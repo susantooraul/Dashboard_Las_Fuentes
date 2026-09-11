@@ -1,0 +1,725 @@
+.hydric-proto-page {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+}
+
+.hydric-proto-hero,
+.hydric-proto-editor-panel {
+  overflow: hidden;
+}
+
+.hydric-proto-hero {
+  padding: 22px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(26, 186, 241, 0.12), transparent 38%),
+    linear-gradient(135deg, rgba(4, 48, 72, 0.96), rgba(3, 20, 40, 0.98));
+}
+
+.hydric-proto-hero-head,
+.hydric-proto-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.hydric-proto-hero-head {
+  margin-bottom: 18px;
+}
+
+.hydric-proto-hero-head h2,
+.hydric-proto-toolbar h3 {
+  margin: 4px 0 6px;
+  color: #f7fbff;
+}
+
+.hydric-proto-hero-head h2 {
+  font-size: clamp(1.65rem, 2.3vw, 2.2rem);
+}
+
+.hydric-proto-hero-head p,
+.hydric-proto-toolbar p {
+  margin: 0;
+  max-width: 980px;
+  color: #a9c2d4;
+}
+
+.hydric-proto-live-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 235px;
+  padding: 12px 14px;
+  border: 1px solid rgba(44, 177, 226, 0.28);
+  border-radius: 14px;
+  background: rgba(2, 20, 38, 0.62);
+}
+
+.hydric-proto-live-status > div {
+  display: grid;
+  gap: 3px;
+}
+
+.hydric-proto-live-status span:not(.hydric-proto-live-dot) {
+  color: #91afc4;
+  font-size: 0.78rem;
+}
+
+.hydric-proto-live-status strong {
+  color: #eef9ff;
+  font-size: 0.9rem;
+}
+
+.hydric-proto-live-dot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 12px currentColor;
+}
+
+.hydric-proto-live-dot.ok {
+  color: #35d980;
+  background: currentColor;
+}
+
+.hydric-proto-live-dot.error {
+  color: #ff6b74;
+  background: currentColor;
+}
+
+.hydric-proto-kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.hydric-proto-editor-panel {
+  padding: 18px;
+}
+
+.hydric-proto-toolbar {
+  margin-bottom: 12px;
+}
+
+.hydric-proto-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.hydric-proto-toolbar-actions button,
+.hydric-proto-mode-switch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid rgba(56, 169, 215, 0.32);
+  border-radius: 10px;
+  color: #dcecf6;
+  background: #071c30;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease, opacity 160ms ease;
+}
+
+.hydric-proto-toolbar-actions button:hover:not(:disabled),
+.hydric-proto-mode-switch button:hover:not(:disabled) {
+  border-color: rgba(34, 190, 242, 0.78);
+  transform: translateY(-1px);
+}
+
+.hydric-proto-toolbar-actions button:disabled,
+.hydric-proto-mode-switch button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.hydric-proto-mode-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid rgba(56, 169, 215, 0.28);
+  border-radius: 12px;
+  background: rgba(3, 20, 36, 0.75);
+}
+
+.hydric-proto-mode-switch button {
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+}
+
+.hydric-proto-mode-switch button.active {
+  color: #fff;
+  background: linear-gradient(135deg, #0d8fc1, #14b7ec);
+  box-shadow: 0 8px 24px rgba(0, 166, 224, 0.22);
+}
+
+.hydric-proto-caution,
+.hydric-proto-save-notice,
+.hydric-proto-data-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.hydric-proto-caution {
+  color: #b9e7ff;
+  border: 1px solid rgba(56, 189, 248, 0.24);
+  background: rgba(8, 47, 73, 0.34);
+}
+
+.hydric-proto-caution svg {
+  color: #38bdf8;
+  flex: 0 0 auto;
+}
+
+.hydric-proto-save-notice {
+  color: #bff5d6;
+  border: 1px solid rgba(55, 208, 126, 0.32);
+  background: rgba(20, 120, 72, 0.16);
+}
+
+.hydric-proto-data-warning {
+  color: #ffe1a8;
+  border: 1px solid rgba(240, 172, 54, 0.35);
+  background: rgba(143, 89, 8, 0.18);
+}
+
+.hydric-proto-scroll-shell {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid rgba(54, 155, 198, 0.22);
+  border-radius: 16px;
+  background: #061424;
+  scrollbar-color: #168db8 #071728;
+}
+
+.hydric-proto-canvas {
+  position: relative;
+  width: 2240px;
+  min-width: 2240px;
+  height: 1180px;
+  overflow: hidden;
+  background-color: #071525;
+  background-image: radial-gradient(circle, rgba(88, 139, 170, 0.22) 1px, transparent 1px);
+  background-size: 22px 22px;
+  user-select: none;
+  touch-action: none;
+}
+
+.hydric-proto-canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg,
+      rgba(10, 110, 170, 0.08) 0%, rgba(10, 110, 170, 0.025) 18%,
+      transparent 18%, transparent 53%,
+      rgba(18, 160, 115, 0.035) 53%, rgba(18, 160, 115, 0.035) 83%,
+      rgba(118, 47, 153, 0.055) 83%, rgba(118, 47, 153, 0.055) 100%);
+}
+
+.hydric-proto-zone-label {
+  position: absolute;
+  z-index: 5;
+  padding: 6px 11px;
+  border: 1px solid rgba(74, 167, 255, 0.45);
+  border-radius: 7px;
+  color: #cfe9ff;
+  background: rgba(13, 55, 103, 0.76);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.hydric-proto-zone-production {
+  color: #d8fff0;
+  border-color: rgba(43, 210, 145, 0.45);
+  background: rgba(15, 93, 66, 0.70);
+}
+
+.hydric-proto-zone-reuse {
+  color: #efd8ff;
+  border-color: rgba(190, 92, 255, 0.48);
+  background: rgba(83, 30, 112, 0.76);
+}
+
+.hydric-proto-zone-label.is-draggable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: grab;
+  border-style: dashed;
+  user-select: none;
+  touch-action: none;
+}
+
+.hydric-proto-zone-label.is-draggable:active {
+  cursor: grabbing;
+}
+
+.hydric-proto-connections {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.hydric-proto-edge {
+  fill: none;
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.hydric-proto-edge-water { stroke: #1aa7e8; }
+.hydric-proto-edge-production { stroke: #18b98a; }
+.hydric-proto-edge-reuse { stroke: #a855d4; }
+.hydric-proto-edge.is-dashed { stroke-dasharray: 8 6; opacity: 0.78; }
+
+.hydric-proto-node {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 188px;
+  min-height: 102px;
+  padding: 11px 11px 12px;
+  border: 1px solid rgba(82, 135, 169, 0.46);
+  border-radius: 12px;
+  color: #ecf8ff;
+  background: linear-gradient(150deg, rgba(11, 31, 51, 0.98), rgba(7, 22, 38, 0.98));
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.17);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.hydric-proto-node.is-monitored {
+  border-width: 2px;
+  border-color: rgba(43, 183, 255, 0.64);
+}
+
+.hydric-proto-node.is-conceptual {
+  border-style: dashed;
+}
+
+.hydric-proto-node-source { border-color: rgba(39, 181, 237, 0.58); }
+.hydric-proto-node-process { border-color: rgba(115, 154, 181, 0.50); }
+.hydric-proto-node-storage { border-color: rgba(151, 189, 211, 0.58); }
+.hydric-proto-node-distribution { border-color: rgba(75, 207, 120, 0.64); }
+.hydric-proto-node-production { border-color: rgba(36, 190, 144, 0.68); }
+.hydric-proto-node-uv { border-color: rgba(80, 210, 180, 0.62); }
+.hydric-proto-node-reuse,
+.hydric-proto-node-return { border-color: rgba(184, 92, 230, 0.72); }
+
+.hydric-proto-node.is-draggable {
+  cursor: grab;
+  box-shadow: 0 0 0 2px rgba(59, 203, 255, 0.08), 0 12px 28px rgba(0, 153, 214, 0.14);
+  touch-action: none;
+}
+
+.hydric-proto-node.is-draggable:active {
+  cursor: grabbing;
+  border-color: #44cfff;
+}
+
+.hydric-proto-node-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 10px;
+  color: #55d2ff;
+  background: rgba(20, 135, 184, 0.16);
+}
+
+.hydric-proto-node-production .hydric-proto-node-icon,
+.hydric-proto-node-distribution .hydric-proto-node-icon {
+  color: #69df99;
+  background: rgba(49, 176, 103, 0.16);
+}
+
+.hydric-proto-node-uv .hydric-proto-node-icon {
+  color: #50e1c0;
+  background: rgba(43, 190, 150, 0.14);
+}
+
+.hydric-proto-node-reuse .hydric-proto-node-icon,
+.hydric-proto-node-return .hydric-proto-node-icon {
+  color: #d58bff;
+  background: rgba(150, 68, 188, 0.16);
+}
+
+.hydric-proto-node-copy {
+  display: grid;
+  min-width: 0;
+  width: 100%;
+  gap: 3px;
+}
+
+.hydric-proto-node-copy > span {
+  color: #7599b2;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.hydric-proto-node-copy > strong {
+  overflow: hidden;
+  color: #f7fbff;
+  font-size: 0.76rem;
+  line-height: 1.13;
+  text-overflow: ellipsis;
+}
+
+.hydric-proto-node-copy > small {
+  display: block;
+  color: #46d2ff;
+  font-size: 0.64rem;
+  font-weight: 800;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
+}
+
+.hydric-proto-node-copy > small.hydric-proto-node-totalizer,
+.hydric-proto-node-copy > small.hydric-proto-node-note {
+  color: #9db9cb;
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.hydric-proto-node-production .hydric-proto-node-flow,
+.hydric-proto-node-distribution .hydric-proto-node-flow {
+  color: #6de1ad;
+}
+
+.hydric-proto-node-reuse .hydric-proto-node-flow {
+  color: #dda0fb;
+}
+
+.hydric-proto-drag-handle {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  color: #5b8aa5;
+}
+
+.hydric-proto-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(360px, .8fr) minmax(280px, .8fr);
+  gap: 20px;
+  align-items: center;
+  padding: 14px 4px 0;
+}
+
+.hydric-proto-legend,
+.hydric-proto-stats,
+.hydric-proto-note {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hydric-proto-legend {
+  flex-wrap: wrap;
+  color: #9bb7ca;
+  font-size: 0.72rem;
+}
+
+.hydric-proto-legend > strong {
+  width: 100%;
+  color: #dfeef8;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hydric-proto-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hydric-proto-legend-line {
+  width: 28px;
+  height: 2px;
+}
+
+.hydric-proto-legend-line.water { background: #1aa7e8; }
+.hydric-proto-legend-line.production { background: #18b98a; }
+.hydric-proto-legend-line.reuse { background: #a855d4; }
+
+.hydric-proto-legend-node {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.hydric-proto-legend-node.measured {
+  border: 2px solid #1aa7e8;
+  background: rgba(43, 183, 255, 0.18);
+}
+
+.hydric-proto-legend-node.conceptual {
+  border: 1px dashed #91a8b8;
+  background: rgba(145, 168, 184, 0.08);
+}
+
+.hydric-proto-stats {
+  justify-content: center;
+  padding: 0 18px;
+  border-right: 1px solid rgba(72, 133, 167, 0.24);
+  border-left: 1px solid rgba(72, 133, 167, 0.24);
+}
+
+.hydric-proto-stats > span {
+  display: grid;
+  gap: 3px;
+  text-align: center;
+}
+
+.hydric-proto-stats small {
+  color: #718fa5;
+  font-size: 0.63rem;
+}
+
+.hydric-proto-stats strong {
+  color: #f0f8fd;
+  font-size: 1rem;
+}
+
+.hydric-proto-note {
+  color: #91adc0;
+  font-size: 0.72rem;
+}
+
+.hydric-proto-note svg {
+  flex: 0 0 auto;
+  color: #43c9fa;
+}
+
+.hydric-proto-editor-panel:fullscreen,
+.hydric-proto-editor-panel.is-fullscreen {
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  margin: 0;
+  padding: 14px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #07111f;
+}
+
+.hydric-proto-editor-panel:fullscreen {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hydric-proto-editor-panel:fullscreen .hydric-proto-scroll-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Modo claro: el canvas sigue siendo claro, como la referencia de Zapopan. */
+.app-shell[data-theme='light'] .hydric-proto-hero {
+  border-color: #cce4f2;
+  background: linear-gradient(145deg, #ffffff, #f2faff);
+  box-shadow: 0 10px 30px rgba(33, 104, 148, 0.08);
+}
+
+.app-shell[data-theme='light'] .hydric-proto-hero-head h2,
+.app-shell[data-theme='light'] .hydric-proto-toolbar h3 {
+  color: #08233c;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-hero-head p,
+.app-shell[data-theme='light'] .hydric-proto-toolbar p {
+  color: #506d82;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-live-status {
+  border-color: #c9e2f0;
+  background: #ffffff;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-live-status span:not(.hydric-proto-live-dot) { color: #55768d; }
+.app-shell[data-theme='light'] .hydric-proto-live-status strong { color: #102f49; }
+
+.app-shell[data-theme='light'] .hydric-proto-editor-panel {
+  border-color: #cfe4ef;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(28, 91, 128, 0.07);
+}
+
+.app-shell[data-theme='light'] .hydric-proto-toolbar-actions button,
+.app-shell[data-theme='light'] .hydric-proto-mode-switch button {
+  color: #0b4567;
+  border-color: #bfddec;
+  background: #f5fbff;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-mode-switch {
+  border-color: #c5e0ee;
+  background: #eff8fd;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-mode-switch button { background: transparent; }
+.app-shell[data-theme='light'] .hydric-proto-mode-switch button.active {
+  color: #fff;
+  background: linear-gradient(135deg, #078dbd, #13b4e9);
+}
+
+.app-shell[data-theme='light'] .hydric-proto-caution {
+  color: #0b4567;
+  border-color: #b9dff0;
+  background: #edf8fe;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-save-notice {
+  color: #0f653a;
+  border-color: #aee5c4;
+  background: #effbf4;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-data-warning {
+  color: #79500a;
+  border-color: #f0ce8f;
+  background: #fff8e9;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-scroll-shell {
+  border-color: #c9e2ef;
+  background: #f7fbfe;
+  scrollbar-color: #78c8e8 #edf7fb;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-canvas {
+  background-color: #fbfdff;
+  background-image: radial-gradient(circle, rgba(59, 129, 165, 0.19) 1px, transparent 1px);
+}
+
+.app-shell[data-theme='light'] .hydric-proto-canvas::before {
+  background:
+    linear-gradient(90deg,
+      rgba(16, 130, 181, 0.04) 0%, rgba(16, 130, 181, 0.015) 18%,
+      transparent 18%, transparent 53%,
+      rgba(27, 160, 110, 0.025) 53%, rgba(27, 160, 110, 0.025) 83%,
+      rgba(137, 65, 167, 0.045) 83%, rgba(137, 65, 167, 0.045) 100%);
+}
+
+.app-shell[data-theme='light'] .hydric-proto-zone-label {
+  color: #0e4a73;
+  border-color: #a7d8ef;
+  background: #e9f6fd;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-zone-production {
+  color: #0e6346;
+  border-color: #9bdcbc;
+  background: #e8faf2;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-zone-reuse {
+  color: #4c145f;
+  border-color: #c688db;
+  background: #f3e4f9;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-node {
+  color: #102f47;
+  border-color: #bfdbe8;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(43, 103, 137, 0.08);
+}
+
+.app-shell[data-theme='light'] .hydric-proto-node.is-monitored {
+  border-color: #46b8e8;
+  box-shadow: 0 10px 24px rgba(0, 126, 178, 0.10);
+}
+
+.app-shell[data-theme='light'] .hydric-proto-node.is-conceptual {
+  border-color: #aec6d4;
+}
+
+.app-shell[data-theme='light'] .hydric-proto-node-production { border-color: #7dd5b0; }
+.app-shell[data-theme='light'] .hydric-proto-node-distribution { border-color: #80d7a2; }
+.app-shell[data-theme='light'] .hydric-proto-node-uv { border-color: #8adbc7; }
+.app-shell[data-theme='light'] .hydric-proto-node-reuse,
+.app-shell[data-theme='light'] .hydric-proto-node-return { border-color: #d39be8; }
+
+.app-shell[data-theme='light'] .hydric-proto-node-copy > span { color: #628199; }
+.app-shell[data-theme='light'] .hydric-proto-node-copy > strong { color: #0d2e47; }
+.app-shell[data-theme='light'] .hydric-proto-node-copy > small { color: #007ea8; }
+.app-shell[data-theme='light'] .hydric-proto-node-copy > small.hydric-proto-node-totalizer,
+.app-shell[data-theme='light'] .hydric-proto-node-copy > small.hydric-proto-node-note { color: #405f74; }
+.app-shell[data-theme='light'] .hydric-proto-node-production .hydric-proto-node-flow,
+.app-shell[data-theme='light'] .hydric-proto-node-distribution .hydric-proto-node-flow { color: #087453; }
+.app-shell[data-theme='light'] .hydric-proto-node-reuse .hydric-proto-node-flow { color: #702884; }
+.app-shell[data-theme='light'] .hydric-proto-drag-handle { color: #447d9d; }
+
+.app-shell[data-theme='light'] .hydric-proto-legend { color: #527087; }
+.app-shell[data-theme='light'] .hydric-proto-legend > strong,
+.app-shell[data-theme='light'] .hydric-proto-stats strong { color: #0f3049; }
+.app-shell[data-theme='light'] .hydric-proto-stats { border-color: #d5e5ed; }
+.app-shell[data-theme='light'] .hydric-proto-stats small,
+.app-shell[data-theme='light'] .hydric-proto-note { color: #5e788b; }
+
+.app-shell[data-theme='light'] .hydric-proto-editor-panel:fullscreen,
+.app-shell[data-theme='light'] .hydric-proto-editor-panel.is-fullscreen {
+  background: #f4fbff;
+}
+
+@media (max-width: 1500px) {
+  .hydric-proto-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hydric-proto-footer { grid-template-columns: 1fr 1fr; }
+  .hydric-proto-note { grid-column: 1 / -1; }
+}
+
+@media (max-width: 1050px) {
+  .hydric-proto-hero-head,
+  .hydric-proto-toolbar { flex-direction: column; }
+  .hydric-proto-live-status { width: 100%; }
+  .hydric-proto-toolbar-actions { justify-content: flex-start; width: 100%; }
+  .hydric-proto-footer { grid-template-columns: 1fr; }
+  .hydric-proto-stats {
+    justify-content: flex-start;
+    padding: 12px 0;
+    border-right: 0;
+    border-left: 0;
+    border-top: 1px solid rgba(72, 133, 167, 0.20);
+    border-bottom: 1px solid rgba(72, 133, 167, 0.20);
+  }
+  .hydric-proto-note { grid-column: auto; }
+}
+
+@media (max-width: 680px) {
+  .hydric-proto-hero,
+  .hydric-proto-editor-panel { padding: 14px; }
+  .hydric-proto-kpis { grid-template-columns: 1fr; }
+  .hydric-proto-toolbar-actions,
+  .hydric-proto-mode-switch { width: 100%; }
+  .hydric-proto-toolbar-actions button,
+  .hydric-proto-mode-switch button { flex: 1 1 auto; }
+  .hydric-proto-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

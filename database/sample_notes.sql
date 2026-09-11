@@ -1,0 +1,2 @@
+-- Este proyecto usa SQLAlchemy para sembrar datos demo automáticamente.
+-- Puedes reemplazar este esquema por tablas reales o vistas existentes del sistema SCADA/medición.

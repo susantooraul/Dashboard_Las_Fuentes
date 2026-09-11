@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Node modules
+node_modules/
+node_modules
+
+# Local SQLite runtime data (auth, sessions, scheduled-report state)
+backend/data/auth.sqlite3
+backend/data/auth.sqlite3-wal
+backend/data/auth.sqlite3-shm
+backend/data/auth.sqlite3-journal
+
+# Local auth backups
+backend/data/backups/
+backend/data/recovery_*/

@@ -1,0 +1,34 @@
+ARCA CONTINENTAL - PLANTA LAS FUENTES - SETUP RAPIDO
+
+1. Backend
+   cd backend
+   python -m venv .venv
+   .venv\Scripts\activate
+   python -m pip install -r requirements.txt
+   copy .env.example .env
+
+2. Conexion SQL Server en backend\.env
+   DB_MODE=sqlserver
+   SQLSERVER_HOST=POZOSLASFUENTES
+   SQLSERVER_DATABASE=ARCA
+   SQLSERVER_DRIVER=ODBC Driver 17 for SQL Server
+   SQLSERVER_USE_WINDOWS_AUTH=true
+   SQLSERVER_ENCRYPT=no
+   SQLSERVER_TRUST_CERT=true
+
+3. Primer administrador
+   python -m app.scripts.create_admin
+
+4. Frontend
+   cd ..\frontend
+   npm install
+
+5. Iniciar
+   Ejecutar "Iniciar Dashboard ARCA.bat" desde la raiz.
+
+6. Verificar
+   Frontend: http://localhost:5173
+   Backend:  http://localhost:8000/docs
+   Base:     http://localhost:8000/health/db
+
+No copiar contraseñas al archivo .env.example ni subir el .env al repositorio.

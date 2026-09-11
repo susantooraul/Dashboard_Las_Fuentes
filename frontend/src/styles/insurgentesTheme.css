@@ -1,0 +1,1584 @@
+/*
+ * ARCA Las Fuentes · tema claro/oscuro.
+ * Solo presentación. El modo oscuro continúa siendo el predeterminado.
+ */
+
+.theme-toggle-button {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-theme-control {
+  padding: 12px 10px 0;
+}
+
+.sidebar-theme-control .theme-toggle-button {
+  margin: 0;
+  min-height: 42px;
+  color: #e6f8ff;
+  background: rgba(5, 42, 67, .48);
+  border-color: rgba(125, 211, 252, .14);
+}
+
+.sidebar-theme-control .theme-toggle-button svg {
+  color: #fbbf24;
+  flex: 0 0 auto;
+}
+
+.sidebar-theme-control .theme-toggle-button:hover {
+  background: rgba(14, 116, 144, .26);
+  border-color: rgba(125, 211, 252, .26);
+}
+
+.pozos-shell .sidebar.collapsed .sidebar-theme-control {
+  padding-inline: 10px;
+}
+
+.pozos-shell .sidebar.collapsed .sidebar-theme-control .theme-toggle-button {
+  justify-content: center;
+  width: 100%;
+  padding-inline: 0;
+}
+
+.pozos-shell.theme-dark {
+  color-scheme: dark;
+}
+
+.pozos-shell.theme-light {
+  color-scheme: light;
+  --bg: #edf4fa;
+  --panel: linear-gradient(180deg, rgba(255,255,255,.995), rgba(247,251,255,.995));
+  --panel-soft: linear-gradient(135deg, rgba(224,242,254,.78), rgba(255,255,255,.98));
+  --border: rgba(2,132,199,.18);
+  --text: #10253d;
+  --muted: #5f748b;
+  --muted-2: #71869b;
+  --ins-visual-page: #edf4fa;
+  --ins-visual-panel-a: #ffffff;
+  --ins-visual-panel-b: #f5faff;
+  --ins-visual-card-a: #0b3555;
+  --ins-visual-card-b: #07243d;
+  --ins-visual-surface: #f5faff;
+  --ins-visual-surface-soft: #eaf5fc;
+  --ins-visual-border: rgba(2,132,199,.18);
+  --ins-visual-border-strong: rgba(2,132,199,.34);
+  --ins-visual-label: #7dd3fc;
+  --ins-visual-text: #ffffff;
+  --ins-visual-muted: #cceeff;
+  --chart-axis: #3c6077;
+  --chart-grid: rgba(2,132,199,.16);
+  color: #10253d;
+  background: #edf4fa;
+}
+
+.pozos-shell.theme-light .main-shell {
+  background:
+    radial-gradient(circle at 84% 3%, rgba(14,165,233,.08), transparent 23%),
+    linear-gradient(180deg, #f8fcff 0%, #edf4fa 100%);
+}
+
+.pozos-shell.theme-light .page-content,
+.pozos-shell.theme-light .insurgentes-page {
+  color: #10253d;
+}
+
+/* Sidebar permanece azul para conservar orientación y contraste. */
+.pozos-shell.theme-light .sidebar {
+  background:
+    radial-gradient(circle at 30px 26px, rgba(56,189,248,.18), transparent 27%),
+    linear-gradient(180deg, #052844 0%, #073756 58%, #05243d 100%);
+  border-right-color: rgba(125,211,252,.24);
+  box-shadow: 12px 0 34px rgba(15,61,94,.14);
+}
+
+.pozos-shell.theme-light .brand-row {
+  background: linear-gradient(90deg, rgba(14,165,233,.18), rgba(255,255,255,.02) 72%);
+}
+
+.pozos-shell.theme-light .sidebar .brand-title,
+.pozos-shell.theme-light .sidebar .nav-item,
+.pozos-shell.theme-light .sidebar-session-control,
+.pozos-shell.theme-light .sidebar-session-control strong {
+  color: #eefaff;
+}
+
+.pozos-shell.theme-light .sidebar .brand-subtitle,
+.pozos-shell.theme-light .sidebar .nav-group-title,
+.pozos-shell.theme-light .sidebar-session-control small,
+.pozos-shell.theme-light .sidebar-session-control .session-label {
+  color: #b8e6f5;
+}
+
+.pozos-shell.theme-light .sidebar .menu-button,
+.pozos-shell.theme-light .sidebar .theme-toggle-button,
+.pozos-shell.theme-light .sidebar .session-logout-button {
+  color: #eefaff;
+  background: rgba(6,55,88,.68);
+  border-color: rgba(125,211,252,.22);
+}
+
+.pozos-shell.theme-light .sidebar .theme-toggle-button svg {
+  color: #dbeafe;
+}
+
+.pozos-shell.theme-light .sidebar .nav-item svg {
+  color: #a7e5f7;
+}
+
+.pozos-shell.theme-light .sidebar .nav-item:hover,
+.pozos-shell.theme-light .sidebar .theme-toggle-button:hover {
+  background: rgba(14,116,144,.34);
+  border-color: rgba(125,211,252,.30);
+}
+
+.pozos-shell.theme-light .sidebar .nav-item.active {
+  color: #fff;
+  background: linear-gradient(90deg, #0284c7, #0ea5e9);
+  border-color: rgba(186,230,253,.40);
+  box-shadow: inset 3px 0 0 #bae6fd, 0 10px 24px rgba(2,132,199,.22);
+}
+
+.pozos-shell.theme-light .plant-context-bar {
+  color: #0c4a6e;
+}
+
+.pozos-shell.theme-light .plant-context-bar > .plant-context-name {
+  color: #075985;
+  background: #fff;
+  border-color: rgba(2,132,199,.22);
+  box-shadow: 0 6px 18px rgba(14,116,144,.08);
+}
+
+.pozos-shell.theme-light .mobile-topbar {
+  color: #fff;
+  background: linear-gradient(90deg, #052844, #073756);
+  border-bottom-color: rgba(125,211,252,.22);
+}
+
+/* Superficies principales */
+.pozos-shell.theme-light .insurgentes-page .panel,
+.pozos-shell.theme-light .insurgentes-page .chart-panel,
+.pozos-shell.theme-light .insurgentes-page .detail-history-panel,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-module-panel,
+.pozos-shell.theme-light .insurgentes-page .shift-cuts-panel,
+.pozos-shell.theme-light .insurgentes-page .operational-alerts-panel,
+.pozos-shell.theme-light .insurgentes-page .daily-modern-shifts,
+.pozos-shell.theme-light .insurgentes-page .daily-module-status-panel,
+.pozos-shell.theme-light .insurgentes-page .daily-comparison-panel,
+.pozos-shell.theme-light .insurgentes-page .daily-elements-panel,
+.pozos-shell.theme-light .insurgentes-page .daily-update-panel,
+.pozos-shell.theme-light .insurgentes-page .report-controls-panel,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-panel,
+.pozos-shell.theme-light .insurgentes-page .report-preview-dashboard,
+.pozos-shell.theme-light .insurgentes-page .users-admin-header,
+.pozos-shell.theme-light .insurgentes-page .users-create-panel,
+.pozos-shell.theme-light .insurgentes-page .users-list-panel {
+  color: #10253d;
+  background: #fff;
+  border-color: rgba(2,132,199,.16);
+  box-shadow: 0 14px 34px rgba(30,64,95,.09);
+}
+
+.pozos-shell.theme-light .insurgentes-page .panel::before {
+  background: linear-gradient(180deg, rgba(14,165,233,.035), transparent 34%);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-hero,
+.pozos-shell.theme-light .insurgentes-page .operational-detail-hero,
+.pozos-shell.theme-light .insurgentes-page .report-hero-modern,
+.pozos-shell.theme-light .insurgentes-page .daily-modern-hero {
+  color: #10253d;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(14,165,233,.08), transparent 30%),
+    linear-gradient(135deg, #ffffff 0%, #f1f8fd 100%);
+  border-color: rgba(2,132,199,.18);
+  box-shadow: 0 14px 34px rgba(30,64,95,.09);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-hero h2,
+.pozos-shell.theme-light .insurgentes-page .operational-detail-title-row h2,
+.pozos-shell.theme-light .insurgentes-page .report-main-title,
+.pozos-shell.theme-light .insurgentes-page .daily-modern-hero h2,
+.pozos-shell.theme-light .insurgentes-page .panel-title,
+.pozos-shell.theme-light .insurgentes-page .report-controls-head h2,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-card-head h3,
+.pozos-shell.theme-light .insurgentes-page .report-preview-head h2,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-equipment-head h3,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-module-state-head h3 {
+  color: #10253d;
+}
+
+.pozos-shell.theme-light .insurgentes-page .panel-subtitle,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-hero p,
+.pozos-shell.theme-light .insurgentes-page .operational-detail-title-block p,
+.pozos-shell.theme-light .insurgentes-page .report-controls-head p,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-card-head p,
+.pozos-shell.theme-light .insurgentes-page .report-main-subtitle,
+.pozos-shell.theme-light .insurgentes-page .daily-modern-hero p {
+  color: #5f748b;
+}
+
+.pozos-shell.theme-light .insurgentes-page .section-eyebrow,
+.pozos-shell.theme-light .insurgentes-page .eyebrow,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-equipment-head span,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-module-state-head span {
+  color: #0369a1;
+}
+
+/* KPI ejecutivos: permanecen azul oscuro con texto blanco en ambos temas. */
+.pozos-shell.theme-light .insurgentes-page .kpi-card,
+.pozos-shell.theme-light .insurgentes-page .report-kpi-card,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-hero-kpis article,
+.pozos-shell.theme-light .insurgentes-page .operational-detail-kpi {
+  color: #fff;
+  border-color: rgba(14,116,144,.34);
+  background:
+    radial-gradient(circle at 88% 82%, rgba(56,189,248,.16), transparent 28%),
+    linear-gradient(145deg, #0b3555, #07243d);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 8px 22px rgba(8,47,73,.10);
+}
+
+.pozos-shell.theme-light .insurgentes-page .kpi-label,
+.pozos-shell.theme-light .insurgentes-page .report-kpi-card span,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-hero-kpis article span,
+.pozos-shell.theme-light .insurgentes-page .operational-detail-kpi span {
+  color: #8fd9ff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .kpi-value,
+.pozos-shell.theme-light .insurgentes-page .report-kpi-card strong,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-hero-kpis article strong,
+.pozos-shell.theme-light .insurgentes-page .operational-detail-kpi strong {
+  color: #fff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .kpi-trend,
+.pozos-shell.theme-light .insurgentes-page .report-kpi-card small,
+.pozos-shell.theme-light .insurgentes-page .operational-detail-kpi small {
+  color: #cceeff;
+}
+
+/* Cards operativas */
+.pozos-shell.theme-light .insurgentes-page .insurgentes-equipment-card,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-level-card,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-uv-card,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-card,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-module-state-card,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-entry-compact,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-card,
+.pozos-shell.theme-light .insurgentes-page .report-preview-section {
+  color: #10253d;
+  background: #fff;
+  border-color: rgba(2,132,199,.17);
+  box-shadow: none;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-clickable-card:hover,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-clickable-card:focus-visible,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-card:hover,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-card:focus-visible,
+.pozos-shell.theme-light .insurgentes-page .daily-module-card:hover,
+.pozos-shell.theme-light .insurgentes-page .daily-module-card:focus-visible {
+  background: #eef8ff;
+  border-color: rgba(2,132,199,.38);
+  box-shadow: inset 3px 0 0 rgba(2,132,199,.48), 0 12px 28px rgba(30,64,95,.08);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-equipment-footer,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-card > p,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-summary-list p,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-summary-list small,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-module-state-head p,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-module-state-head > small {
+  color: #5f748b;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-equipment-footer strong,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-value,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-module-state-head > strong,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-module-state-rows b {
+  color: #10253d;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-title,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-card > em,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-module-state-action,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-module-state-rows span {
+  color: #0369a1;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-metric-list > div,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-entry-compact-metrics > div,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-module-state-rows,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-summary,
+.pozos-shell.theme-light .insurgentes-page .daily-module-card > div,
+.pozos-shell.theme-light .insurgentes-page .daily-comparison-grid article,
+.pozos-shell.theme-light .insurgentes-page .daily-update-grid article,
+.pozos-shell.theme-light .insurgentes-page .detail-period-status-row,
+.pozos-shell.theme-light .insurgentes-page .shift-accordion-item,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-accordion-item {
+  color: #163a56;
+  background: #f6fbff;
+  border-color: rgba(2,132,199,.15);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-metric-list > div:nth-child(-n+3) {
+  background: #edf7fd;
+  border-color: rgba(2,132,199,.24);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-metric-list span,
+.pozos-shell.theme-light .insurgentes-page .detail-period-status-row span,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-summary strong,
+.pozos-shell.theme-light .insurgentes-page .daily-module-card b,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-lines b {
+  color: #0369a1;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-metric-list strong,
+.pozos-shell.theme-light .insurgentes-page .detail-period-status-row strong,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-summary span,
+.pozos-shell.theme-light .insurgentes-page .daily-module-card em,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-lines em {
+  color: #10253d;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-level-visual {
+  background: #eaf6fc;
+  border-color: rgba(2,132,199,.25);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-level-visual strong {
+  color: #0f3552;
+  text-shadow: 0 1px 0 rgba(255,255,255,.8);
+}
+
+/* Formularios y controles */
+.pozos-shell.theme-light .insurgentes-page input,
+.pozos-shell.theme-light .insurgentes-page select,
+.pozos-shell.theme-light .insurgentes-page textarea,
+.pozos-shell.theme-light .insurgentes-page .history-aggregation-native,
+.pozos-shell.theme-light .insurgentes-page .date-range-fields input,
+.pozos-shell.theme-light .insurgentes-page .shift-toolbar input,
+.pozos-shell.theme-light .insurgentes-page .shift-toolbar select,
+.pozos-shell.theme-light .insurgentes-page .daily-modern-datebox input,
+.pozos-shell.theme-light .insurgentes-page .users-inline-input,
+.pozos-shell.theme-light .insurgentes-page .users-table select {
+  color-scheme: light;
+  color: #10253d;
+  background: #fff;
+  border-color: rgba(2,132,199,.25);
+  box-shadow: inset 0 1px 2px rgba(30,64,95,.04);
+}
+
+.pozos-shell.theme-light .insurgentes-page input::placeholder,
+.pozos-shell.theme-light .insurgentes-page textarea::placeholder {
+  color: #8497a9;
+}
+
+.pozos-shell.theme-light .insurgentes-page .date-range-fields label,
+.pozos-shell.theme-light .insurgentes-page .date-range-fields label > span,
+.pozos-shell.theme-light .insurgentes-page .report-email-field > span,
+.pozos-shell.theme-light .insurgentes-page .users-create-form label > span,
+.pozos-shell.theme-light .insurgentes-page .daily-modern-datebox label {
+  color: #0369a1;
+}
+
+.pozos-shell.theme-light .insurgentes-page .date-input-with-icon svg {
+  color: #0284c7;
+}
+
+.pozos-shell.theme-light .insurgentes-page .date-range-reset,
+.pozos-shell.theme-light .insurgentes-page .ghost-action,
+.pozos-shell.theme-light .insurgentes-page .btn.secondary,
+.pozos-shell.theme-light .insurgentes-page .shift-toolbar .btn:not(.primary) {
+  color: #075985;
+  background: #eef7fc;
+  border-color: rgba(2,132,199,.22);
+}
+
+.pozos-shell.theme-light .insurgentes-page .date-range-reset:hover,
+.pozos-shell.theme-light .insurgentes-page .ghost-action:hover:not(:disabled) {
+  color: #0c4a6e;
+  background: #e2f2fb;
+  border-color: rgba(2,132,199,.34);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-control-group,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-series-toolbar,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-totalizer-note,
+.pozos-shell.theme-light .insurgentes-page .report-format-selector {
+  color: #163a56;
+  background: #f5faff;
+  border-color: rgba(2,132,199,.18);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-control-group button,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-series-actions button,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-series-chips button,
+.pozos-shell.theme-light .insurgentes-page .daily-filter-row button {
+  color: #0c4a6e;
+  background: #eef7fc;
+  border-color: rgba(2,132,199,.20);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-control-group button.active,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-series-chips button.active,
+.pozos-shell.theme-light .insurgentes-page .daily-filter-row button.active {
+  color: #fff;
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  border-color: rgba(2,132,199,.55);
+}
+
+/* Revisión diaria */
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card,
+.pozos-shell.theme-light .insurgentes-page .daily-module-card {
+  color: #10253d;
+  background: #fff;
+  border-color: rgba(2,132,199,.18);
+  box-shadow: none;
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card.status-partial {
+  background: #fffaf0;
+  border-color: rgba(217,119,6,.36);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card.status-pending {
+  opacity: 1;
+  background: #f8fafc;
+  border-color: rgba(2,132,199,.22);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card > span,
+.pozos-shell.theme-light .insurgentes-page .daily-module-card > span,
+.pozos-shell.theme-light .insurgentes-page .daily-comparison-grid article > span,
+.pozos-shell.theme-light .insurgentes-page .daily-update-grid article > span {
+  color: #0369a1;
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card > strong,
+.pozos-shell.theme-light .insurgentes-page .daily-module-card > strong,
+.pozos-shell.theme-light .insurgentes-page .daily-comparison-grid strong,
+.pozos-shell.theme-light .insurgentes-page .daily-update-grid strong,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-accordion-item > button {
+  color: #10253d;
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card > small,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-lines p,
+.pozos-shell.theme-light .insurgentes-page .daily-module-card p,
+.pozos-shell.theme-light .insurgentes-page .daily-comparison-grid b,
+.pozos-shell.theme-light .insurgentes-page .daily-comparison-grid small,
+.pozos-shell.theme-light .insurgentes-page .daily-comparison-loading,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-accordion-item > button small {
+  color: #5f748b;
+}
+
+/* Reportes */
+.pozos-shell.theme-light .insurgentes-page .report-generated-card,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-item,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-recipients,
+.pozos-shell.theme-light .insurgentes-page .report-info-strip,
+.pozos-shell.theme-light .insurgentes-page .report-preview-code {
+  color: #163a56;
+  background: #f5faff;
+  border-color: rgba(2,132,199,.17);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-generated-card strong,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-item strong,
+.pozos-shell.theme-light .insurgentes-page .report-preview-code span,
+.pozos-shell.theme-light .insurgentes-page .report-format-selector label {
+  color: #10253d;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-generated-card span,
+.pozos-shell.theme-light .insurgentes-page .report-generated-card small,
+.pozos-shell.theme-light .insurgentes-page .report-field-hint,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-item p,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-item small,
+.pozos-shell.theme-light .insurgentes-page .report-action-feedback {
+  color: #5f748b;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-controls-modern {
+  background: #fff;
+  border-color: rgba(2,132,199,.18);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-controls-head,
+.pozos-shell.theme-light .insurgentes-page .report-support-actions,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-card-head,
+.pozos-shell.theme-light .insurgentes-page .report-preview-head,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-item {
+  border-color: rgba(2,132,199,.14);
+}
+
+/* Las convenciones Excel verde / PDF vino se conservan en claro. */
+.pozos-shell.theme-light .insurgentes-page .report-action-button.report-export-excel,
+.pozos-shell.theme-light .insurgentes-page .five-minute-excel-button {
+  color: #fff !important;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-action-button.report-export-pdf {
+  color: #fff !important;
+}
+
+/* Tablas */
+.pozos-shell.theme-light .insurgentes-page table {
+  color: #17334a;
+  background: #fff;
+}
+
+.pozos-shell.theme-light .insurgentes-page table th {
+  color: #0c4a6e;
+  background: #edf7fd;
+  border-color: rgba(2,132,199,.15);
+}
+
+.pozos-shell.theme-light .insurgentes-page table td {
+  color: #17334a;
+  border-color: rgba(2,132,199,.11);
+}
+
+.pozos-shell.theme-light .insurgentes-page table tbody tr:hover td,
+.pozos-shell.theme-light .insurgentes-page .daily-elements-table tbody tr:hover {
+  background: #f0f8fd;
+}
+
+.pozos-shell.theme-light .insurgentes-page .well-name-cell strong,
+.pozos-shell.theme-light .insurgentes-page .well-name-cell a,
+.pozos-shell.theme-light .insurgentes-page .well-name-cell button {
+  color: #0c4a6e;
+}
+
+/* Gráficas: líneas de datos conservan sus colores; cambia solo el soporte visual. */
+.pozos-shell.theme-light .insurgentes-page .recharts-cartesian-grid line {
+  stroke: rgba(2,132,199,.16) !important;
+}
+
+.pozos-shell.theme-light .insurgentes-page .recharts-cartesian-axis-line,
+.pozos-shell.theme-light .insurgentes-page .recharts-cartesian-axis-tick-line {
+  stroke: #6f8798 !important;
+}
+
+.pozos-shell.theme-light .insurgentes-page .recharts-cartesian-axis-tick-value,
+.pozos-shell.theme-light .insurgentes-page .recharts-text.recharts-label,
+.pozos-shell.theme-light .insurgentes-page .recharts-label-list text {
+  fill: #355a72 !important;
+}
+
+.pozos-shell.theme-light .insurgentes-page .chart-tooltip,
+.pozos-shell.theme-light .insurgentes-page .module-history-tooltip,
+.pozos-shell.theme-light .insurgentes-page .water-history-tooltip,
+.pozos-shell.theme-light .insurgentes-page .pozos-tooltip,
+.pozos-shell.theme-light .insurgentes-page .solid-tooltip {
+  color: #10253d;
+  background: #fff;
+  border-color: rgba(2,132,199,.22);
+  box-shadow: 0 14px 34px rgba(30,64,95,.14);
+}
+
+.pozos-shell.theme-light .insurgentes-page .chart-tooltip-label,
+.pozos-shell.theme-light .insurgentes-page .chart-tooltip-name,
+.pozos-shell.theme-light .insurgentes-page .module-history-tooltip-title {
+  color: #355a72;
+}
+
+.pozos-shell.theme-light .insurgentes-page .chart-tooltip-value,
+.pozos-shell.theme-light .insurgentes-page .module-history-tooltip strong,
+.pozos-shell.theme-light .insurgentes-page .water-history-tooltip strong {
+  color: #10253d;
+}
+
+/* Estados */
+.pozos-shell.theme-light .insurgentes-page .status-pill.normal,
+.pozos-shell.theme-light .insurgentes-page .resumen-status-pill.normal,
+.pozos-shell.theme-light .insurgentes-page .status-badge.normal {
+  color: #065f46;
+  background: #ecfdf5;
+  border-color: rgba(5,150,105,.28);
+}
+
+.pozos-shell.theme-light .insurgentes-page .status-pill.warning,
+.pozos-shell.theme-light .insurgentes-page .resumen-status-pill.warning {
+  color: #92400e;
+  background: #fffbeb;
+  border-color: rgba(217,119,6,.30);
+}
+
+.pozos-shell.theme-light .insurgentes-page .status-pill.alert,
+.pozos-shell.theme-light .insurgentes-page .status-pill.critical,
+.pozos-shell.theme-light .insurgentes-page .status-badge.alert {
+  color: #991b1b;
+  background: #fff1f2;
+  border-color: rgba(220,38,38,.28);
+}
+
+.pozos-shell.theme-light .insurgentes-page .status-pill.idle,
+.pozos-shell.theme-light .insurgentes-page .status-pill.inactive,
+.pozos-shell.theme-light .insurgentes-page .status-pill.subtle {
+  color: #475569;
+  background: #f1f5f9;
+  border-color: rgba(100,116,139,.22);
+}
+
+/* Usuarios */
+.pozos-shell.theme-light .insurgentes-page .users-table-wrap {
+  border-color: rgba(2,132,199,.15);
+  background: #fff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .users-create-form label,
+.pozos-shell.theme-light .insurgentes-page .users-list-heading {
+  color: #17334a;
+}
+
+/* Portales fuera del shell: correo, contraseña y notificaciones. */
+html[data-arca-insurgentes-theme="light"] .report-email-modal {
+  background: rgba(15,45,68,.28);
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-email-card {
+  color: #10253d;
+  background: #fff;
+  border-color: rgba(2,132,199,.20);
+  box-shadow: 0 24px 70px rgba(30,64,95,.20);
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-email-card h3 {
+  color: #10253d;
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-email-card p,
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-field-hint {
+  color: #5f748b;
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-email-field > span {
+  color: #0369a1;
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal input,
+html[data-arca-insurgentes-theme="light"] .report-email-modal select,
+html[data-arca-insurgentes-theme="light"] .report-email-modal textarea {
+  color-scheme: light;
+  color: #10253d;
+  background: #fff;
+  border-color: rgba(2,132,199,.25);
+}
+
+html[data-arca-insurgentes-theme="light"] .notification-toast {
+  color: #10253d;
+  background: #fff;
+  border-color: rgba(2,132,199,.22);
+  box-shadow: 0 18px 44px rgba(30,64,95,.16);
+}
+
+html[data-arca-insurgentes-theme="light"] .notification-toast strong,
+html[data-arca-insurgentes-theme="light"] .notification-toast .notification-minimized-main {
+  color: #10253d;
+}
+
+html[data-arca-insurgentes-theme="light"] .notification-toast p,
+html[data-arca-insurgentes-theme="light"] .notification-toast em {
+  color: #5f748b;
+}
+
+html[data-arca-insurgentes-theme="light"] .notification-toast.notification-warning {
+  background: #fffbeb;
+  border-color: rgba(217,119,6,.32);
+}
+
+html[data-arca-insurgentes-theme="light"] .notification-toast.notification-error,
+html[data-arca-insurgentes-theme="light"] .notification-toast.notification-critical {
+  background: #fff1f2;
+  border-color: rgba(220,38,38,.32);
+}
+
+html[data-arca-insurgentes-theme="light"] .notification-toast.notification-success {
+  background: #ecfdf5;
+  border-color: rgba(5,150,105,.30);
+}
+
+html[data-arca-insurgentes-theme="light"] .notification-icon-button,
+html[data-arca-insurgentes-theme="light"] .notification-clear-all {
+  color: #0c4a6e;
+  background: rgba(255,255,255,.72);
+  border-color: rgba(2,132,199,.20);
+}
+
+/* Loader de planta: evita flash oscuro al conservar preferencia clara. */
+html[data-arca-insurgentes-theme="light"] .initial-loader-screen {
+  color: #10253d;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(14,165,233,.10), transparent 28%),
+    linear-gradient(180deg, #f7fbff 0%, #edf4fa 100%);
+}
+
+html[data-arca-insurgentes-theme="light"] .initial-loader-card {
+  color: #10253d;
+  background: #fff;
+  border-color: rgba(2,132,199,.20);
+  box-shadow: 0 22px 60px rgba(30,64,95,.16);
+}
+
+html[data-arca-insurgentes-theme="light"] .initial-loader-copy h1 {
+  color: #10253d;
+}
+
+html[data-arca-insurgentes-theme="light"] .initial-loader-copy p {
+  color: #5f748b;
+}
+
+@media (max-width: 720px) {
+  .sidebar-theme-control {
+    padding-top: 8px;
+  }
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-format-selector {
+  color: #163a56;
+  background: #f5faff;
+  border-color: rgba(2,132,199,.18);
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-format-selector strong {
+  color: #0369a1;
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-format-selector label {
+  color: #10253d;
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal .ghost-action {
+  color: #075985;
+  background: #eef7fc;
+  border-color: rgba(2,132,199,.22);
+}
+
+html[data-arca-insurgentes-theme="light"] .notification-queue-count {
+  color: #075985;
+  background: #eaf5fc;
+  border-color: rgba(2,132,199,.20);
+}
+
+/* Incremental 10A — ajuste fino de contraste y saturación en modo claro.
+   Regla visual solicitada: evitar grises apagados y usar azules más vivos. */
+.pozos-shell.theme-light .insurgentes-page .date-range-status,
+.pozos-shell.theme-light .insurgentes-page .report-status-pill {
+  color: #0b3555;
+  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+  border-color: rgba(2, 132, 199, .34);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 8px 18px rgba(14,116,144,.10);
+}
+
+.pozos-shell.theme-light .insurgentes-page .date-range-apply,
+.pozos-shell.theme-light .insurgentes-page .primary-action,
+.pozos-shell.theme-light .insurgentes-page .btn.primary,
+html[data-arca-insurgentes-theme="light"] .report-email-modal .primary-action {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  border-color: rgba(2, 132, 199, .40);
+  box-shadow: 0 10px 24px rgba(2,132,199,.18);
+}
+
+.pozos-shell.theme-light .insurgentes-page .date-range-apply:hover:not(:disabled),
+.pozos-shell.theme-light .insurgentes-page .primary-action:hover:not(:disabled),
+.pozos-shell.theme-light .insurgentes-page .btn.primary:hover:not(:disabled),
+html[data-arca-insurgentes-theme="light"] .report-email-modal .primary-action:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0369a1, #0284c7);
+  border-color: rgba(2, 132, 199, .52);
+  box-shadow: 0 12px 28px rgba(2,132,199,.24);
+}
+
+.pozos-shell.theme-light .insurgentes-page .date-range-reset,
+.pozos-shell.theme-light .insurgentes-page .ghost-action,
+.pozos-shell.theme-light .insurgentes-page .btn.secondary,
+.pozos-shell.theme-light .insurgentes-page .shift-toolbar .btn:not(.primary),
+.pozos-shell.theme-light .insurgentes-page .report-schedule-actions .report-action-button,
+html[data-arca-insurgentes-theme="light"] .report-email-modal .ghost-action,
+html[data-arca-insurgentes-theme="light"] .notification-icon-button,
+html[data-arca-insurgentes-theme="light"] .notification-clear-all {
+  color: #0b4f77;
+  background: linear-gradient(135deg, #ecf8ff, #dbeafe);
+  border-color: rgba(2, 132, 199, .28);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.78), 0 6px 14px rgba(14,116,144,.08);
+}
+
+.pozos-shell.theme-light .insurgentes-page .date-range-reset:hover,
+.pozos-shell.theme-light .insurgentes-page .ghost-action:hover:not(:disabled),
+.pozos-shell.theme-light .insurgentes-page .btn.secondary:hover:not(:disabled),
+.pozos-shell.theme-light .insurgentes-page .shift-toolbar .btn:not(.primary):hover:not(:disabled),
+.pozos-shell.theme-light .insurgentes-page .report-schedule-actions .report-action-button:hover:not(:disabled),
+html[data-arca-insurgentes-theme="light"] .report-email-modal .ghost-action:hover:not(:disabled),
+html[data-arca-insurgentes-theme="light"] .notification-icon-button:hover,
+html[data-arca-insurgentes-theme="light"] .notification-clear-all:hover {
+  color: #08334d;
+  background: linear-gradient(135deg, #dff3ff, #c7e7ff);
+  border-color: rgba(2, 132, 199, .40);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-control-group button,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-series-actions button,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-series-chips button,
+.pozos-shell.theme-light .insurgentes-page .daily-filter-row button,
+.pozos-shell.theme-light .insurgentes-page .report-format-selector label,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-options label,
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-format-selector label {
+  color: #0c4a6e;
+  background: linear-gradient(135deg, #f3fbff, #dfefff);
+  border-color: rgba(2, 132, 199, .24);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-control-group button:hover:not(.active),
+.pozos-shell.theme-light .insurgentes-page .insurgentes-series-actions button:hover:not(.active),
+.pozos-shell.theme-light .insurgentes-page .insurgentes-series-chips button:hover:not(.active),
+.pozos-shell.theme-light .insurgentes-page .daily-filter-row button:hover:not(.active) {
+  background: linear-gradient(135deg, #e8f6ff, #d4ebff);
+  border-color: rgba(2, 132, 199, .34);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-state,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-count {
+  color: #075985;
+  background: linear-gradient(135deg, #eff8ff, #dbeafe);
+  border-color: rgba(2, 132, 199, .26);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.76);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-state.is-enabled {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+  border-color: rgba(20, 184, 166, .34);
+  box-shadow: 0 8px 18px rgba(20,184,166,.18);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-state.is-paused {
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #0284c7);
+  border-color: rgba(37, 99, 235, .34);
+  box-shadow: 0 8px 18px rgba(37,99,235,.16);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-options .report-schedule-enabled {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  border-color: rgba(2, 132, 199, .34);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-generated-card,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-item,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-recipients,
+.pozos-shell.theme-light .insurgentes-page .report-info-strip,
+.pozos-shell.theme-light .insurgentes-page .report-preview-code,
+html[data-arca-insurgentes-theme="light"] .notification-queue-count {
+  background: linear-gradient(180deg, #f7fcff, #eef7ff);
+}
+
+.pozos-shell.theme-light .insurgentes-page .status-pill.idle,
+.pozos-shell.theme-light .insurgentes-page .status-pill.inactive,
+.pozos-shell.theme-light .insurgentes-page .status-pill.subtle {
+  color: #075985;
+  background: #eaf6ff;
+  border-color: rgba(14, 165, 233, .24);
+}
+
+/* Incremental 10B — pulido del Resumen en modo claro.
+   Se eliminan fondos grisáceos restantes, se aumenta el contraste
+   y se refuerza la lectura de gráficas y mensajes. */
+.pozos-shell.theme-light .insurgentes-page .insurgentes-hero-state {
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(125, 211, 252, .16), transparent 30%),
+    linear-gradient(135deg, #1e3a5f, #335a7a);
+  border-color: rgba(125, 211, 252, .24);
+  box-shadow: 0 14px 28px rgba(30, 64, 95, .14);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-hero-state > span,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-hero-state > small {
+  color: #d7eefc;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-hero-state > strong {
+  color: #ffffff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .operational-alerts-note {
+  color: #92400e;
+}
+
+.pozos-shell.theme-light .insurgentes-page .operational-alert-empty {
+  color: #0f3b57;
+  background: linear-gradient(135deg, #eaf6ff, #dbeafe);
+  border-color: rgba(2, 132, 199, .24);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.78);
+}
+
+.pozos-shell.theme-light .insurgentes-page .operational-alert-empty > span {
+  color: #ffffff;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  border-color: rgba(2, 132, 199, .28);
+}
+
+.pozos-shell.theme-light .insurgentes-page .operational-alert-empty strong {
+  color: #10253d;
+}
+
+.pozos-shell.theme-light .insurgentes-page .operational-alert-empty p {
+  color: #355a72;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-access-panel .insurgentes-quick-card,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-card {
+  background:
+    radial-gradient(circle at 85% 82%, rgba(56, 189, 248, .10), transparent 34%),
+    linear-gradient(180deg, #ffffff, #f3faff);
+  border-color: rgba(2,132,199,.18);
+  box-shadow: 0 10px 24px rgba(30,64,95,.05);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-title,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-card > em,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-series-toolbar span {
+  color: #0284c7;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-value,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-series-toolbar strong {
+  color: #10253d;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-value > small,
+.pozos-shell.theme-light .insurgentes-page .insurgentes-quick-card > p {
+  color: #5f748b;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-fixed-metric,
+.pozos-shell.theme-light .insurgentes-page .chart-period-note span,
+.pozos-shell.theme-light .insurgentes-page .date-range-meta span {
+  color: #0c4a6e;
+  background: linear-gradient(135deg, #ecf8ff, #dbeafe);
+  border-color: rgba(2,132,199,.26);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.84);
+}
+
+.pozos-shell.theme-light .insurgentes-page .chart-period-note {
+  color: #0c4a6e;
+}
+
+.pozos-shell.theme-light .insurgentes-page .chart-empty-state {
+  color: #0c4a6e;
+  background: linear-gradient(180deg, #f8fcff, #edf7ff);
+  border-color: rgba(2,132,199,.24);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-export-message {
+  color: #0c4a6e;
+  background: linear-gradient(135deg, #f2fbff, #e0f2fe);
+  border-color: rgba(2,132,199,.22);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-export-message.is-error {
+  color: #92400e;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border-color: rgba(245, 158, 11, .30);
+}
+
+.pozos-shell.theme-light .insurgentes-page .recharts-cartesian-grid line {
+  stroke: rgba(2,132,199,.22) !important;
+}
+
+.pozos-shell.theme-light .insurgentes-page .recharts-cartesian-axis-line,
+.pozos-shell.theme-light .insurgentes-page .recharts-cartesian-axis-tick-line {
+  stroke: #7a92a4 !important;
+}
+
+.pozos-shell.theme-light .insurgentes-page .recharts-cartesian-axis-tick-value,
+.pozos-shell.theme-light .insurgentes-page .recharts-text.recharts-label,
+.pozos-shell.theme-light .insurgentes-page .recharts-label-list text,
+.pozos-shell.theme-light .insurgentes-page .recharts-legend-item-text {
+  fill: #4a657c !important;
+  color: #4a657c !important;
+}
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-export-message {
+  padding: 8px 12px;
+  border: 1px solid rgba(2,132,199,.22);
+  border-radius: 12px;
+}
+
+/* Incremental 10C — turnos y navegación compartida en modo claro.
+   Se evita el gris/marrón y se concentra la semántica en una familia azul. */
+.pozos-shell.theme-light .insurgentes-page .shift-chip {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0e7490, #0284c7);
+  border-color: rgba(2, 132, 199, .34);
+  box-shadow: 0 8px 18px rgba(2,132,199,.14);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-summary-card {
+  opacity: 1;
+  color: #ffffff;
+  border-color: rgba(56, 189, 248, .35);
+  background:
+    radial-gradient(circle at 90% 24%, rgba(125,211,252,.18), transparent 30%),
+    linear-gradient(145deg, #083b61, #0b5f8f);
+  box-shadow: 0 10px 24px rgba(8, 71, 108, .14);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-summary-card.status-partial {
+  opacity: 1;
+  border-color: rgba(34, 211, 238, .52);
+  background:
+    radial-gradient(circle at 90% 24%, rgba(103,232,249,.20), transparent 30%),
+    linear-gradient(145deg, #075985, #0e7490);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-summary-card.status-pending {
+  opacity: 1;
+  border-style: solid;
+  border-color: rgba(96, 165, 250, .48);
+  background:
+    radial-gradient(circle at 90% 24%, rgba(147,197,253,.20), transparent 30%),
+    linear-gradient(145deg, #164e78, #2563a6);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-summary-card span,
+.pozos-shell.theme-light .insurgentes-page .shift-summary-card small,
+.pozos-shell.theme-light .insurgentes-page .shift-summary-card p {
+  color: #d9f3ff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-summary-card > strong {
+  color: #ffffff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-accordion-item {
+  color: #10253d;
+  background: linear-gradient(180deg, #ffffff, #eef8ff);
+  border-color: rgba(2,132,199,.22);
+  box-shadow: none;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-accordion-item > button {
+  color: #10253d;
+  background: linear-gradient(90deg, #f7fcff, #eaf6ff);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-accordion-item > button:hover {
+  background: linear-gradient(90deg, #eaf7ff, #d9efff);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-accordion-item > button strong {
+  color: #0b3555;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-accordion-item > button small {
+  color: #28739a;
+  font-weight: 800;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-accordion-body {
+  background: #ffffff;
+  border-top-color: rgba(2,132,199,.17);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-detail-card {
+  color: #10253d;
+  background: linear-gradient(180deg, #f8fcff, #eaf6ff);
+  border-color: rgba(2,132,199,.20);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.86);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-detail-card > strong {
+  color: #ffffff;
+  background: linear-gradient(135deg, #075985, #0284c7);
+  border-bottom-color: rgba(2,132,199,.18);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-detail-card div {
+  border-bottom-color: rgba(2,132,199,.12);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-detail-card span {
+  color: #0284c7;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-detail-card b {
+  color: #10253d;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-table th {
+  color: #075985;
+  background: #dff2ff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-table td {
+  color: #17334a;
+  background: #ffffff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-table tbody tr:nth-child(even) td {
+  background: #f5fbff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .detail-back-link,
+.pozos-shell.theme-light .insurgentes-page .detail-element-nav-link {
+  color: #ffffff;
+  background: linear-gradient(135deg, #075985, #0284c7);
+  border-color: rgba(2,132,199,.36);
+  box-shadow: 0 8px 18px rgba(2,132,199,.14);
+}
+
+.pozos-shell.theme-light .insurgentes-page .detail-back-link:hover,
+.pozos-shell.theme-light .insurgentes-page .detail-back-link:focus-visible,
+.pozos-shell.theme-light .insurgentes-page .detail-element-nav-link:hover,
+.pozos-shell.theme-light .insurgentes-page .detail-element-nav-link:focus-visible {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0369a1, #0ea5e9);
+  border-color: rgba(14,165,233,.55);
+  box-shadow: 0 10px 24px rgba(2,132,199,.20);
+}
+
+/* Revisión diaria reutiliza una variante propia de turnos; se homologa a la misma paleta. */
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card {
+  opacity: 1;
+  color: #ffffff;
+  border-color: rgba(56,189,248,.35);
+  background:
+    radial-gradient(circle at 90% 24%, rgba(125,211,252,.18), transparent 30%),
+    linear-gradient(145deg, #083b61, #0b5f8f);
+  box-shadow: 0 10px 24px rgba(8,71,108,.14);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card.status-partial {
+  opacity: 1;
+  border-color: rgba(34,211,238,.52);
+  background:
+    radial-gradient(circle at 90% 24%, rgba(103,232,249,.20), transparent 30%),
+    linear-gradient(145deg, #075985, #0e7490);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card.status-pending {
+  opacity: 1;
+  border-style: solid;
+  border-color: rgba(96,165,250,.48);
+  background:
+    radial-gradient(circle at 90% 24%, rgba(147,197,253,.20), transparent 30%),
+    linear-gradient(145deg, #164e78, #2563a6);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card > span,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card > small,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-lines p,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-lines b,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-lines em,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card > strong {
+  color: #ffffff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card > span,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-card > small,
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-lines b {
+  color: #d9f3ff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-accordion-item {
+  color: #10253d;
+  background: linear-gradient(180deg, #ffffff, #eef8ff);
+  border-color: rgba(2,132,199,.22);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-accordion-item > button {
+  color: #10253d;
+  background: linear-gradient(90deg, #f7fcff, #eaf6ff);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-accordion-item > button strong {
+  color: #0b3555;
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-accordion-item > button small {
+  color: #28739a;
+  font-weight: 800;
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-accordion-body {
+  background: #ffffff;
+  border-top-color: rgba(2,132,199,.17);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-summary {
+  color: #10253d;
+  background: linear-gradient(180deg, #f8fcff, #eaf6ff);
+  border-color: rgba(2,132,199,.18);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-summary strong {
+  color: #0284c7;
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-shift-module-summary span {
+  color: #10253d;
+}
+
+/* Incremental 10D — Revisión diaria y resumen UV sin superficies grises. */
+.pozos-shell.theme-light .insurgentes-page .daily-modern-datebox {
+  color: #10253d;
+  background:
+    radial-gradient(circle at 94% 12%, rgba(56,189,248,.10), transparent 34%),
+    linear-gradient(135deg, #f8fcff, #e8f5ff);
+  border-color: rgba(2,132,199,.24);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.86), 0 10px 24px rgba(30,64,95,.07);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-modern-datebox label,
+.pozos-shell.theme-light .insurgentes-page .daily-modern-datebox label > span {
+  color: #0369a1;
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-modern-datebox input {
+  color: #10253d;
+  background: #ffffff;
+  border-color: rgba(2,132,199,.30);
+  box-shadow: inset 0 1px 2px rgba(30,64,95,.04);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-modern-datebox .btn.primary {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  border-color: rgba(2,132,199,.42);
+  box-shadow: 0 8px 18px rgba(2,132,199,.16);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-modern-datebox .btn.secondary {
+  color: #075985;
+  background: linear-gradient(135deg, #ecf8ff, #dbeafe);
+  border-color: rgba(2,132,199,.26);
+}
+
+.pozos-shell.theme-light .insurgentes-page .daily-modern-datebox em {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid rgba(2,132,199,.18);
+  border-radius: 10px;
+  color: #075985;
+  background: #eaf6ff;
+  font-weight: 850;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-system-summary {
+  color: #10253d;
+  background:
+    radial-gradient(circle at 92% 18%, rgba(56,189,248,.10), transparent 30%),
+    linear-gradient(180deg, #f8fcff, #eaf6ff);
+  border-color: rgba(2,132,199,.24);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.86);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-system-summary > strong {
+  color: #0b3555;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-system-metric {
+  color: #10253d;
+  background: #ffffff;
+  border-color: rgba(2,132,199,.18);
+  box-shadow: 0 6px 14px rgba(30,64,95,.04);
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-system-summary span {
+  color: #0284c7;
+}
+
+.pozos-shell.theme-light .insurgentes-page .shift-system-summary b {
+  color: #10253d;
+}
+
+/* Incremental 10E — histórico común + visibilidad del icono UV en modo claro. */
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-locked-module {
+  color: #075985;
+  background: linear-gradient(135deg, #e6f6ff, #cdeaff);
+  border-color: rgba(2,132,199,.30);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.82);
+}
+
+.pozos-shell.theme-light .insurgentes-page .module-history-pdf-button {
+  color: #ffffff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-uv-lamp {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(56,189,248,.15), transparent 58%),
+    linear-gradient(145deg, #f6fcff, #dff4ff);
+  border: 2px solid rgba(14,165,233,.42);
+  box-shadow:
+    0 0 0 7px rgba(56,189,248,.055),
+    0 10px 28px rgba(14,116,144,.12),
+    inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-uv-lamp span {
+  background: linear-gradient(180deg, #e0f7ff, #ffffff);
+  border: 2px solid rgba(56,189,248,.45);
+  box-shadow:
+    0 0 0 5px rgba(56,189,248,.08),
+    inset 0 0 0 3px rgba(14,165,233,.08);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-uv-lamp.state-1 {
+  border-color: rgba(245,158,11,.55);
+  background: linear-gradient(145deg, #fffaf0, #fff1c7);
+  box-shadow: 0 0 0 7px rgba(245,158,11,.06), 0 10px 28px rgba(180,83,9,.12);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-uv-lamp.state-1 span {
+  background: #fbbf24;
+  border-color: rgba(180,83,9,.30);
+  box-shadow: 0 0 22px rgba(251,191,36,.46), inset 0 0 0 3px rgba(255,255,255,.28);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-uv-lamp.state-2 {
+  border-color: rgba(14,165,233,.68);
+  box-shadow: 0 0 0 7px rgba(56,189,248,.07), 0 0 32px rgba(56,189,248,.24);
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-uv-lamp.state-2 span {
+  background: linear-gradient(180deg, #d8f6ff, #ffffff);
+  border-color: rgba(14,165,233,.52);
+  box-shadow: 0 0 28px rgba(56,189,248,.60), inset 0 0 0 3px rgba(14,165,233,.10);
+}
+
+/* Incremental 10J — Reportes: contraste completo en modo claro.
+   Mantiene el modo oscuro intacto y evita textos claros sobre superficies claras. */
+.pozos-shell.theme-light .insurgentes-page .report-controls-head h2,
+.pozos-shell.theme-light .insurgentes-page .report-preview-head h2,
+.pozos-shell.theme-light .insurgentes-page .report-preview-section-head h3,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-card-head h3,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-empty strong,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-item-title > strong {
+  color: #0b3555;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-controls-head p,
+.pozos-shell.theme-light .insurgentes-page .report-preview-head p,
+.pozos-shell.theme-light .insurgentes-page .report-preview-section-head p,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-card-head p,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-empty p,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-item p,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-item small,
+.pozos-shell.theme-light .insurgentes-page .report-action-feedback,
+.pozos-shell.theme-light .insurgentes-page .report-preview-code small,
+.pozos-shell.theme-light .insurgentes-page .report-field-hint {
+  color: #47657d;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-section-head,
+.pozos-shell.theme-light .insurgentes-page .report-preview-head,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-card-head {
+  border-color: rgba(2, 132, 199, .20);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-section {
+  color: #10253d;
+  background: #ffffff;
+  border-color: rgba(2, 132, 199, .22);
+  box-shadow: 0 8px 20px rgba(30, 64, 95, .05);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-count {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  border-color: rgba(2, 132, 199, .52);
+  box-shadow: 0 7px 16px rgba(2, 132, 199, .17);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-table {
+  color: #17334a;
+  background: #ffffff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-table th {
+  color: #075985;
+  background: #e5f5ff;
+  border-color: rgba(2, 132, 199, .22);
+  font-weight: 900;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-table td {
+  color: #17334a;
+  background: #ffffff;
+  border-color: rgba(2, 132, 199, .14);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-table tbody tr:nth-child(even) td {
+  background: #f5fbff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-table tbody tr:hover td {
+  color: #0b3555;
+  background: #eaf6ff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-empty {
+  color: #47657d;
+  background: #f5fbff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-code {
+  color: #47657d;
+  background: #f4faff;
+  border-color: rgba(2, 132, 199, .20);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-preview-code span {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0369a1, #0284c7);
+  border-color: rgba(2, 132, 199, .46);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-info-strip {
+  color: #0b4f77;
+  background: #eaf6ff;
+  border-color: rgba(2, 132, 199, .25);
+  border-left-color: #0284c7;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-card,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-item,
+.pozos-shell.theme-light .insurgentes-page .report-schedule-empty {
+  color: #10253d;
+  background: #ffffff;
+  border-color: rgba(2, 132, 199, .20);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-recipients {
+  color: #10253d;
+  background: #eaf6ff;
+  border: 1px solid rgba(2, 132, 199, .18);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-recipients span {
+  color: #0369a1;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-recipients strong {
+  color: #0b3555;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-actions .report-action-button {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  border-color: rgba(2, 132, 199, .42);
+  box-shadow: 0 7px 16px rgba(2, 132, 199, .13);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-actions .report-action-button:hover:not(:disabled) {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0369a1, #0284c7);
+  border-color: rgba(2, 132, 199, .60);
+  box-shadow: 0 9px 20px rgba(2, 132, 199, .19);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-actions .report-schedule-delete {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, .22) !important;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-actions .report-schedule-delete:hover:not(:disabled) {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 10px 22px rgba(185, 28, 28, .28) !important;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-email-field > span,
+.pozos-shell.theme-light .insurgentes-page .report-format-selector > strong,
+.pozos-shell.theme-light .insurgentes-page .report-support-actions > span {
+  color: #075985;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-action-feedback.is-active {
+  color: #075985;
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-email-head h3 {
+  color: #0b3555;
+}
+
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-email-head p,
+html[data-arca-insurgentes-theme="light"] .report-email-modal .report-email-field > span {
+  color: #47657d;
+}
+
+
+/* Incremental 10O — contraste de tabla UV en modo claro. */
+.pozos-shell.theme-light .insurgentes-page .uv-scada-table-wrap {
+  border-color: #b9e6fb;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(14, 116, 144, 0.08);
+}
+
+.pozos-shell.theme-light .insurgentes-page .uv-scada-table th {
+  background: linear-gradient(180deg, #075b8c, #084b73);
+  color: #ffffff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .uv-scada-table td {
+  color: #0b3555;
+  border-bottom-color: #d9edf8;
+  background: #ffffff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .uv-scada-table tbody tr:nth-child(even) td {
+  background: #f2faff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .uv-scada-table tbody tr:hover td {
+  background: #e6f6ff;
+}
+
+.pozos-shell.theme-light .insurgentes-page .uv-scada-equipment-link {
+  color: #0369a1;
+}
+
+.pozos-shell.theme-light .insurgentes-page .uv-ignition-code {
+  border-color: #7dd3fc;
+  background: #e0f5ff;
+  color: #075985;
+}
+
+/* Incremental 10P — contraste de actualización de Reportes en modo claro.
+   La tarjeta conserva el lenguaje azul ejecutivo y todo su texto permanece blanco. */
+.pozos-shell.theme-light .insurgentes-page .report-generated-card {
+  color: #ffffff;
+  background: linear-gradient(135deg, #075985 0%, #0284c7 58%, #0ea5e9 100%);
+  border-color: rgba(14, 165, 233, .52);
+  box-shadow:
+    0 12px 26px rgba(2, 132, 199, .22),
+    inset 0 1px 0 rgba(255, 255, 255, .18);
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-generated-card span,
+.pozos-shell.theme-light .insurgentes-page .report-generated-card strong,
+.pozos-shell.theme-light .insurgentes-page .report-generated-card small {
+  color: #ffffff;
+}
+
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-totalizer-control > span {
+  color: #0369a1;
+}
+
+.pozos-shell.theme-light .insurgentes-page .insurgentes-history-totalizer-note {
+  color: #0c4a6e;
+  background: #f5faff;
+  border-color: rgba(2,132,199,.18);
+}
