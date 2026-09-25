@@ -17,8 +17,8 @@ interface LoginError {
 }
 
 export default function LoginPage({ onSuccess }: LoginPageProps) {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('demo123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -56,13 +56,13 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         </div>
         <form className="login-form" onSubmit={handleSubmit}>
           <label className="field-label">Usuario</label>
-          <div className="field-wrap"><UserIcon size={16} /><input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" /></div>
+          <div className="field-wrap"><UserIcon size={16} /><input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Usuario" /></div>
           <label className="field-label">Contraseña</label>
-          <div className="field-wrap"><Lock size={16} /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="demo123" /></div>
+          <div className="field-wrap"><Lock size={16} /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" /></div>
           {error ? <div className="login-error">{error}</div> : null}
           <button className="login-button" disabled={loading}>{loading ? 'Entrando…' : 'Entrar'}</button>
         </form>
-        <div className="login-hint">Credenciales: <strong>admin / demo123</strong> o <strong>operacion / operacion123</strong></div>
+        <div className="login-hint">Usa las credenciales asignadas para esta planta.</div>
       </div>
     </div>
   );

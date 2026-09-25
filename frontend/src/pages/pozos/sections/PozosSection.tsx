@@ -10,6 +10,7 @@ import OperationalModuleHistoryPanel from '../components/OperationalModuleHistor
 import PanelHeader from '../components/PanelHeader';
 import SqlChartDateControls from '../components/SqlChartDateControls';
 import StatusBadge from '../components/StatusBadge';
+import ShiftCutsPanel from '../components/ShiftCutsPanel';
 import useSqlChartDashboard from '../hooks/useSqlChartDashboard';
 import useWaterModuleHistory from '../hooks/useWaterModuleHistory';
 import { asRecord, asRows, formatNumber, pivotCommonHistorySeries } from '../insurgentesUtils';
@@ -87,10 +88,9 @@ function PozosSection({ itemId }: PozosSectionProps) {
           title={nameOf(selectedWell)}
           status={String(selectedWell.status || 'Sin estado')}
           statusType={String(selectedWell.statusType || 'normal')}
-          description="Análisis individual del pozo operativo para el periodo seleccionado."
           metrics={[
             { label: 'Total día anterior', value: totalizerStartText(selectedWell) },
-            { label: 'Total bombeado hoy', value: periodVolumeText(selectedWell) },
+            { label: 'Volumen bombeado', value: periodVolumeText(selectedWell) },
             { label: 'Totalizador actual', value: totalizerCurrentText(selectedWell) },
             { label: 'Flujo actual', value: flowText(selectedWell) },
             { label: 'Actividad', value: activityText(selectedWell) },
@@ -108,13 +108,11 @@ function PozosSection({ itemId }: PozosSectionProps) {
             module="well"
             sensorId={sensorIdOf(selectedWell) as number}
             title="Flujo de pozo"
-            subtitle="Promedio, volumen y totalizador del pozo seleccionado."
             sourceLabel="Flujo promedio del pozo · totalizador"
-            shortHistorySubtitle="Promedio, volumen y totalizador del pozo seleccionado"
           />
         ) : (
         <section className="panel chart-panel fade-up detail-history-panel">
-          <PanelHeader title="Histórico del pozo" subtitle="Flujo registrado para el periodo seleccionado; cero es lectura válida sin actividad." />
+          <PanelHeader title="Histórico del pozo" />
           <SqlChartDateControls controller={historyController} title="Rango de fechas" />
           {visibleHistoryHasData && chartRows.length && chartKeys.length ? (
             <ResponsiveContainer width="100%" height={390}>
@@ -132,6 +130,8 @@ function PozosSection({ itemId }: PozosSectionProps) {
           ) : <ChartEmptyState message={historyController.loading ? 'Cargando histórico...' : historyController.error || 'Sin histórico válido para el periodo seleccionado.'} />}
         </section>
         )}
+
+        <ShiftCutsPanel module="pozos" elementId={String(itemId)} variant="detail" title={`Cortes por turno · ${nameOf(selectedWell)}`} />
 
         <DetailPeriodStatus
           rows={[
@@ -168,11 +168,13 @@ function PozosSection({ itemId }: PozosSectionProps) {
           <article><span>Con actividad</span><strong>{activeCount}/{allWells.length || 5}</strong></article>
           <article><span>Flujo total</span><strong>{totalFlow === null ? '—' : `${formatNumber(totalFlow)} L/s`}</strong></article>
           <article><span>Total día anterior</span><strong>{totalPrevious === null ? '—' : `${formatNumber(totalPrevious)} m³`}</strong></article>
-          <article><span>Total bombeado hoy</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
+          <article><span>Volumen bombeado</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
           <article><span>Totalizador actual</span><strong>{totalCurrent === null ? '—' : `${formatNumber(totalCurrent)} m³`}</strong></article>
           <article><span>Tiempo activo</span><strong>{formatMinutes(totalActiveMinutes)}</strong></article>
         </div>
       </section>
+
+      <ShiftCutsPanel module="pozos" />
 
       <section className="insurgentes-equipment-grid">
         {wells.length ? wells.map((well) => (
@@ -191,7 +193,7 @@ function PozosSection({ itemId }: PozosSectionProps) {
             </div>
             <div className="insurgentes-metric-list">
               <div><span>Total día anterior</span><strong>{totalizerStartText(well)}</strong></div>
-              <div><span>Total bombeado hoy</span><strong>{periodVolumeText(well)}</strong></div>
+              <div><span>Volumen bombeado</span><strong>{periodVolumeText(well)}</strong></div>
               <div><span>Totalizador actual</span><strong>{totalizerCurrentText(well)}</strong></div>
               <div><span>Flujo actual</span><strong>{flowText(well)}</strong></div>
               <div><span>Actividad</span><strong>{activityText(well)}</strong></div>

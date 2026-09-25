@@ -66,8 +66,12 @@ class LocalAuthMiddleware(BaseHTTPMiddleware):
         }
         # Operador solo puede mutar las operaciones explicitamente autorizadas.
         # Cualquier nueva mutacion queda denegada hasta declararla de forma consciente.
-        self.operator_mutation_paths = {
+        self.self_service_mutation_paths = {
             f"{self.api_prefix}/auth/logout",
+            f"{self.api_prefix}/auth/change-password",
+        }
+        self.operator_mutation_paths = {
+            *self.self_service_mutation_paths,
             f"{self.api_prefix}/water/reports/daily/email",
             f"{self.api_prefix}/email/report",
         }
@@ -95,20 +99,23 @@ class LocalAuthMiddleware(BaseHTTPMiddleware):
             or request.headers.get(BROWSER_SESSION_HEADER)
             or embedded_browser_session
         )
-        session = service.get_session(
+        session, rejection_reason = service.get_session_with_reason(
             session_token,
             browser_session,
             require_browser_session=False if bos_local_compat else None,
         )
         if not session:
             logger.warning(
-                'auth_session_rejected path=%s session_cookie=%s local_header=%s browser_binding=%s composite_cookie=%s bos_local_compat=%s',
+                'auth_session_rejected reason=%s path=%s method=%s session_cookie=%s local_header=%s browser_binding=%s composite_cookie=%s bos_local_compat=%s client=%s',
+                rejection_reason,
                 path,
+                request.method,
                 bool(raw_session_cookie),
                 bool(local_session_header),
                 bool(browser_session),
                 bool(embedded_browser_session),
                 bos_local_compat,
+                request.client.host if request.client else 'unknown',
             )
             return JSONResponse(status_code=401, content={"detail": "Sesión no válida o expirada."})
 
@@ -127,7 +134,7 @@ class LocalAuthMiddleware(BaseHTTPMiddleware):
                 )
 
             role = str(user.get("role") or "")
-            if role == "viewer" and path != f"{self.api_prefix}/auth/logout":
+            if role == "viewer" and path not in self.self_service_mutation_paths:
                 return JSONResponse(status_code=403, content={"detail": "No cuenta con permisos para esta operación."})
             if role == "operator" and path not in self.operator_mutation_paths:
                 return JSONResponse(status_code=403, content={"detail": "No cuenta con permisos para esta operación."})

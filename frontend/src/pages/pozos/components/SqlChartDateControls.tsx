@@ -20,6 +20,8 @@ interface SqlChartDateControlsProps {
   subtitle?: string;
   extraAction?: ReactNode;
   showHeader?: boolean;
+  showMeta?: boolean;
+  showStatus?: boolean;
 }
 
 function SqlChartDateControls({
@@ -28,6 +30,8 @@ function SqlChartDateControls({
   subtitle = 'Este rango solo afecta esta gráfica y no modifica los estados actuales.',
   extraAction,
   showHeader = true,
+  showMeta = true,
+  showStatus = true,
 }: SqlChartDateControlsProps) {
   const meta = rangeMeta(controller.range, controller.aggregation);
   const status = controller.error || (controller.loading ? 'Cargando datos...' : `${meta.periodTitle} · ${meta.rangeLabel}`);
@@ -35,6 +39,8 @@ function SqlChartDateControls({
     <DateRangeControls
       className="chart-date-range-panel"
       showHeader={showHeader}
+      showMeta={showMeta}
+      showStatus={showStatus}
       title={title}
       subtitle={subtitle}
       draftRange={controller.draftRange}

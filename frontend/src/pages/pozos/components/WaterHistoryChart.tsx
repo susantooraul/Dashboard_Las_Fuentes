@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { HistoryAggregation, WaterHistoryPoint, WaterModuleHistorySeries } from '../types';
+import { buildProgressiveVolume } from '../detailHistoryVolume';
 import WaterHistoryTooltip from './WaterHistoryTooltip';
 
 const axisColor = '#b9e7ff';
@@ -19,6 +20,7 @@ const modulePalette = ['#14b8ff', '#a78bfa', '#34d399', '#f59e0b', '#fb7185', '#
 
 type ModuleHistoryMetric = 'flow' | 'totalizer' | 'both';
 type ModuleTotalizerDisplay = 'delta' | 'absolute';
+export type DetailVolumeDisplay = 'interval' | 'cumulative';
 
 interface WaterHistoryChartProps {
   points?: WaterHistoryPoint[];
@@ -27,6 +29,7 @@ interface WaterHistoryChartProps {
   flowUnit?: string;
   series?: WaterModuleHistorySeries[];
   showVolume?: boolean;
+  detailVolumeDisplay?: DetailVolumeDisplay;
   moduleMetric?: ModuleHistoryMetric;
   moduleTotalizerDisplay?: ModuleTotalizerDisplay;
 }
@@ -39,6 +42,7 @@ interface ChartPoint {
   flowMin: number | null;
   flowMax: number | null;
   volume: number | null;
+  cumulativeVolume: number | null;
   samples: number;
   dataStatus: string;
   rawTotalizerClose: number | null;
@@ -224,6 +228,7 @@ export default function WaterHistoryChart({
   flowUnit = 'Unidad por confirmar',
   series,
   showVolume = true,
+  detailVolumeDisplay = 'interval',
   moduleMetric = 'flow',
   moduleTotalizerDisplay = 'delta',
 }: WaterHistoryChartProps) {
@@ -328,14 +333,15 @@ export default function WaterHistoryChart({
     );
   }
 
-  const data: ChartPoint[] = points.map((point) => ({
+  const data: ChartPoint[] = buildProgressiveVolume(points).map(({ point, intervalVolume, cumulativeVolume }) => ({
     timestamp: new Date(point.bucket_start).getTime(),
     bucketStart: point.bucket_start,
     bucketEnd: point.bucket_end,
     flow: point.flow_avg_lps,
     flowMin: point.flow_min_lps,
     flowMax: point.flow_max_lps,
-    volume: point.volume_m3,
+    volume: intervalVolume,
+    cumulativeVolume,
     samples: point.samples,
     dataStatus: point.data_status,
     rawTotalizerClose: valueOrNull(point.raw_totalizer_close_m3 ?? point.observed_totalizer_close_m3 ?? point.totalizer_close_m3),
@@ -368,7 +374,7 @@ export default function WaterHistoryChart({
         <YAxis yAxisId="flow" stroke={axisColor} width={58} />
         {showVolume ? <YAxis yAxisId="volume" orientation="right" stroke="#a855f7" width={58} /> : null}
         <Tooltip
-          content={<WaterHistoryTooltip aggregation={aggregation} flowUnit={flowUnit} />}
+          content={<WaterHistoryTooltip aggregation={aggregation} flowUnit={flowUnit} volumeDisplay={detailVolumeDisplay} />}
           cursor={{ fill: 'rgba(56,189,248,0.05)' }}
           filterNull={false}
           offset={14}
@@ -387,13 +393,25 @@ export default function WaterHistoryChart({
           legendType="none"
           isAnimationActive={false}
         />
-        {showVolume ? <Bar
+        {showVolume && detailVolumeDisplay === 'interval' ? <Bar
           yAxisId="volume"
           dataKey="volume"
           name="Volumen del intervalo (m³)"
           fill="#a855f7"
           maxBarSize={30}
           radius={[4, 4, 0, 0]}
+        /> : null}
+        {showVolume && detailVolumeDisplay === 'cumulative' ? <Line
+          yAxisId="volume"
+          type="linear"
+          dataKey="cumulativeVolume"
+          name="Volumen acumulado del periodo (m³)"
+          stroke="#a855f7"
+          strokeWidth={2.8}
+          dot={showDots ? { r: 2.8 } : false}
+          activeDot={{ r: 4 }}
+          connectNulls={false}
+          isAnimationActive={false}
         /> : null}
         <Line
           yAxisId="flow"

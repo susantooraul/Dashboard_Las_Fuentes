@@ -9,6 +9,7 @@ import OperationalDetailHero from '../components/OperationalDetailHero';
 import PanelHeader from '../components/PanelHeader';
 import SqlChartDateControls from '../components/SqlChartDateControls';
 import StatusBadge from '../components/StatusBadge';
+import ShiftCutsPanel from '../components/ShiftCutsPanel';
 import useSqlChartDashboard from '../hooks/useSqlChartDashboard';
 import useWaterModuleHistory from '../hooks/useWaterModuleHistory';
 import { asRecord, asRows, formatNumber, pivotCommonHistorySeries } from '../insurgentesUtils';
@@ -91,10 +92,9 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
           title={nameOf(selectedFlow)}
           status={String(selectedFlow.status || 'Sin estado')}
           statusType={String(selectedFlow.statusType || 'normal')}
-          description={`Análisis individual del medidor de ${title.toLowerCase()} para el periodo seleccionado.`}
           metrics={[
             { label: 'Total día anterior', value: totalizerStartText(selectedFlow) },
-            { label: 'Total bombeado hoy', value: periodVolumeText(selectedFlow) },
+            { label: 'Volumen del periodo', value: periodVolumeText(selectedFlow) },
             { label: 'Totalizador actual', value: totalizerCurrentText(selectedFlow) },
             { label: 'Flujo actual', value: flowText(selectedFlow) },
             { label: 'Tiempo activo', value: formatMinutes(activeMinutesValue(selectedFlow)) },
@@ -111,9 +111,7 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
             module="flow"
             sensorId={sensorIdOf(selectedFlow) as number}
             title="Flujo del elemento"
-            subtitle="Promedio, volumen y totalizador del flujo seleccionado."
             sourceLabel="Flujo promedio del elemento · totalizador"
-            shortHistorySubtitle="Promedio, volumen y totalizador del flujo seleccionado"
           />
         ) : (
         <section className="panel chart-panel fade-up detail-history-panel">
@@ -135,6 +133,8 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
           ) : <ChartEmptyState message={historyController.loading ? 'Cargando histórico...' : historyController.error || 'Sin histórico válido para el periodo seleccionado.'} />}
         </section>
         )}
+
+        <ShiftCutsPanel module="flujos" group={group} elementId={String(itemId)} variant="detail" title={`Cortes por turno · ${nameOf(selectedFlow)}`} />
 
         <DetailPeriodStatus
           rows={[
@@ -170,11 +170,13 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
           <article><span>Con actividad</span><strong>{activeCount}/{allFlows.length}</strong></article>
           <article><span>Flujo total</span><strong>{totalFlow === null ? '—' : `${formatNumber(totalFlow)} L/s`}</strong></article>
           <article><span>Total día anterior</span><strong>{totalPrevious === null ? '—' : `${formatNumber(totalPrevious)} m³`}</strong></article>
-          <article><span>Total bombeado hoy</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
+          <article><span>Volumen del periodo</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
           <article><span>Totalizador actual</span><strong>{totalCurrent === null ? '—' : `${formatNumber(totalCurrent)} m³`}</strong></article>
           <article><span>Tiempo activo</span><strong>{formatMinutes(totalActiveMinutes)}</strong></article>
         </div>
       </section>
+
+      <ShiftCutsPanel module="flujos" group={group} title={`Cortes por turno · ${title}`} />
 
       <section className="insurgentes-equipment-grid two-columns">
         {flows.length ? flows.map((flow) => (
@@ -193,7 +195,7 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
             </div>
             <div className="insurgentes-metric-list">
               <div><span>Total día anterior</span><strong>{totalizerStartText(flow)}</strong></div>
-              <div><span>Total bombeado hoy</span><strong>{periodVolumeText(flow)}</strong></div>
+              <div><span>Volumen del periodo</span><strong>{periodVolumeText(flow)}</strong></div>
               <div><span>Totalizador actual</span><strong>{totalizerCurrentText(flow)}</strong></div>
               <div><span>Flujo actual</span><strong>{flowText(flow)}</strong></div>
               <div><span>Actividad</span><strong>{activityText(flow)}</strong></div>

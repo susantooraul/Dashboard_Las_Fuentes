@@ -28,6 +28,8 @@ class ReportEmailScheduleCreateRequest(BaseModel):
     recipients: list[EmailStr]
     enabled: bool = True
     send_delay_minutes: int = 10
+    send_time_local: str | None = None
+    send_time_local_2: str | None = None
 
 
 class ReportEmailScheduleUpdateRequest(BaseModel):
@@ -37,3 +39,5 @@ class ReportEmailScheduleUpdateRequest(BaseModel):
     recipients: list[EmailStr] | None = None
     enabled: bool | None = None
     send_delay_minutes: int | None = None
+    send_time_local: str | None = None
+    send_time_local_2: str | None = None

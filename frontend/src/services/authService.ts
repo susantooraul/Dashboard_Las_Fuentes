@@ -52,6 +52,18 @@ export async function getCurrentSession(): Promise<CurrentSessionResponse> {
   return data;
 }
 
+export interface ChangeOwnPasswordResponse {
+  message: string;
+}
+
+export async function changeOwnPassword(currentPassword: string, newPassword: string): Promise<ChangeOwnPasswordResponse> {
+  const { data } = await api.post<ChangeOwnPasswordResponse>('/auth/change-password', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });
+  return data;
+}
+
 export async function logout(): Promise<void> {
   try {
     await api.post('/auth/logout');

@@ -24,10 +24,97 @@ export function defaultTodayRange(): DateRange {
   return { startDate: today, endDate: today, refreshKey: 0 };
 }
 
-export function formatDateRangeStatus(range?: DateRange | null, fallback = 'Datos actuales de planta'): string {
-  if (!range?.startDate && !range?.endDate) return fallback;
-  if (range.startDate && range.endDate && range.startDate === range.endDate) return range.startDate;
-  return `${range?.startDate || 'inicio'} → ${range?.endDate || 'último'}`;
+export interface ExplicitRangeOptions {
+  aggregation?: Period | HistoryAggregation | string;
+  lastUpdate?: unknown;
+  useLastUpdateWhenCurrent?: boolean;
+}
+
+function inputDateParts(value: unknown): { year: number; month: number; day: number } | null {
+  const text = String(value || '').trim();
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return null;
+  return { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
+}
+
+function displayInputDate(value: unknown): string {
+  const parts = inputDateParts(value);
+  if (!parts) return String(value || '').trim();
+  return `${String(parts.day).padStart(2, '0')}/${String(parts.month).padStart(2, '0')}/${parts.year}`;
+}
+
+function localInputDate(value: unknown): string {
+  if (!value) return '';
+  const parsed = new Date(value as string | number | Date);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function localTime(value: unknown): string {
+  if (!value) return '';
+  const parsed = new Date(value as string | number | Date);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return `${String(parsed.getHours()).padStart(2, '0')}:${String(parsed.getMinutes()).padStart(2, '0')}`;
+}
+
+function expectedLastBucketTime(aggregation: unknown): string {
+  const value = String(aggregation || '').toLowerCase();
+  if (value === 'hourly') return '23:00';
+  if (value === 'quarter_hour') return '23:45';
+  if (value === 'minute') return '23:59';
+  return '23:59';
+}
+
+export function formatExplicitDateTimeRange(
+  range?: DateRange | null,
+  options: ExplicitRangeOptions = {},
+  fallback = 'Intervalo no disponible',
+): string {
+  const start = String(range?.startDate || '').trim();
+  const end = String(range?.endDate || range?.startDate || '').trim();
+  if (!start && !end) return fallback;
+
+  const effectiveStart = start || end;
+  const effectiveEnd = end || start;
+  const startLabel = displayInputDate(effectiveStart);
+  const endLabel = displayInputDate(effectiveEnd);
+  let endTime = expectedLastBucketTime(options.aggregation);
+
+  const shouldUseLastUpdate = options.useLastUpdateWhenCurrent !== false
+    && effectiveEnd === todayInputDate()
+    && localInputDate(options.lastUpdate) === effectiveEnd;
+  if (shouldUseLastUpdate) {
+    endTime = localTime(options.lastUpdate) || endTime;
+  }
+
+  return `del ${startLabel} 00:00 al ${endLabel} ${endTime}`;
+}
+
+export function formatDateRangeStatus(range?: DateRange | null, fallback = 'Datos actuales de planta', aggregation?: Period | HistoryAggregation | string): string {
+  return formatExplicitDateTimeRange(range, { aggregation, useLastUpdateWhenCurrent: false }, fallback);
+}
+
+function addInputDateDays(value: string, days: number): string {
+  const parts = inputDateParts(value);
+  if (!parts) return value;
+  const date = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + days));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+}
+
+export function formatShiftDateTimeRange(day: unknown, schedule: unknown): string {
+  const date = String(day || '').trim();
+  const rawSchedule = String(schedule || '').trim();
+  const dateLabel = displayInputDate(date);
+  const match = rawSchedule.match(/(\d{1,2}:\d{2})\s*[–—-]\s*(\d{1,2}:\d{2})/);
+  if (!match) return date ? `${dateLabel} · ${rawSchedule || 'horario no disponible'}` : rawSchedule || 'Intervalo no disponible';
+  const startTime = match[1].padStart(5, '0');
+  const endTime = match[2].padStart(5, '0');
+  const crossesMidnight = endTime <= startTime;
+  const endDate = crossesMidnight ? addInputDateDays(date, 1) : date;
+  return `del ${dateLabel} ${startTime} al ${displayInputDate(endDate)} ${endTime}`;
 }
 
 export function periodLabel(period: string): string {

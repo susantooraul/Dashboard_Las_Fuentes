@@ -53,8 +53,8 @@ class UserNotFoundError(AuthError):
 
 @dataclass(frozen=True)
 class AuthPolicy:
-    idle_hours: int = 8
-    absolute_hours: int = 12
+    idle_hours: int = 24
+    absolute_hours: int = 72
     max_failed_attempts: int = 5
     lock_minutes: int = 15
     require_browser_session: bool = True
@@ -279,6 +279,60 @@ class AuthService:
             row = connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         return self._serialize_user(row)
 
+    def change_password(
+        self,
+        user_id: int,
+        current_password: str,
+        new_password: str,
+        *,
+        current_session_id: int,
+        ip_address: str | None = None,
+    ) -> None:
+        """Cambia la contraseña propia conservando sólo la sesión actual."""
+        with self.database.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT id, password_hash FROM users WHERE id = ? AND is_active = 1",
+                (user_id,),
+            ).fetchone()
+            if not row:
+                connection.rollback()
+                raise UserNotFoundError("Usuario no encontrado.")
+            if not verify_password(str(row["password_hash"]), current_password):
+                connection.rollback()
+                raise InvalidCredentialsError("La contraseña actual no es correcta.")
+            if verify_password(str(row["password_hash"]), new_password):
+                connection.rollback()
+                raise ValueError("La nueva contraseña debe ser diferente de la contraseña actual.")
+
+            new_hash = hash_password(new_password)
+            now = iso(utc_now())
+            connection.execute(
+                """
+                UPDATE users
+                SET password_hash = ?, failed_login_attempts = 0, locked_until = NULL, updated_at = ?
+                WHERE id = ?
+                """,
+                (new_hash, now, user_id),
+            )
+            connection.execute(
+                """
+                UPDATE sessions
+                SET revoked_at = ?
+                WHERE user_id = ? AND id <> ? AND revoked_at IS NULL
+                """,
+                (now, user_id, current_session_id),
+            )
+            self._audit(
+                connection,
+                action="password_changed",
+                actor_user_id=user_id,
+                target_user_id=user_id,
+                ip_address=ip_address,
+                details={"other_sessions_revoked": True},
+            )
+            connection.commit()
+
     def reset_password(
         self,
         user_id: int,
@@ -445,15 +499,20 @@ class AuthService:
             expires_at=iso(absolute_expiry) or "",
         )
 
-    def get_session(
+    def get_session_with_reason(
         self,
         token: str | None,
         browser_session: str | None = None,
         *,
         require_browser_session: bool | None = None,
-    ) -> dict[str, Any] | None:
+    ) -> tuple[dict[str, Any] | None, str]:
+        """Valida la sesión y devuelve una causa estable cuando es rechazada.
+
+        La causa se usa únicamente para diagnóstico del backend. La respuesta HTTP
+        al navegador sigue siendo genérica para no exponer detalles sensibles.
+        """
         if not token:
-            return None
+            return None, "missing_session_token"
         token_hash = hash_token(token)
         now = utc_now()
         with self.database.connect() as connection:
@@ -469,10 +528,15 @@ class AuthService:
                 """,
                 (token_hash,),
             ).fetchone()
-            if not row or row["revoked_at"] or not row["is_active"]:
-                return None
+            if not row:
+                return None, "session_not_found"
+            if row["revoked_at"]:
+                return None, "session_revoked"
+            if not row["is_active"]:
+                return None, "user_inactive"
             if not constant_time_token_match(token, str(row["token_hash"])):
-                return None
+                return None, "session_token_mismatch"
+
             effective_require_browser_session = (
                 self.policy.require_browser_session
                 if require_browser_session is None
@@ -480,22 +544,35 @@ class AuthService:
             )
             if effective_require_browser_session:
                 stored_browser_hash = row["browser_session_hash"]
-                if not browser_session or not stored_browser_hash:
-                    return None
+                if not browser_session:
+                    return None, "browser_session_missing"
+                if not stored_browser_hash:
+                    return None, "browser_session_not_bound"
                 if not constant_time_token_match(browser_session, str(stored_browser_hash)):
-                    return None
+                    return None, "browser_session_mismatch"
 
             expires_at = parse_datetime(row["expires_at"])
             created_at = parse_datetime(row["created_at"])
             last_activity = parse_datetime(row["last_activity_at"])
+            if not expires_at:
+                return None, "session_expiry_missing"
+
             policy_expiry = created_at + timedelta(hours=self.policy.absolute_hours) if created_at else now
             idle_expiry = last_activity + timedelta(hours=self.policy.idle_hours) if last_activity else now
-            if not expires_at or expires_at <= now or policy_expiry <= now or idle_expiry <= now:
+            rejection_reason = None
+            if expires_at <= now:
+                rejection_reason = "session_stored_expired"
+            elif policy_expiry <= now:
+                rejection_reason = "session_absolute_expired"
+            elif idle_expiry <= now:
+                rejection_reason = "session_idle_expired"
+
+            if rejection_reason:
                 connection.execute(
                     "UPDATE sessions SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL",
                     (iso(now), row["id"]),
                 )
-                return None
+                return None, rejection_reason
 
             user = {
                 "id": int(row["user_id"]),
@@ -513,7 +590,21 @@ class AuthService:
                 "created_at": row["created_at"],
                 "last_activity_at": row["last_activity_at"],
                 "expires_at": row["expires_at"],
-            }
+            }, "ok"
+
+    def get_session(
+        self,
+        token: str | None,
+        browser_session: str | None = None,
+        *,
+        require_browser_session: bool | None = None,
+    ) -> dict[str, Any] | None:
+        session, _ = self.get_session_with_reason(
+            token,
+            browser_session,
+            require_browser_session=require_browser_session,
+        )
+        return session
 
     def touch_session(self, session_id: int) -> None:
         now = utc_now()

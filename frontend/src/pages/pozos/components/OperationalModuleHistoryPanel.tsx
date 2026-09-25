@@ -10,10 +10,10 @@ import useWaterModuleHistory from '../hooks/useWaterModuleHistory';
 import { asRecord, asRows, chartLabel, numberOrNull } from '../insurgentesUtils';
 import type { FlexibleRecord, WaterModuleHistorySeries } from '../types';
 import { downloadFiveMinuteModuleHistoryExcel, validateFiveMinuteExportRange, type FiveMinuteExportModule } from '../../../services/waterFiveMinuteExportService';
-import { downloadWaterModuleHistoryPdf } from '../../../services/waterModuleHistoryExportService';
+import { downloadWaterModuleHistoryPdf, type ModuleHistoryExportMetric, type ModuleHistoryExportModule } from '../../../services/waterModuleHistoryExportService';
 
 type ModuleKey = 'pozos' | 'lineas' | 'flujos' | 'niveles' | 'uv';
-type MetricKey = 'flow' | 'totalizer' | 'both' | 'level' | 'uv_state';
+type MetricKey = 'flow' | 'totalizer' | 'both' | 'level' | 'uv_horometer' | 'uv_flow';
 type TotalizerDisplay = 'delta' | 'absolute';
 
 interface SeriesConfig {
@@ -70,11 +70,11 @@ const MODULES: Record<ModuleKey, {
   },
   uv: {
     title: 'Lámparas UV',
-    subtitle: 'Estado operativo de las lámparas UV. 0 apagada, 1 ignición, 2 encendida.',
+    subtitle: 'Horómetros por lámpara y flujo compartido del sistema UV.',
     elementsField: 'uv_lamps',
     historyField: 'uv_history',
     empty: 'Sin histórico UV para el periodo seleccionado.',
-    metrics: ['uv_state'],
+    metrics: ['uv_horometer', 'uv_flow'],
   },
 };
 
@@ -95,7 +95,8 @@ function getMetricLabel(metric: MetricKey): string {
   if (metric === 'totalizer') return 'Totalizador';
   if (metric === 'both') return 'Ambos';
   if (metric === 'level') return 'Nivel';
-  return 'Estado UV';
+  if (metric === 'uv_horometer') return 'Horómetros';
+  return 'Flujo UV';
 }
 
 
@@ -286,20 +287,64 @@ function buildLevelChart(rows: FlexibleRecord[], elements: FlexibleRecord[], sel
   return { chartRows: Array.from(points.values()).sort((a, b) => String(a.bucket).localeCompare(String(b.bucket))), series };
 }
 
-function uvDataKey(item: FlexibleRecord): string {
-  const raw = String(item.state_field || item.id || '').toLowerCase();
-  if (raw.includes('2')) return 'lamp_2_state';
-  return 'lamp_1_state';
+function uvLampIndex(item: FlexibleRecord): 1 | 2 {
+  const raw = String(item.agel_field || item.state_field || item.id || '').toLowerCase();
+  return raw.includes('2') ? 2 : 1;
 }
 
-function buildUvChart(rows: FlexibleRecord[], elements: FlexibleRecord[], selectedIds: Set<string>) {
-  const series: SeriesConfig[] = elements
-    .filter((element) => selectedIds.has(idOf(element)))
-    .map((element, index) => ({ key: uvDataKey(element), name: nameOf(element), color: colors[index % colors.length], yAxisId: 'left' as const }));
-  const chartRows = rows
-    .map((row) => ({ ...row, label: chartLabel(row.bucket || row.timestamp) }))
+function buildUvChart(
+  rows: FlexibleRecord[],
+  elements: FlexibleRecord[],
+  selectedIds: Set<string>,
+  metric: MetricKey,
+) {
+  const selectedElements = elements.filter((element) => selectedIds.has(idOf(element)));
+  const chartRows: FlexibleRecord[] = rows
+    .map((row): FlexibleRecord => ({ ...row, label: chartLabel(row.bucket || row.timestamp) }))
     .sort((a, b) => String(a.bucket || a.timestamp).localeCompare(String(b.bucket || b.timestamp)));
+
+  if (metric === 'uv_flow') {
+    return {
+      chartRows,
+      series: selectedElements.length
+        ? [{ key: 'flow', name: 'Flujo del sistema UV · Compartido', color: colors[0], yAxisId: 'left' as const }]
+        : [],
+    };
+  }
+
+  const series: SeriesConfig[] = selectedElements.map((element, index) => {
+    const lampIndex = uvLampIndex(element);
+    return {
+      key: `lamp_${lampIndex}_age`,
+      name: `${nameOf(element)} · Horómetro`,
+      color: colors[index % colors.length],
+      yAxisId: 'left' as const,
+      strokeDasharray: lampIndex === 2 ? '8 5' : undefined,
+    };
+  });
   return { chartRows, series };
+}
+
+function chartDomain(rows: FlexibleRecord[], series: SeriesConfig[]): [number, number] | undefined {
+  const values = rows.flatMap((row) => series.map((item) => numberOrNull(row[item.key])).filter((value): value is number => value !== null));
+  if (!values.length) return undefined;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = Math.max(max - min, 1);
+  const pad = Math.max(span * 0.12, 1);
+  return [Math.max(0, Math.floor((min - pad) * 10) / 10), Math.ceil((max + pad) * 10) / 10];
+}
+
+function pdfModuleFor(moduleKey: ModuleKey): ModuleHistoryExportModule {
+  if (moduleKey === 'pozos') return 'well';
+  if (moduleKey === 'lineas') return 'line';
+  if (moduleKey === 'flujos') return 'flow';
+  if (moduleKey === 'niveles') return 'level';
+  return 'uv';
+}
+
+function pdfMetricFor(metric: MetricKey): ModuleHistoryExportMetric {
+  return metric as ModuleHistoryExportMetric;
 }
 
 interface OperationalModuleHistoryPanelProps {
@@ -361,9 +406,13 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
   const effectiveTotalizerDisplay: TotalizerDisplay = metric === 'both' ? 'delta' : totalizerDisplay;
   const chart = useMemo(() => {
     if (moduleKey === 'niveles') return buildLevelChart(history, elements, selectedSet);
-    if (moduleKey === 'uv') return buildUvChart(history, elements, selectedSet);
+    if (moduleKey === 'uv') return buildUvChart(history, elements, selectedSet, metric);
     return buildLineFlowChart(history, elements, selectedSet, metric, effectiveTotalizerDisplay);
   }, [moduleKey, history, elements, selectedSet, metric, effectiveTotalizerDisplay]);
+  const uvHorometerDomain = useMemo(
+    () => moduleKey === 'uv' && metric === 'uv_horometer' ? chartDomain(chart.chartRows, chart.series) : undefined,
+    [moduleKey, metric, chart.chartRows, chart.series],
+  );
 
   const selectedElements = useMemo(
     () => elements.filter((element) => selectedSet.has(idOf(element))),
@@ -399,7 +448,6 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
   };
 
   const exportVisiblePdf = async () => {
-    if (!hydraulicModule || !['flow', 'totalizer', 'both'].includes(metric)) return;
     const startDate = String(controller.range.startDate || '');
     const endDate = String(controller.range.endDate || '');
     if (!startDate || !endDate) return;
@@ -408,11 +456,13 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
     setExportMessage('');
     try {
       await downloadWaterModuleHistoryPdf({
-        module: hydraulicModule,
+        module: pdfModuleFor(moduleKey),
         startDate,
         endDate,
-        aggregation: String(commonController.aggregation || 'quarter_hour'),
-        metric: metric as 'flow' | 'totalizer' | 'both',
+        aggregation: hydraulicModule
+          ? String(commonController.aggregation || 'quarter_hour')
+          : String(dashboard.aggregation || 'hourly'),
+        metric: pdfMetricFor(metric),
         totalizerDisplay: effectiveTotalizerDisplay,
         selectedIds,
       });
@@ -468,16 +518,29 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
 
   const selectAll = () => setSelectedIds(elements.map(idOf).filter(Boolean));
   const clearAll = () => setSelectedIds([]);
+  const selectUvLamps = (mode: 'both' | 'uv1' | 'uv2') => {
+    if (mode === 'both') {
+      selectAll();
+      return;
+    }
+    const targetIndex = mode === 'uv2' ? 2 : 1;
+    const target = elements.find((element) => uvLampIndex(element) === targetIndex);
+    setSelectedIds(target ? [idOf(target)] : []);
+  };
+  const uvSelectionMode = moduleKey === 'uv'
+    ? (selectedIds.length > 1 ? 'both' : (elements.find((element) => selectedIds.includes(idOf(element)) && uvLampIndex(element) === 2) ? 'uv2' : 'uv1'))
+    : 'both';
   const hasBothAxes = metric === 'both' && (moduleKey === 'pozos' || moduleKey === 'lineas' || moduleKey === 'flujos');
   const hasRenderableChart = Boolean(elements.length && selectedIds.length && hasSelectedHistoryData && chart.chartRows.length);
+  const cleanLockedHydraulicModule = lockedModule === 'pozos' || lockedModule === 'lineas' || lockedModule === 'flujos';
 
   return (
     <section className="panel chart-panel fade-up insurgentes-history-module-panel">
       <PanelHeader
         title={lockedModule ? `Histórico de ${moduleConfig.title.toLowerCase()}` : 'Histórico operativo por módulo'}
-        subtitle={lockedModule
+        subtitle={lockedModule && !cleanLockedHydraulicModule
           ? `${moduleConfig.subtitle} Cero conserva lectura válida; los huecos permanecen como ausencia de registro.`
-          : 'Compara únicamente elementos del módulo seleccionado. Cero conserva lectura válida; los huecos permanecen como ausencia de registro.'}
+          : undefined}
       />
 
       <div className="insurgentes-history-controls">
@@ -494,7 +557,7 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
               </button>
             ))}
           </div>
-        ) : <span className="insurgentes-history-locked-module">{moduleConfig.title}</span>}
+        ) : cleanLockedHydraulicModule ? null : <span className="insurgentes-history-locked-module">{moduleConfig.title}</span>}
         <div className="insurgentes-history-metric-actions">
           {moduleConfig.metrics.length > 1 ? (
             <div className="insurgentes-history-control-group" aria-label="Métrica histórica">
@@ -513,7 +576,7 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
             <span className="insurgentes-history-fixed-metric">{getMetricLabel(moduleConfig.metrics[0])}</span>
           )}
           <div className="insurgentes-history-export-actions">
-            {hydraulicModule ? (
+            {(hydraulicModule || moduleKey === 'niveles' || moduleKey === 'uv') ? (
               <button
                 type="button"
                 className="module-history-pdf-button"
@@ -552,7 +615,19 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
       </div>
       {exportMessage ? <div className={`insurgentes-history-export-message${exportError ? ' is-error' : ''}`}>{exportMessage}</div> : null}
 
-      <SqlChartDateControls controller={controller} title="Fechas del histórico" subtitle={moduleConfig.subtitle} />
+      <SqlChartDateControls
+        controller={controller}
+        title="Fechas del histórico"
+        subtitle={cleanLockedHydraulicModule ? undefined : moduleConfig.subtitle}
+        showMeta={Boolean(lockedModule) && !cleanLockedHydraulicModule}
+        showStatus={Boolean(lockedModule) && !cleanLockedHydraulicModule}
+      />
+
+      {moduleKey === 'uv' && metric === 'uv_flow' ? (
+        <div className="insurgentes-history-totalizer-note">
+          El flujo es una lectura compartida del sistema UV. Seleccionar UV 1, UV 2 o ambas no crea series distintas porque SCADA entrega un único Flow para la máquina.
+        </div>
+      ) : null}
 
       {metric === 'totalizer' ? (
         <div className="insurgentes-history-totalizer-control" aria-label="Modo de visualización del totalizador">
@@ -584,30 +659,46 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
         </div>
       ) : null}
 
-      <div className="insurgentes-series-toolbar">
-        <div>
-          <span>Elementos visibles · {moduleConfig.title}</span>
-          <strong>{selectedIds.length}/{elements.length} seleccionados</strong>
+      {moduleKey === 'uv' ? (
+        <div className="insurgentes-series-toolbar">
+          <div>
+            <span>Lámparas visibles</span>
+            <strong>{metric === 'uv_flow' ? 'Flow compartido del sistema UV' : 'Selecciona ambas o una sola lámpara'}</strong>
+          </div>
+          <div className="insurgentes-history-control-group" role="group" aria-label="Seleccionar lámpara UV histórica">
+            <button type="button" className={uvSelectionMode === 'both' ? 'active' : ''} onClick={() => selectUvLamps('both')}>Ambas</button>
+            <button type="button" className={uvSelectionMode === 'uv1' ? 'active' : ''} onClick={() => selectUvLamps('uv1')}>UV 1</button>
+            <button type="button" className={uvSelectionMode === 'uv2' ? 'active' : ''} onClick={() => selectUvLamps('uv2')}>UV 2</button>
+          </div>
         </div>
-        <div className="insurgentes-series-actions">
-          <button type="button" onClick={selectAll}>Seleccionar todos</button>
-          <button type="button" onClick={clearAll}>Deseleccionar todos</button>
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="insurgentes-series-toolbar">
+            <div>
+              <span>Elementos visibles · {moduleConfig.title}</span>
+              <strong>{selectedIds.length}/{elements.length} seleccionados</strong>
+            </div>
+            <div className="insurgentes-series-actions">
+              <button type="button" onClick={selectAll}>Seleccionar todos</button>
+              <button type="button" onClick={clearAll}>Deseleccionar todos</button>
+            </div>
+          </div>
 
-      {elements.length ? (
-        <div className="insurgentes-series-chips">
-          {elements.map((element) => {
-            const id = idOf(element);
-            const checked = selectedIds.includes(id);
-            return (
-              <button key={id} type="button" className={checked ? 'active' : ''} onClick={() => toggleElement(id)}>
-                {checked ? '✓ ' : ''}{nameOf(element)}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+          {elements.length ? (
+            <div className="insurgentes-series-chips">
+              {elements.map((element) => {
+                const id = idOf(element);
+                const checked = selectedIds.includes(id);
+                return (
+                  <button key={id} type="button" className={checked ? 'active' : ''} onClick={() => toggleElement(id)}>
+                    {checked ? '✓ ' : ''}{nameOf(element)}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </>
+      )}
 
       {controller.error ? (
         <div className="insurgentes-history-export-message is-error">
@@ -623,14 +714,14 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
           <LineChart data={chart.chartRows} margin={{ top: 20, right: hasBothAxes ? 38 : 24, bottom: 48, left: 12 }}>
             <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
             <XAxis dataKey="label" stroke={axisColor} minTickGap={30} />
-            <YAxis yAxisId="left" stroke={axisColor} />
+            <YAxis yAxisId="left" stroke={axisColor} domain={uvHorometerDomain} allowDataOverflow={false} />
             {hasBothAxes ? <YAxis yAxisId="right" orientation="right" stroke="#fbbf24" /> : null}
             <Tooltip content={<ChartTooltip />} />
             <Legend wrapperStyle={{ paddingTop: 12 }} />
             {chart.series.map((item) => (
               <Line
                 key={item.key}
-                type={moduleKey === 'uv' ? 'stepAfter' : 'monotone'}
+                type="monotone"
                 dataKey={item.key}
                 name={item.name}
                 stroke={item.color}

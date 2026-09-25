@@ -4,6 +4,9 @@ import DashboardBaseSection from './pozos/sections/DashboardBaseSection';
 import PozosSection from './pozos/sections/PozosSection';
 import FlujosSection from './pozos/sections/FlujosSection';
 import UsersPage from './UsersPage';
+import RevisionDiariaSection from './pozos/sections/RevisionDiariaSection';
+import ReportesSection from './pozos/sections/ReportesSection';
+import '../styles/reportes.css';
 import '../styles/insurgentesVisualPolish.css';
 import '../styles/insurgentesTheme.css';
 
@@ -27,6 +30,14 @@ const sectionMap = {
   embotellado: {
     title: 'Medidores de embotellado',
     render: ({ itemId } = {}) => <FlujosSection itemId={itemId} group="embotellado" title="Medidores de embotellado" eyebrow="Embotellado" basePath="/pozos/embotellado" />,
+  },
+  revision: {
+    title: 'Revisión diaria',
+    render: () => <RevisionDiariaSection />,
+  },
+  reportes: {
+    title: 'Reportes',
+    render: ({ user } = {}) => <ReportesSection currentUser={user} />,
   },
   usuarios: {
     title: 'Usuarios',

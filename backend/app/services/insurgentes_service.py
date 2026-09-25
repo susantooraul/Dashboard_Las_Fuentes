@@ -649,7 +649,15 @@ def _apply_activity_metrics(items: Iterable[dict[str, Any]], metrics: dict[int, 
             item.setdefault("start_count", None)
             item.setdefault("encendidos_periodo", None)
 
-def _period_delta(rows: list[dict[str, Any]]) -> dict[str, Any]:
+def _period_delta(rows: list[dict[str, Any]], previous_totalizer_m3: float | None = None) -> dict[str, Any]:
+    """Return the reconciled period delta using the last valid reading before T0 when available.
+
+    The visible period follows [T0,T1): the opening boundary is the last valid
+    totalizer strictly before T0 and the closing boundary is the last valid
+    totalizer observed inside the requested interval. When an opening boundary
+    is unavailable we keep the legacy in-range fallback, but require two valid
+    samples so absence is never fabricated as zero.
+    """
     valid: list[tuple[datetime, float]] = []
     for row in rows:
         total = _num(row.get("total_value"), None)
@@ -657,13 +665,20 @@ def _period_delta(rows: list[dict[str, Any]]) -> dict[str, Any]:
         if total is None or total <= 0 or not isinstance(timestamp, datetime):
             continue
         valid.append((timestamp, total))
-    if len(valid) < 2:
+    valid.sort(key=lambda pair: pair[0])
+
+    boundary = _num(previous_totalizer_m3, None)
+    if boundary is not None and boundary <= 0:
+        boundary = None
+    if not valid or (boundary is None and len(valid) < 2):
         return {"value": None, "status": "sin_datos", "note": "Sin suficientes lecturas válidas para calcular el periodo."}
 
+    opening_total = boundary if boundary is not None else valid[0][1]
+    sequence = [opening_total, *[total for _, total in valid]] if boundary is not None else [total for _, total in valid]
     resets = 0
     jumps = 0
-    previous = valid[0][1]
-    for _, current in valid[1:]:
+    previous = sequence[0]
+    for current in sequence[1:]:
         increment = current - previous
         if increment < 0:
             resets += 1
@@ -675,22 +690,25 @@ def _period_delta(rows: list[dict[str, Any]]) -> dict[str, Any]:
     if jumps:
         return {"value": None, "status": "dato_en_revision", "note": "El totalizador presentó un salto técnico no confiable."}
 
-    delta = valid[-1][1] - valid[0][1]
+    delta = valid[-1][1] - opening_total
     if delta < 0 or delta > MAX_TECHNICAL_PERIOD_DELTA_M3:
         return {"value": None, "status": "dato_en_revision", "note": "El volumen del periodo requiere revisión."}
     return {
         "value": round(delta, 4),
         "status": "valid",
         "note": "",
-        "first_total": valid[0][1],
+        "first_total": opening_total,
         "last_total": valid[-1][1],
-        "first_timestamp": valid[0][0].isoformat(timespec="seconds"),
+        "first_timestamp": None if boundary is not None else valid[0][0].isoformat(timespec="seconds"),
         "last_timestamp": valid[-1][0].isoformat(timespec="seconds"),
+        "boundary_source": "last_valid_before_t0" if boundary is not None else "first_valid_in_range",
     }
 
 
-def _bos_period_delta(start_row: dict[str, Any] | None, end_row: dict[str, Any] | None, prefix: str, index: int) -> dict[str, Any]:
-    first_total = _num(_bos_value(start_row, prefix, index, "total_value", None), None)
+def _bos_period_delta(start_row: dict[str, Any] | None, end_row: dict[str, Any] | None, prefix: str, index: int, previous_totalizer_m3: float | None = None) -> dict[str, Any]:
+    first_total = _num(previous_totalizer_m3, None)
+    if first_total is None or first_total <= 0:
+        first_total = _num(_bos_value(start_row, prefix, index, "total_value", None), None)
     last_total = _num(_bos_value(end_row, prefix, index, "total_value", None), None)
     if first_total is None or last_total is None or first_total <= 0 or last_total <= 0:
         return {"value": None, "status": "sin_datos", "note": "Sin totalizadores válidos en el periodo."}
@@ -788,7 +806,7 @@ def _bos_history_rows(
     return output
 
 
-def _build_entry(pozo_row: dict[str, Any] | None, pozo_first: dict[str, Any] | None, readings: dict[int, list[dict[str, Any]]], period: str, bos_rows: list[dict[str, Any]] | None = None) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
+def _build_entry(pozo_row: dict[str, Any] | None, pozo_first: dict[str, Any] | None, readings: dict[int, list[dict[str, Any]]], period: str, bos_rows: list[dict[str, Any]] | None = None, previous_totalizers: dict[int, float] | None = None) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
     updated = _normalize_timestamp(_first(pozo_row, "time_stamp", "timestamp"), POZO_BOS_TABLE)
     primary = WATER_ENTRY["primary_bos"]
     backup = WATER_ENTRY["backup_bos"]
@@ -821,9 +839,10 @@ def _build_entry(pozo_row: dict[str, Any] | None, pozo_first: dict[str, Any] | N
         period_rows = readings.get(WATER_ENTRY["backup_sensor_id"], [])
         if period_rows:
             source_sensor = WATER_ENTRY["backup_sensor_id"] if not readings.get(WATER_ENTRY["primary_sensor_id"]) else source_sensor
-    period_info = _period_delta(period_rows)
+    previous_totalizer_m3 = (previous_totalizers or {}).get(int(source_sensor))
+    period_info = _period_delta(period_rows, previous_totalizer_m3)
     if period_info["status"] == "sin_datos":
-        period_info = _bos_period_delta(pozo_first, pozo_row, prefix, index)
+        period_info = _bos_period_delta(pozo_first, pozo_row, prefix, index, previous_totalizer_m3)
         period_source = "bos_fallback" if period_info["status"] != "sin_datos" else "sin_datos"
 
     has_reading = flow is not None or total is not None
@@ -841,7 +860,7 @@ def _build_entry(pozo_row: dict[str, Any] | None, pozo_first: dict[str, Any] | N
         "totalizador_m3": total,
         "period_m3": period_info.get("value"),
         "period_delta_m3": period_info.get("value"),
-        "entry_m3": period_info.get("value") or 0,
+        "entry_m3": period_info.get("value"),
         "period_status": period_info.get("status"),
         "period_note": period_info.get("note"),
         "period_source": period_source,
@@ -883,7 +902,7 @@ def _build_sosa_well(
     flow = _num(_column_value(flow_row, str(config.get("flow_column") or "sosa_flujo"), None), None)
     total = _num(_column_value(flow_row, str(config.get("total_column") or "sosa_total"), None), None)
     has_reading = flow is not None or total is not None
-    period_info = _period_delta(sosa_rows)
+    period_info = _period_delta(sosa_rows, previous_totalizer_m3)
     source_status = "sosa_minute_sql" if sosa_rows else "sin_datos"
     status, status_type, active = _sosa_operational_status(flow, has_reading, communication_type)
     item = {
@@ -906,7 +925,7 @@ def _build_sosa_well(
         "previous_totalizer_source": "last_valid_reading_before_t0" if previous_totalizer_m3 is not None else "missing_previous_reading",
         "period_m3": period_info.get("value"),
         "period_delta_m3": period_info.get("value"),
-        "entry_m3": period_info.get("value") or 0,
+        "entry_m3": period_info.get("value"),
         "period_status": period_info.get("status"),
         "period_note": period_info.get("note"),
         "source_status": source_status,
@@ -958,10 +977,10 @@ def _build_wells(
         previous_totalizer_m3 = (previous_totalizers or {}).get(sensor_id)
         flow = _num(_bos_value(pozo_row, prefix, index, "instant_value", None), None)
         total = _num(_bos_value(pozo_row, prefix, index, "total_value", None), None)
-        period_info = _period_delta(readings.get(sensor_id, []))
+        period_info = _period_delta(readings.get(sensor_id, []), previous_totalizer_m3)
         source_status = "readings_minute"
         if period_info["status"] == "sin_datos":
-            period_info = _bos_period_delta(pozo_first, pozo_row, prefix, index)
+            period_info = _bos_period_delta(pozo_first, pozo_row, prefix, index, previous_totalizer_m3)
             source_status = "bos_fallback" if period_info["status"] != "sin_datos" else "sin_datos"
         status, status_type, active = _operational_status(flow, flow is not None or total is not None)
         items.append({
@@ -981,7 +1000,7 @@ def _build_wells(
             "previous_totalizer_source": "last_valid_reading_before_t0" if previous_totalizer_m3 is not None else "missing_previous_reading",
             "period_m3": period_info.get("value"),
             "period_delta_m3": period_info.get("value"),
-            "entry_m3": period_info.get("value") or 0,
+            "entry_m3": period_info.get("value"),
             "period_status": period_info.get("status"),
             "period_note": period_info.get("note"),
             "source_status": source_status,
@@ -1022,10 +1041,10 @@ def _build_lines(
         previous_totalizer_m3 = (previous_totalizers or {}).get(sensor_id)
         flow = _num(_bos_value(line_row, "LINEA_FLOW_IN", index, "instant_value", None), None)
         total = _num(_bos_value(line_row, "LINEA_FLOW_IN", index, "total_value", None), None)
-        period_info = _period_delta(readings.get(sensor_id, []))
+        period_info = _period_delta(readings.get(sensor_id, []), previous_totalizer_m3)
         source_status = "readings_minute"
         if period_info["status"] == "sin_datos":
-            period_info = _bos_period_delta(line_first, line_row, "LINEA_FLOW_IN", index)
+            period_info = _bos_period_delta(line_first, line_row, "LINEA_FLOW_IN", index, previous_totalizer_m3)
             source_status = "bos_fallback" if period_info["status"] != "sin_datos" else "sin_datos"
         status, status_type, active = _operational_status(flow, flow is not None or total is not None)
         items.append({
@@ -1090,10 +1109,10 @@ def _build_flows(
         previous_totalizer_m3 = (previous_totalizers or {}).get(sensor_id)
         flow = _num(_bos_value(flow_row, "TANQUE_FLOW_IN", index, "instant_value", None), None)
         total = _num(_bos_value(flow_row, "TANQUE_FLOW_IN", index, "total_value", None), None)
-        period_info = _period_delta(readings.get(sensor_id, []))
+        period_info = _period_delta(readings.get(sensor_id, []), previous_totalizer_m3)
         source_status = "readings_minute"
         if period_info["status"] == "sin_datos":
-            period_info = _bos_period_delta(flow_first, flow_row, "TANQUE_FLOW_IN", index)
+            period_info = _bos_period_delta(flow_first, flow_row, "TANQUE_FLOW_IN", index, previous_totalizer_m3)
             source_status = "bos_fallback" if period_info["status"] != "sin_datos" else "sin_datos"
         configured_idle = config.get("expected_activity") == "configured_without_recent_activity"
         status, status_type, active = _operational_status(flow, flow is not None or total is not None, configured_idle=configured_idle)
@@ -1411,7 +1430,9 @@ def get_insurgentes_dashboard_payload(
                 except SQLAlchemyError as exc:
                     sql_errors.append(type(exc).__name__)
 
-        entry, entry_history, entry_source = _build_entry(pozo_row, pozo_first, readings, normalized_period, pozo_period_rows)
+        entry, entry_history, entry_source = _build_entry(
+            pozo_row, pozo_first, readings, normalized_period, pozo_period_rows, previous_well_totalizers
+        )
         wells, well_history = _build_wells(
             pozo_row,
             pozo_first,
@@ -1500,7 +1521,7 @@ def get_insurgentes_dashboard_payload(
             "title": DASHBOARD_TITLE,
             "subtitle": "Monitoreo operativo de agua de Planta Las Fuentes",
             "cards": cards,
-            "water_entry_by_well": [{"name": entry["name"], "value": entry.get("period_m3") or 0, "unit": "m³", "detail": entry.get("period_note") or "Volumen del periodo"}],
+            "water_entry_by_well": [{"name": entry["name"], "value": entry.get("period_m3"), "unit": "m³", "detail": entry.get("period_note") or "Volumen del periodo"}],
             "water_consumption": [],
             "tank_levels": [],
             "supply_hours": [],
@@ -1696,6 +1717,9 @@ def _volume_item_from_rows(
     return {
         'id': str(config.get('id') or config.get('name')),
         'name': str(config.get('name') or config.get('nombre') or config.get('id') or 'Elemento'),
+        'sensor_id': config.get('sensor_id'),
+        'module_group': config.get('module_group'),
+        'operational_number': config.get('operational_number'),
         'type': 'volume',
         'unit': unit,
         'opening_m3': reconciled.get('totalizer_open_m3'),

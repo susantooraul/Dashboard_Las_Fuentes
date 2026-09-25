@@ -378,9 +378,10 @@ for _item in [WATER_ENTRY, *WELLS, *LINES, *FLOWS]:
         _item["hydraulic_contract"]["audit_evidence"] = deepcopy(_evidence)
 
 
-# Horarios que usa hoy el dashboard, todavia pendientes de confirmacion formal
-# de Planta. Permanecen fuera de la interfaz hasta su confirmacion.
-SHIFT_CONTRACT_STATUS = "provisional_pending_plant_confirmation"
+# Turnos provisionales habilitados para validación visual/operativa en Las Fuentes.
+# Se usan 00–07, 07–15 y 15–24 mientras la planta confirma su matriz oficial.
+# Los horarios viven aquí para poder sustituirlos sin tocar las pantallas.
+SHIFT_CONTRACT_STATUS = "provisional_enabled_for_validation"
 SHIFT_WINDOWS = [
     {"id": "turno-1", "label": "Turno 1", "start": "00:00", "end": "07:00"},
     {"id": "turno-2", "label": "Turno 2", "start": "07:00", "end": "15:00"},

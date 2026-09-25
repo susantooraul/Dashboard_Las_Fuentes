@@ -36,6 +36,12 @@ interface SummaryData {
   pozos_total?: NumericValue;
   volumen_lineas_m3?: NumericValue;
   volumen_flujos_m3?: NumericValue;
+  volumen_tam_m3?: NumericValue;
+  volumen_embotellado_m3?: NumericValue;
+  volumen_cisterna_m3?: NumericValue;
+  tam_total?: NumericValue;
+  embotellado_total?: NumericValue;
+  cisterna_total?: NumericValue;
   lineas_activas?: NumericValue;
   lineas_total?: NumericValue;
   flujos_activos?: NumericValue;
@@ -53,6 +59,7 @@ interface SummaryData {
 }
 
 interface EntryRow {
+  module_group?: string;
   equipo?: string;
   elemento?: string;
   flujo_lps?: NumericValue;
@@ -118,7 +125,30 @@ interface ShiftRow {
   pozos?: NumericValue;
   lineas?: NumericValue;
   flujos?: NumericValue;
+  tam?: NumericValue;
+  embotellado?: NumericValue;
+  cisterna?: NumericValue;
   estado?: string;
+}
+
+interface ComparisonRow {
+  module?: string;
+  elemento?: string;
+  seleccionado?: NumericValue;
+  hoy?: NumericValue;
+  ayer?: NumericValue;
+  semana_anterior?: NumericValue;
+  esta_semana?: NumericValue;
+  semana_pasada?: NumericValue;
+  hace_dos_semanas?: NumericValue;
+  un_mes_antes?: NumericValue;
+  dos_meses_antes?: NumericValue;
+  tres_meses_antes?: NumericValue;
+}
+
+interface ComparisonSection {
+  rows?: ComparisonRow[];
+  headers?: Record<string, string>;
 }
 
 interface DailyWaterReport {
@@ -137,9 +167,12 @@ interface DailyWaterReport {
   wells?: ReportRows<EntryRow>;
   lines?: ReportRows<EntryRow>;
   flows?: ReportRows<EntryRow>;
+  flow_groups?: { tam?: ReportRows<EntryRow>; embotellado?: ReportRows<EntryRow>; cisterna?: ReportRows<EntryRow> };
   levels?: ReportRows<LevelRow>;
   uv?: ReportRows<UvRow> & { summary?: UvSummary };
   shifts?: { rows?: ShiftRow[] };
+  comparative?: ComparisonSection;
+  historical_comparative?: ComparisonSection;
 }
 
 function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = {}) {
@@ -169,6 +202,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
   const [scheduleRecipients, setScheduleRecipients] = useState('');
   const [scheduleFormats, setScheduleFormats] = useState<DailyWaterReportAttachmentFormat[]>(['pdf', 'excel']);
   const [scheduleEnabled, setScheduleEnabled] = useState(true);
+  const [scheduleTime1, setScheduleTime1] = useState('06:30');
+  const [scheduleTime2, setScheduleTime2] = useState('07:00');
   const [scheduleError, setScheduleError] = useState('');
   const latestPreviewRequestRef = useRef(0);
   const previewIntervalRef = useRef<number | null>(null);
@@ -392,6 +427,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
     setScheduleRecipients('');
     setScheduleFormats(['pdf', 'excel']);
     setScheduleEnabled(true);
+    setScheduleTime1('06:30');
+    setScheduleTime2('07:00');
     setScheduleError('');
   };
 
@@ -406,6 +443,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
     setScheduleRecipients(schedule.recipients.join(', '));
     setScheduleFormats(schedule.formats?.length ? schedule.formats : ['pdf']);
     setScheduleEnabled(schedule.enabled);
+    setScheduleTime1(schedule.send_time_local || (schedule.period_mode === 'fixed_12h_blocks' ? '19:00' : '06:30'));
+    setScheduleTime2(schedule.send_time_local_2 || '07:00');
     setScheduleError('');
   };
 
@@ -433,6 +472,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
         recipients,
         enabled: scheduleEnabled,
         send_delay_minutes: 10,
+        send_time_local: scheduleTime1,
+        send_time_local_2: schedulePeriodMode === 'fixed_12h_blocks' ? scheduleTime2 : null,
       };
       if (scheduleEditingId) await updateReportEmailSchedule(scheduleEditingId, payload);
       else await createReportEmailSchedule(payload);
@@ -480,34 +521,33 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
   };
 
   const summary = dailyReport?.summary || {};
-  const entryRows = dailyReport?.water_entry?.rows || [];
   const wellRows = dailyReport?.wells?.rows || [];
-  const lineRows = dailyReport?.lines?.rows || [];
   const flowRows = dailyReport?.flows?.rows || [];
-  const levelRows = dailyReport?.levels?.rows || [];
-  const uvRows = dailyReport?.uv?.rows || [];
-  const uvSummary = dailyReport?.uv?.summary || {};
+  const tamRows = dailyReport?.flow_groups?.tam?.rows || flowRows.filter((item) => item.module_group === 'tam');
+  const bottlingRows = dailyReport?.flow_groups?.embotellado?.rows || flowRows.filter((item) => item.module_group === 'embotellado');
+  const cisternRows = dailyReport?.flow_groups?.cisterna?.rows || flowRows.filter((item) => item.module_group === 'cisterna');
   const shiftRows = dailyReport?.shifts?.rows || [];
+  const comparativeRows = dailyReport?.comparative?.rows || [];
+  const comparativeHeaders = dailyReport?.comparative?.headers || {};
+  const historicalComparisonRows = dailyReport?.historical_comparative?.rows || [];
+  const historicalComparisonHeaders = dailyReport?.historical_comparative?.headers || {};
   const reportStatus = `Reporte: ${formatDateRangeStatus(reportRange, 'Hoy')}`;
 
   const kpiCards = [
-    { label: 'Pozos Corporativos', value: formatMeasurement(summary.volumen_recibido_m3, 'm³'), caption: 'Medición conjunta de entrada' },
     { label: 'Volumen de pozos', value: formatMeasurement(summary.volumen_pozos_m3, 'm³'), caption: `${formatCount(summary.pozos_activos, summary.pozos_total)} pozos con actividad` },
-    { label: 'Volumen de líneas', value: formatMeasurement(summary.volumen_lineas_m3, 'm³'), caption: `${formatCount(summary.lineas_activas, summary.lineas_total)} con actividad` },
-    { label: 'Volumen de flujos', value: formatMeasurement(summary.volumen_flujos_m3, 'm³'), caption: `${formatCount(summary.flujos_activos, summary.flujos_total)} con actividad` },
-    { label: 'Niveles actualizados', value: formatCount(summary.niveles_actualizados, summary.niveles_total), caption: 'Lecturas de nivel disponibles' },
-    { label: 'UV encendidas', value: formatCount(summary.lamparas_uv_encendidas, summary.lamparas_uv_total), caption: 'Estado operativo UV' },
-    { label: 'Calidad del periodo', value: summary.calidad_periodo || 'Sin datos', caption: summary.calidad_periodo === 'Validado' ? 'Cobertura validada en módulos hídricos' : `${formatInteger(summary.validacion_parcial)} elementos requieren atención` },
+    { label: 'Medidores TAM', value: formatMeasurement(summary.volumen_tam_m3, 'm³'), caption: `${tamRows.length} medidores configurados` },
+    { label: 'Embotellado', value: formatMeasurement(summary.volumen_embotellado_m3, 'm³'), caption: `${bottlingRows.length} medidores configurados` },
+    { label: 'Cisterna', value: formatMeasurement(summary.volumen_cisterna_m3, 'm³'), caption: `${cisternRows.length} medidor configurado` },
+    { label: 'Calidad del periodo', value: summary.calidad_periodo || 'Sin datos', caption: `${formatInteger(summary.validacion_parcial)} elementos requieren atención` },
   ];
 
   return (
     <section className="reportes-page fade-up">
       <div className="panel report-hero-panel report-hero-modern">
         <div>
-          <span className="eyebrow">Centro de reportes</span>
           <h1 className="report-main-title">Reportes</h1>
           <p className="report-main-subtitle">Control hídrico · Planta Las Fuentes</p>
-          <p className="panel-subtitle">Genera, consulta y envía reportes del periodo seleccionado. El preview es ligero; PDF, Excel, HTML y correo se generan bajo demanda.</p>
+          
         </div>
         <div className="report-generated-card">
           <span>Última actualización</span>
@@ -520,7 +560,7 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
         <div className="report-controls-head">
           <div>
             <h2>Periodo del reporte</h2>
-            <p>Configura el periodo y genera el formato necesario.</p>
+            
           </div>
           {refreshing && <span className="status-pill report-status-pill">Actualizando preview...</span>}
         </div>
@@ -614,7 +654,7 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
             <div>
               <span className="eyebrow">Automatización</span>
               <h2>Programar correo</h2>
-              <p>24 h envía el día calendario anterior. 12 h usa bloques fijos 00:00–12:00 y 12:00–24:00, diez minutos después del cierre.</p>
+              <p>24 h envía el día calendario anterior completo. En 12 h puedes definir horarios independientes para los bloques 00:00–12:00 y 12:00–24:00.</p>
             </div>
             {scheduleLoading && <span className="status-pill report-status-pill">Actualizando...</span>}
           </div>
@@ -632,11 +672,21 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
                 <label className="report-email-field"><span>Nombre</span><input type="text" value={scheduleName} onChange={(event) => setScheduleName(event.target.value)} /></label>
                 <label className="report-email-field">
                   <span>Periodo</span>
-                  <select value={schedulePeriodMode} onChange={(event) => setSchedulePeriodMode(event.target.value as ReportEmailSchedulePeriodMode)}>
+                  <select value={schedulePeriodMode} onChange={(event) => { const next = event.target.value as ReportEmailSchedulePeriodMode; setSchedulePeriodMode(next); if (next === 'fixed_12h_blocks' && scheduleTime1 < '12:00') setScheduleTime1('19:00'); }}>
                     <option value="previous_calendar_day_24h">24 h — día anterior completo</option>
                     <option value="fixed_12h_blocks">12 h — dos bloques fijos diarios</option>
                   </select>
                 </label>
+                <div className="report-schedule-time-grid">
+                  <label className="report-email-field">
+                    <span>{schedulePeriodMode === 'fixed_12h_blocks' ? 'Entrega bloque 00:00–12:00' : 'Hora de entrega'}</span>
+                    <input type="time" value={scheduleTime1} onChange={(event) => setScheduleTime1(event.target.value)} />
+                  </label>
+                  {schedulePeriodMode === 'fixed_12h_blocks' && <label className="report-email-field">
+                    <span>Entrega bloque 12:00–24:00</span>
+                    <input type="time" value={scheduleTime2} onChange={(event) => setScheduleTime2(event.target.value)} />
+                  </label>}
+                </div>
                 <label className="report-email-field">
                   <span>Destinatarios</span>
                   <input type="text" value={scheduleRecipients} onChange={(event) => setScheduleRecipients(event.target.value)} placeholder="correo@empresa.com, operacion@empresa.com" />
@@ -686,6 +736,7 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
                         <span className={`report-schedule-state ${schedule.enabled ? 'is-enabled' : 'is-paused'}`}>{schedule.enabled ? 'Activa' : 'Pausada'}</span>
                       </div>
                       <p>{schedule.period_mode === 'fixed_12h_blocks' ? '12 h · bloques 00–12 / 12–24' : '24 h · día anterior completo'} · {schedule.formats.map((item) => item.toUpperCase()).join(' + ')}</p>
+                      <small>Horario: {schedule.period_mode === 'fixed_12h_blocks' ? `${schedule.send_time_local} / ${schedule.send_time_local_2 || '—'}` : schedule.send_time_local}</small>
                       <div className="report-schedule-recipients">
                         <span>Destinatarios</span>
                         <strong title={schedule.recipients.join(', ')}>{schedule.recipients.join(', ')}</strong>
@@ -755,10 +806,6 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
         ))}
       </div>
 
-      <div className="report-info-strip">
-        No se calcula Total Operativo global ni Balance de Agua. La medición Pozos Corporativos se conserva separada de los pozos individuales para evitar doble conteo.
-      </div>
-
       <article className="panel report-preview-dashboard">
         <div className="report-preview-head">
           <div>
@@ -777,17 +824,52 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
 
         <ReportPreviewTable
           title="Cortes por turno"
-          subtitle="Cortes administrativos con la misma respuesta del periodo."
-          headers={['Turno', 'Horario', 'Pozos Corporativos', 'Pozos', 'Líneas', 'Flujos', 'Estado']}
-          rows={shiftRows.map((item) => [item.turno, item.horario, formatMaybeMeasurement(item.entrada, 'm³'), formatMaybeMeasurement(item.pozos, 'm³'), formatMaybeMeasurement(item.lineas, 'm³'), formatMaybeMeasurement(item.flujos, 'm³'), item.estado])}
+          subtitle="Turnos provisionales 00:00–07:00, 07:00–15:00 y 15:00–24:00."
+          headers={['Turno', 'Horario', 'Pozos', 'TAM', 'Embotellado', 'Cisterna', 'Estado']}
+          rows={shiftRows.map((item) => [item.turno, item.horario, formatMaybeMeasurement(item.pozos, 'm³'), formatMaybeMeasurement(item.tam, 'm³'), formatMaybeMeasurement(item.embotellado, 'm³'), formatMaybeMeasurement(item.cisterna, 'm³'), item.estado])}
         />
-        <ReportPreviewTable title="Pozos Corporativos" headers={['Elemento', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación', 'Última actualización']} rows={entryRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, formatActiveMinutes(item.tiempo_activo_min ?? item.active_minutes), formatInteger(item.encendidos_periodo ?? item.start_count), item.comunicacion, item.validacion, item.ultima_actualizacion])} />
-        <ReportPreviewTable title="Pozos" headers={['Pozo', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación', 'Última actualización']} rows={wellRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, formatActiveMinutes(item.tiempo_activo_min ?? item.active_minutes), formatInteger(item.encendidos_periodo ?? item.start_count), item.comunicacion, item.validacion, item.ultima_actualizacion])} />
-        <ReportPreviewTable title="Líneas" headers={['Línea', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación', 'Última actualización']} rows={lineRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, formatActiveMinutes(item.tiempo_activo_min ?? item.active_minutes), formatInteger(item.encendidos_periodo ?? item.start_count), item.comunicacion, item.validacion, item.ultima_actualizacion])} />
-        {flowRows.length > 0 && <ReportPreviewTable title="Flujos" headers={['Flujo', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación', 'Última actualización']} rows={flowRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, formatActiveMinutes(item.tiempo_activo_min ?? item.active_minutes), formatInteger(item.encendidos_periodo ?? item.start_count), item.comunicacion, item.validacion, item.ultima_actualizacion])} />}
-        <ReportPreviewTable title="Niveles" headers={['Elemento', 'Nivel', 'Porcentaje', 'Mínimo', 'Máximo', 'Estado', 'Comunicación', 'Última actualización']} rows={levelRows.map((item) => [item.elemento, formatMeasurement(item.nivel_m, 'm'), formatMeasurement(item.porcentaje, '%'), formatMeasurement(item.nivel_minimo_m, 'm'), formatMeasurement(item.nivel_maximo_m, 'm'), item.estado, item.comunicacion, item.ultima_actualizacion])} />
-        <ReportPreviewTable title="Lámparas UV" headers={['Lámpara', 'ID', 'Age', 'UVT', 'Power', 'Flow', 'Dosis', 'Ignition', 'State', 'Status']} rows={uvRows.map((item) => [item.equipo, item.scada_id, formatInteger(item.agel), formatMeasurement(item.uvt, '%'), formatMeasurement(item.power, '%'), formatMeasurement(item.flow, 'm³/h'), formatMeasurement(item.dose, 'mJ/cm²'), formatInteger(item.ignition), item.estado_operativo, formatMeasurement(item.status, '%')])} />
-        <ReportPreviewTable title="Lecturas generales del sistema UV" headers={['UVT', 'Potencia', 'Flujo', 'Dosis', 'Comunicación', 'Última actualización']} rows={[[formatNumber(uvSummary.uvt, 2), formatNumber(uvSummary.potencia, 2), formatNumber(uvSummary.flujo, 2), formatNumber(uvSummary.dosis, 2), uvSummary.comunicacion || '—', uvSummary.ultima_actualizacion || '—']]} />
+        <ReportPreviewTable
+          title="Comparativo del periodo"
+          headers={[
+            'Módulo', 'Elemento',
+            comparativeHeaders.seleccionado || 'Seleccionado',
+            comparativeHeaders.ayer || 'Anterior',
+            comparativeHeaders.semana_anterior || 'Semana anterior',
+            comparativeHeaders.esta_semana || 'Esta semana',
+          ]}
+          rows={comparativeRows.map((item) => [
+            item.module, item.elemento,
+            formatMaybeMeasurement(item.hoy ?? item.seleccionado, 'm³'),
+            formatMaybeMeasurement(item.ayer, 'm³'),
+            formatMaybeMeasurement(item.semana_anterior, 'm³'),
+            formatMaybeMeasurement(item.esta_semana, 'm³'),
+          ])}
+        />
+        {historicalComparisonRows.length ? (
+          <ReportPreviewTable
+            title="Comparativo histórico"
+            headers={[
+              'Módulo', 'Elemento',
+              historicalComparisonHeaders.semana_pasada || 'Semana pasada',
+              historicalComparisonHeaders.hace_dos_semanas || 'Hace dos semanas',
+              historicalComparisonHeaders.un_mes_antes || 'Un mes antes',
+              historicalComparisonHeaders.dos_meses_antes || 'Dos meses antes',
+              historicalComparisonHeaders.tres_meses_antes || 'Tres meses antes',
+            ]}
+            rows={historicalComparisonRows.map((item) => [
+              item.module, item.elemento,
+              formatMaybeMeasurement(item.semana_pasada, 'm³'),
+              formatMaybeMeasurement(item.hace_dos_semanas, 'm³'),
+              formatMaybeMeasurement(item.un_mes_antes, 'm³'),
+              formatMaybeMeasurement(item.dos_meses_antes, 'm³'),
+              formatMaybeMeasurement(item.tres_meses_antes, 'm³'),
+            ])}
+          />
+        ) : null}
+        <ReportPreviewTable title="Pozos" headers={['Pozo', 'Flujo actual', 'Volumen del periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación', 'Última actualización']} rows={wellRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, formatActiveMinutes(item.tiempo_activo_min ?? item.active_minutes), formatInteger(item.encendidos_periodo ?? item.start_count), item.comunicacion, item.validacion, item.ultima_actualizacion])} />
+        <ReportPreviewTable title="Medidores de TAM" headers={['Medidor', 'Flujo actual', 'Volumen del periodo', 'Totalizador', 'Actividad', 'Comunicación', 'Validación']} rows={tamRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, item.comunicacion, item.validacion])} />
+        <ReportPreviewTable title="Medidores de embotellado" headers={['Medidor', 'Flujo actual', 'Volumen del periodo', 'Totalizador', 'Actividad', 'Comunicación', 'Validación']} rows={bottlingRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, item.comunicacion, item.validacion])} />
+        <ReportPreviewTable title="Medidor de cisterna" headers={['Medidor', 'Flujo actual', 'Volumen del periodo', 'Totalizador', 'Actividad', 'Comunicación', 'Validación']} rows={cisternRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, item.comunicacion, item.validacion])} />
       </article>
     </section>
   );

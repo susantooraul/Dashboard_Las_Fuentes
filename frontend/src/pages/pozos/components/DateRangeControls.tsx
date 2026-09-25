@@ -25,11 +25,13 @@ export interface DateRangeControlsProps {
   onAggregationChange?: (value: HistoryAggregation) => void;
   extraAction?: ReactNode;
   showHeader?: boolean;
+  showMeta?: boolean;
+  showStatus?: boolean;
 }
 
 export function rangeMeta(range: DateRange = {}, aggregation?: Period): RangeMeta {
   const period = aggregation || dateRangePeriod(range);
-  const rangeLabel = formatDateRangeStatus(range, 'Hoy');
+  const rangeLabel = formatDateRangeStatus(range, 'Hoy', period);
   return {
     period,
     periodLabel: periodLabel(period),
@@ -53,6 +55,8 @@ function DateRangeControls({
   onAggregationChange,
   extraAction,
   showHeader = true,
+  showMeta = true,
+  showStatus = true,
 }: DateRangeControlsProps) {
   const meta = rangeMeta(activeRange || draftRange, aggregation);
   const renderDateInput = (field: 'startDate' | 'endDate') => {
@@ -81,10 +85,12 @@ function DateRangeControls({
             {subtitle ? <div className="panel-subtitle">{subtitle}</div> : null}
           </>
         ) : null}
-        <div className="date-range-meta">
-          <span>{meta.periodTitle}</span>
-          <span>{meta.rangeLabel}</span>
-        </div>
+        {showMeta ? (
+          <div className="date-range-meta">
+            <span>{meta.periodTitle}</span>
+            <span>{meta.rangeLabel}</span>
+          </div>
+        ) : null}
       </div>
       <div className="date-range-fields">
         <label>
@@ -114,7 +120,7 @@ function DateRangeControls({
         <button type="button" className="date-range-apply" onClick={onApply}>Actualizar</button>
         {onReset ? <button type="button" className="date-range-reset" onClick={onReset}>Restablecer</button> : null}
         {extraAction}
-        <div className="date-range-status">{status || `${meta.periodTitle} · ${meta.rangeLabel}`}</div>
+        {showStatus ? <div className="date-range-status">{status || `${meta.periodTitle} · ${meta.rangeLabel}`}</div> : null}
       </div>
     </section>
   );
