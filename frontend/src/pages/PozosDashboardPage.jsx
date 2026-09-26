@@ -14,6 +14,7 @@ import '../styles/pages/pozos.css';
 import '../styles/pages/tam.css';
 import '../styles/pages/embotellado.css';
 import '../styles/pages/cisterna.css';
+import '../styles/pages/revision-diaria.css';
 
 const sectionMap = {
   dashboard: {

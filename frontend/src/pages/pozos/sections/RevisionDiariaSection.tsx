@@ -4,15 +4,15 @@ import ChartEmptyState from '../components/ChartEmptyState';
 import PanelHeader from '../components/PanelHeader';
 import StatusBadge from '../components/StatusBadge';
 import useDailyWaterReview from '../hooks/useDailyWaterReview';
+import { formatShiftDateTimeRange, todayInputDate } from '../dateUtils';
 import { asRecord, asRows, formatLocalDate, formatNumber, numberOrNull } from '../insurgentesUtils';
-import { todayInputDate } from '../dateUtils';
 import type { FlexibleRecord } from '../types';
 
 type GroupKey = 'pozos' | 'tam' | 'embotellado' | 'cisterna';
 
 const GROUP_LABELS: Record<GroupKey, string> = {
   pozos: 'Pozos',
-  tam: 'Medidores TAM',
+  tam: 'TAM',
   embotellado: 'Embotellado',
   cisterna: 'Cisterna',
 };
@@ -79,6 +79,25 @@ function comparisonRows(payload: FlexibleRecord): Array<{ key: GroupKey; selecte
   }));
 }
 
+function dateLabel(value: unknown): string {
+  const text = String(value || '').trim();
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return text || '—';
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+function activityTrend(items: FlexibleRecord[]): string {
+  if (!items.length) return 'Sin elementos';
+  return `${items.filter(isActive).length}/${items.length} con actividad`;
+}
+
+function shiftStatusType(status: unknown): string {
+  const value = String(status || '').toLowerCase();
+  if (value === 'partial') return 'warning';
+  if (value === 'pending') return 'idle';
+  return 'normal';
+}
+
 export default function RevisionDiariaSection() {
   const review = useDailyWaterReview();
   const payload = asRecord(review.data);
@@ -87,48 +106,60 @@ export default function RevisionDiariaSection() {
   const shifts = asRows(asRecord(payload.shifts).shifts);
   const comparisons = useMemo(() => comparisonRows(payload), [review.data]);
   const selectedDate = review.date || todayInputDate();
-  const allItems = [...groups.pozos, ...groups.tam, ...groups.embotellado, ...groups.cisterna];
-  const active = allItems.filter(isActive).length;
-  const partial = allItems.filter((item) => /parcial|revisi/i.test(qualityLabel(item))).length;
+  const comparisonPayload = asRecord(payload.comparisons);
+  const previousDay = asRecord(comparisonPayload.previous_day);
+  const previousWeek = asRecord(comparisonPayload.previous_week);
+  const selectedDateLabel = dateLabel(payload.date ?? selectedDate);
+  const previousDateLabel = dateLabel(previousDay.date ?? previousDay.end_date);
+  const previousWeekDateLabel = dateLabel(previousWeek.date ?? previousWeek.end_date);
 
   if (review.loading && !review.data) return <ChartEmptyState message="Cargando revisión diaria..." />;
 
   return (
-    <>
-      <section className="daily-modern-hero panel fade-up">
+    <div className="lf-review-page">
+      <section className="daily-modern-hero panel fade-up lf-review-hero">
         <div>
-          <span className="section-eyebrow">REVISIÓN DIARIA</span>
           <h2>Revisión diaria</h2>
-          <p>Estado operativo, volumen y cortes por turno del día seleccionado.</p>
         </div>
         <div className="daily-modern-datebox">
           <label><span>Día</span><input type="date" value={review.draftDate || selectedDate} onChange={(event) => review.setDraftDate(event.target.value)} /></label>
           <button type="button" className="btn primary" onClick={review.apply}>Actualizar</button>
           <button type="button" className="btn secondary" onClick={review.reset}>Restablecer</button>
-          <em>{review.isToday ? 'Actualización automática cada 60 s' : 'Día histórico sin polling activo'}</em>
+          <em>{review.refreshing ? 'Actualizando…' : review.isToday ? 'Actualización automática cada 60 s' : 'Día histórico sin polling activo'}</em>
         </div>
       </section>
 
-      {review.error ? <section className="panel"><ChartEmptyState message={review.error} /></section> : null}
+      {review.error && review.data ? <p className="lf-review-inline-warning">No se pudo actualizar la revisión. Se conserva el último dato válido.</p> : null}
+      {review.error && !review.data ? <section className="panel lf-review-error"><ChartEmptyState message={review.error} /></section> : null}
 
-      <section className="cards-grid daily-modern-kpis">
+      <section className="cards-grid daily-modern-kpis lf-review-kpis" aria-label="Volumen diario por proceso">
         {(Object.keys(GROUP_LABELS) as GroupKey[]).map((key) => {
           const total = volumeTotal(groups[key]);
-          return <KpiCard key={key} label={GROUP_LABELS[key]} value={total === null ? '—' : formatNumber(total)} unit={total === null ? '' : 'm³'} trend={`${groups[key].filter(isActive).length}/${groups[key].length} con actividad`} accent="blue" />;
+          return (
+            <KpiCard
+              key={key}
+              label={GROUP_LABELS[key]}
+              value={total === null ? '—' : formatNumber(total)}
+              unit={total === null ? '' : 'm³'}
+              trend={activityTrend(groups[key])}
+              accent="blue"
+            />
+          );
         })}
-        <KpiCard label="Elementos con actividad" value={`${active}/${allItems.length}`} unit="" trend="Elementos visibles de Las Fuentes" accent="cyan" />
-        <KpiCard label="Validación parcial" value={String(partial)} unit="elementos" trend={partial ? 'Revisar elementos marcados' : 'Sin incidencias de validación'} accent={partial ? 'amber' : 'green'} />
       </section>
 
-      <section className="panel fade-up daily-modern-shifts">
-        <PanelHeader title="Cortes por turno" subtitle={`Día consultado: ${selectedDate}. Turnos provisionales 00–07, 07–15 y 15–24.`} />
+      <section className="panel fade-up daily-modern-shifts lf-review-shifts">
+        <PanelHeader title="Cortes por turno" />
         <div className="daily-shift-card-grid">
           {shifts.map((shift) => (
             <article className={`daily-shift-card status-${String(shift.status)}`} key={String(shift.id)}>
-              <span>{String(shift.label || 'Turno').toUpperCase()}</span>
-              <small>{String(shift.schedule || '')}</small>
-              <strong>{String(shift.status_label || 'Sin estado')}</strong>
-              <StatusBadge type={String(shift.status) === 'partial' ? 'warning' : String(shift.status) === 'pending' ? 'idle' : 'normal'}>{String(shift.status_label || 'Sin estado')}</StatusBadge>
+              <header className="lf-review-shift-card__header">
+                <div>
+                  <span>{String(shift.label || 'Turno').toUpperCase()}</span>
+                  <small>{formatShiftDateTimeRange(selectedDate, shift.schedule)}</small>
+                </div>
+                <StatusBadge type={shiftStatusType(shift.status)}>{String(shift.status_label || 'Sin estado')}</StatusBadge>
+              </header>
               <div className="daily-shift-summary-grid">
                 {(Object.keys(GROUP_LABELS) as GroupKey[]).map((key) => {
                   const value = shiftGroupVolume(shift, key);
@@ -140,33 +171,64 @@ export default function RevisionDiariaSection() {
         </div>
       </section>
 
-      <section className="panel fade-up">
-        <PanelHeader title="Comparativo de volúmenes" subtitle="Día seleccionado, día anterior y misma fecha de la semana anterior." />
+      <section className="panel fade-up lf-review-comparison">
+        <PanelHeader title="Comparativo de volúmenes" />
         <div className="shift-table-wrap">
           <table className="shift-table">
-            <thead><tr><th>Proceso</th><th>Seleccionado · {selectedDate}</th><th>Día anterior</th><th>Semana anterior</th></tr></thead>
-            <tbody>{comparisons.map((row) => <tr key={row.key}><td>{GROUP_LABELS[row.key]}</td><td>{row.selected === null ? '—' : `${formatNumber(row.selected)} m³`}</td><td>{row.previous === null ? '—' : `${formatNumber(row.previous)} m³`}</td><td>{row.week === null ? '—' : `${formatNumber(row.week)} m³`}</td></tr>)}</tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="panel fade-up">
-        <PanelHeader title="Resumen de elementos" subtitle={review.refreshing ? 'Actualizando…' : `Revisión generada: ${formatLocalDate(payload.updated_at)}`} />
-        <div className="shift-table-wrap">
-          <table className="shift-table">
-            <thead><tr><th>Proceso</th><th>Elemento</th><th>Volumen</th><th>Actividad</th><th>Comunicación</th><th>Validación</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Proceso</th>
+                <th>Seleccionado · {selectedDateLabel}</th>
+                <th>Día anterior · {previousDateLabel}</th>
+                <th>Semana anterior · {previousWeekDateLabel}</th>
+              </tr>
+            </thead>
             <tbody>
-              {(Object.keys(GROUP_LABELS) as GroupKey[]).flatMap((key) => groups[key].map((item) => (
-                <tr key={`${key}-${String(item.id || item.sensor_id || item.name)}`}>
-                  <td>{GROUP_LABELS[key]}</td><td>{String(item.name || item.nombre || item.id || 'Elemento')}</td>
-                  <td>{volumeOf(item) === null ? '—' : `${formatNumber(volumeOf(item))} m³`}</td>
-                  <td>{isActive(item) ? 'Con actividad' : 'Sin actividad'}</td><td>{communicationLabel(item)}</td><td>{qualityLabel(item)}</td>
+              {comparisons.map((row) => (
+                <tr key={row.key}>
+                  <td>{GROUP_LABELS[row.key]}</td>
+                  <td>{row.selected === null ? '—' : `${formatNumber(row.selected)} m³`}</td>
+                  <td>{row.previous === null ? '—' : `${formatNumber(row.previous)} m³`}</td>
+                  <td>{row.week === null ? '—' : `${formatNumber(row.week)} m³`}</td>
                 </tr>
-              ))) }
+              ))}
             </tbody>
           </table>
         </div>
       </section>
-    </>
+
+      <section className="panel fade-up lf-review-elements">
+        <PanelHeader title="Resumen de elementos" />
+        {review.refreshing ? <p className="lf-review-refreshing">Actualizando…</p> : null}
+        <div className="shift-table-wrap">
+          <table className="shift-table">
+            <thead>
+              <tr>
+                <th>Proceso</th>
+                <th>Elemento</th>
+                <th>Volumen</th>
+                <th>Actividad</th>
+                <th>Comunicación</th>
+                <th>Validación</th>
+                <th>Última actualización</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(Object.keys(GROUP_LABELS) as GroupKey[]).flatMap((key) => groups[key].map((item) => (
+                <tr key={`${key}-${String(item.id || item.sensor_id || item.name)}`}>
+                  <td>{GROUP_LABELS[key]}</td>
+                  <td>{String(item.name || item.nombre || item.id || 'Elemento')}</td>
+                  <td>{volumeOf(item) === null ? '—' : `${formatNumber(volumeOf(item))} m³`}</td>
+                  <td>{isActive(item) ? 'Con actividad' : 'Sin actividad'}</td>
+                  <td>{communicationLabel(item)}</td>
+                  <td>{qualityLabel(item)}</td>
+                  <td>{formatLocalDate(item.updated ?? item.ultima_lectura ?? item.last_update ?? dashboard.last_update)}</td>
+                </tr>
+              )))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
   );
 }
