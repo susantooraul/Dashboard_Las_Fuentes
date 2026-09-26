@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import AdvancedElementHistoryPanel from '../components/AdvancedElementHistoryPanel';
+import type { DetailHistoryPeriodSummary } from '../components/AdvancedElementHistoryPanel';
+import DetailHistoryPeriodMetric from '../components/DetailHistoryPeriodMetric';
 import ChartEmptyState from '../components/ChartEmptyState';
 import ChartTooltip from '../components/ChartTooltip';
 import DetailElementNavigator from '../components/DetailElementNavigator';
-import DetailPeriodStatus from '../components/DetailPeriodStatus';
 import OperationalDetailHero from '../components/OperationalDetailHero';
 import PanelHeader from '../components/PanelHeader';
 import SqlChartDateControls from '../components/SqlChartDateControls';
@@ -47,6 +49,10 @@ function activityText(item: FlexibleRecord): string {
   return String(item.status || 'Sin estado');
 }
 
+function detailVolumeLabel(group: FlujosSectionProps['group']): string {
+  return group === 'cisterna' ? 'Volumen de salida' : 'Volumen consumido';
+}
+
 function validationText(item: FlexibleRecord): string {
   const status = String(item.period_status || '').toLowerCase();
   if (status === 'ok' || status === 'valid' || status === 'validado') return 'Válida';
@@ -66,6 +72,7 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
   const dashboard = asRecord(controller.dashboard);
   const allFlows = asRows(dashboard.flows).filter((item) => String(item.module_group || '') === group);
   const selectedFlow = itemId ? allFlows.find((item) => idOf(item) === itemId) : null;
+  const [detailPeriodSummary, setDetailPeriodSummary] = useState<DetailHistoryPeriodSummary | null>(null);
   const flows = selectedFlow ? [selectedFlow] : allFlows;
   const historySeries = asRows(historyController.data?.series);
   const visibleHistorySeries = itemId
@@ -93,13 +100,20 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
           status={String(selectedFlow.status || 'Sin estado')}
           statusType={String(selectedFlow.statusType || 'normal')}
           metrics={[
-            { label: 'Total día anterior', value: totalizerStartText(selectedFlow) },
-            { label: 'Volumen del periodo', value: periodVolumeText(selectedFlow) },
+            { label: 'Totalizador apertura', value: totalizerStartText(selectedFlow) },
+            { label: detailVolumeLabel(group), value: periodVolumeText(selectedFlow) },
             { label: 'Totalizador actual', value: totalizerCurrentText(selectedFlow) },
             { label: 'Flujo actual', value: flowText(selectedFlow) },
             { label: 'Tiempo activo', value: formatMinutes(activeMinutesValue(selectedFlow)) },
-            { label: 'Encendidos periodo', value: startCountText(selectedFlow) },
-            { label: 'Comunicación', value: String(selectedFlow.estado_comunicacion || 'Sin estado') },
+            { label: 'Encendidos', value: startCountText(selectedFlow) },
+            ...(sensorIdOf(selectedFlow) ? [{
+              label: 'Periodo seleccionado',
+              value: <DetailHistoryPeriodMetric
+                summary={detailPeriodSummary}
+                sensorId={sensorIdOf(selectedFlow)}
+                volumeLabel={detailVolumeLabel(group)}
+              />,
+            }] : []),
             { label: 'Última lectura', value: itemUpdateText(selectedFlow) },
           ]}
         >
@@ -110,12 +124,12 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
           <AdvancedElementHistoryPanel
             module="flow"
             sensorId={sensorIdOf(selectedFlow) as number}
-            title="Flujo del elemento"
-            sourceLabel="Flujo promedio del elemento · totalizador"
+            title="Histórico del medidor"
+            onPeriodSummaryChange={setDetailPeriodSummary}
           />
         ) : (
         <section className="panel chart-panel fade-up detail-history-panel">
-          <PanelHeader title="Histórico del elemento" subtitle="Flujo registrado para el periodo seleccionado." />
+          <PanelHeader title="Histórico del medidor" />
           <SqlChartDateControls controller={historyController} title="Rango de fechas" />
           {visibleHistoryHasData && chartRows.length && chartKeys.length ? (
             <ResponsiveContainer width="100%" height={390}>
@@ -136,17 +150,6 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
 
         <ShiftCutsPanel module="flujos" group={group} elementId={String(itemId)} variant="detail" title={`Cortes por turno · ${nameOf(selectedFlow)}`} />
 
-        <DetailPeriodStatus
-          rows={[
-            { label: 'Actividad', value: activityText(selectedFlow) },
-            { label: 'Comunicación', value: String(selectedFlow.estado_comunicacion || 'Sin estado') },
-            { label: 'Validación', value: validationText(selectedFlow) },
-            { label: 'Volumen del periodo', value: periodVolumeText(selectedFlow) },
-            { label: 'Tiempo activo', value: formatMinutes(activeMinutesValue(selectedFlow)) },
-            { label: 'Encendidos periodo', value: startCountText(selectedFlow) },
-            { label: 'Última actualización', value: itemUpdateText(selectedFlow) },
-          ]}
-        />
       </>
     );
   }
