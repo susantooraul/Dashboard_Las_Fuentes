@@ -10,6 +10,7 @@ import '../styles/reportes.css';
 import '../styles/insurgentesVisualPolish.css';
 import '../styles/insurgentesTheme.css';
 import '../styles/pages/resumen.css';
+import '../styles/pages/pozos.css';
 
 const sectionMap = {
   dashboard: {

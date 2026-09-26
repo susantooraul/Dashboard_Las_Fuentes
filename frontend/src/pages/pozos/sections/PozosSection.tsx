@@ -14,7 +14,7 @@ import ShiftCutsPanel from '../components/ShiftCutsPanel';
 import useSqlChartDashboard from '../hooks/useSqlChartDashboard';
 import useWaterModuleHistory from '../hooks/useWaterModuleHistory';
 import { asRecord, asRows, formatNumber, pivotCommonHistorySeries } from '../insurgentesUtils';
-import { activeMinutesValue, countActive, currentTotalizerValue, flowText, flowValue, itemUpdateText, periodVolumeText, periodVolumeValue, previousTotalizerValue, startCountText, sumValues, totalizerCurrentText, totalizerStartText, formatMinutes } from '../operationalPresentation';
+import { activeMinutesValue, countActive, currentTotalizerValue, flowText, flowValue, itemUpdateText, periodVolumeText, periodVolumeValue, startCountText, sumValues, totalizerCurrentText, totalizerStartText, formatMinutes } from '../operationalPresentation';
 import type { FlexibleRecord } from '../types';
 
 const colors = ['#38bdf8', '#22d3ee', '#34d399', '#fbbf24', '#a78bfa', '#fb7185'];
@@ -149,60 +149,57 @@ function PozosSection({ itemId }: PozosSectionProps) {
     );
   }
 
-  const totalPrevious = sumValues(allWells, previousTotalizerValue);
   const totalCurrent = sumValues(allWells, currentTotalizerValue);
   const totalPeriod = sumValues(allWells, periodVolumeValue);
   const totalFlow = sumValues(allWells, flowValue);
-  const totalActiveMinutes = sumValues(allWells, activeMinutesValue);
   const activeCount = countActive(allWells);
 
   return (
-    <>
-      <section className="insurgentes-hero panel fade-up insurgentes-hero--with-kpis">
-        <div>
+    <div className="lf-pozos-page">
+      <section className="insurgentes-hero panel fade-up insurgentes-hero--with-kpis lf-pozos-hero">
+        <div className="lf-pozos-hero__intro">
           <span className="section-eyebrow">Operación de pozos</span>
           <h2>Pozos</h2>
-          <p>Se muestran los cinco pozos confirmados de Planta Las Fuentes con su flujo instantáneo y totalizador.</p>
         </div>
-        <div className="insurgentes-hero-kpis" aria-label="Resumen operativo de pozos">
-          <article><span>Con actividad</span><strong>{activeCount}/{allWells.length || 5}</strong></article>
-          <article><span>Flujo total</span><strong>{totalFlow === null ? '—' : `${formatNumber(totalFlow)} L/s`}</strong></article>
-          <article><span>Total día anterior</span><strong>{totalPrevious === null ? '—' : `${formatNumber(totalPrevious)} m³`}</strong></article>
-          <article><span>Volumen bombeado</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
-          <article><span>Totalizador actual</span><strong>{totalCurrent === null ? '—' : `${formatNumber(totalCurrent)} m³`}</strong></article>
-          <article><span>Tiempo activo</span><strong>{formatMinutes(totalActiveMinutes)}</strong></article>
+        <div className="insurgentes-hero-kpis lf-pozos-hero__kpis" aria-label="Resumen operativo de pozos">
+          <article className="lf-pozos-kpi"><span>Operando</span><strong>{activeCount}/{allWells.length || 5}</strong></article>
+          <article className="lf-pozos-kpi lf-pozos-kpi--primary"><span>Bombeado hoy</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
+          <article className="lf-pozos-kpi"><span>Flujo total</span><strong>{totalFlow === null ? '—' : `${formatNumber(totalFlow)} L/s`}</strong></article>
+          <article className="lf-pozos-kpi"><span>Totalizador actual</span><strong>{totalCurrent === null ? '—' : `${formatNumber(totalCurrent)} m³`}</strong></article>
         </div>
       </section>
 
-      <ShiftCutsPanel module="pozos" />
-
-      <section className="insurgentes-equipment-grid">
+      <section className="insurgentes-equipment-grid lf-pozos-grid" aria-label="Pozos operativos">
         {wells.length ? wells.map((well) => (
           <Link
-            className="panel insurgentes-equipment-card insurgentes-clickable-card fade-up"
+            className="panel insurgentes-equipment-card insurgentes-clickable-card fade-up lf-pozos-card"
             key={idOf(well)}
             to={`/pozos/pozos/${encodeURIComponent(idOf(well))}${suffix}`}
             aria-label={`Abrir detalle de ${nameOf(well)}`}
           >
-            <div className="insurgentes-equipment-head">
-              <div>
-                <span>Pozo operativo</span>
-                <h3>{nameOf(well)}</h3>
-              </div>
+            <div className="insurgentes-equipment-head lf-pozos-card__head">
+              <h3>{nameOf(well)}</h3>
               <StatusBadge type={String(well.statusType || 'normal')}>{String(well.status || 'Sin datos')}</StatusBadge>
             </div>
-            <div className="insurgentes-metric-list">
-              <div><span>Total día anterior</span><strong>{totalizerStartText(well)}</strong></div>
-              <div><span>Volumen bombeado</span><strong>{periodVolumeText(well)}</strong></div>
-              <div><span>Totalizador actual</span><strong>{totalizerCurrentText(well)}</strong></div>
-              <div><span>Flujo actual</span><strong>{flowText(well)}</strong></div>
-              <div><span>Actividad</span><strong>{activityText(well)}</strong></div>
-              <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(well))}</strong></div>
-              <div><span>Encendidos periodo</span><strong>{startCountText(well)}</strong></div>
-              <div><span>Comunicación</span><strong>{String(well.estado_comunicacion || 'Sin estado')}</strong></div>
-              <div><span>Validación</span><strong>{validationText(well)}</strong></div>
+
+            <div className="lf-pozos-card__primary">
+              <div>
+                <span>Bombeado hoy</span>
+                <strong>{periodVolumeText(well)}</strong>
+              </div>
+              <div>
+                <span>Flujo actual</span>
+                <strong>{flowText(well)}</strong>
+              </div>
             </div>
-            <div className="insurgentes-equipment-footer">
+
+            <div className="lf-pozos-card__secondary">
+              <div><span>Totalizador actual</span><strong>{totalizerCurrentText(well)}</strong></div>
+              <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(well))}</strong></div>
+              <div><span>Encendidos</span><strong>{startCountText(well)}</strong></div>
+            </div>
+
+            <div className="insurgentes-equipment-footer lf-pozos-card__footer">
               <span>{itemUpdateText(well)}</span>
               <strong>Abrir detalle →</strong>
             </div>
@@ -212,7 +209,8 @@ function PozosSection({ itemId }: PozosSectionProps) {
 
       <OperationalModuleHistoryPanel initialModule="pozos" lockedModule="pozos" />
 
-    </>
+      <ShiftCutsPanel module="pozos" />
+    </div>
   );
 }
 
