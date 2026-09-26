@@ -25,10 +25,12 @@ function OperationalDetailHero({ backTo, typeLabel, title, status, statusType, d
 
   return (
     <section className="panel operational-detail-hero fade-up">
-      <div className="operational-detail-main">
+      <div className="operational-detail-back-row">
         <Link to={target} className="detail-back-link" aria-label={`Volver a ${typeLabel}`}>
           ← Volver
         </Link>
+      </div>
+      <div className="operational-detail-main">
         {children}
         <div className="operational-detail-title-block">
           <span className="section-eyebrow">Detalle operativo</span>

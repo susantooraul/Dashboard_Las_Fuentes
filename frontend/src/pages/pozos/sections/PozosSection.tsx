@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import AdvancedElementHistoryPanel from '../components/AdvancedElementHistoryPanel';
+import type { DetailHistoryPeriodSummary } from '../components/AdvancedElementHistoryPanel';
+import DetailHistoryPeriodMetric from '../components/DetailHistoryPeriodMetric';
 import ChartEmptyState from '../components/ChartEmptyState';
 import ChartTooltip from '../components/ChartTooltip';
 import DetailElementNavigator from '../components/DetailElementNavigator';
-import DetailPeriodStatus from '../components/DetailPeriodStatus';
 import OperationalDetailHero from '../components/OperationalDetailHero';
 import OperationalModuleHistoryPanel from '../components/OperationalModuleHistoryPanel';
 import PanelHeader from '../components/PanelHeader';
@@ -38,20 +40,6 @@ function sensorIdOf(item: FlexibleRecord): number | null {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
-function activityText(item: FlexibleRecord): string {
-  if (item.active === true) return 'Con actividad';
-  if (item.active === false) return 'Sin actividad';
-  return String(item.status || 'Sin estado');
-}
-
-function validationText(item: FlexibleRecord): string {
-  const status = String(item.period_status || '').toLowerCase();
-  if (status === 'ok' || status === 'valid' || status === 'validado') return 'Válida';
-  if (status === 'dato_en_revision' || status.includes('parcial') || status.includes('partial')) return 'Validación parcial';
-  if (status === 'sin_datos') return 'No disponible';
-  return periodVolumeText(item) === 'Sin datos' ? 'No disponible' : 'Válida';
-}
-
 function PozosSection({ itemId }: PozosSectionProps) {
   const location = useLocation();
   const controller = useSqlChartDashboard('pozos', undefined, {
@@ -62,6 +50,7 @@ function PozosSection({ itemId }: PozosSectionProps) {
   const dashboard = asRecord(controller.dashboard);
   const allWells = asRows(dashboard.wells || dashboard.pozos);
   const selectedWell = itemId ? allWells.find((item) => idOf(item) === itemId) : null;
+  const [detailPeriodSummary, setDetailPeriodSummary] = useState<DetailHistoryPeriodSummary | null>(null);
   const wells = selectedWell ? [selectedWell] : allWells;
   const historySeries = asRows(historyController.data?.series);
   const visibleHistorySeries = itemId
@@ -89,14 +78,20 @@ function PozosSection({ itemId }: PozosSectionProps) {
           status={String(selectedWell.status || 'Sin estado')}
           statusType={String(selectedWell.statusType || 'normal')}
           metrics={[
-            { label: 'Total día anterior', value: totalizerStartText(selectedWell) },
+            { label: 'Totalizador apertura', value: totalizerStartText(selectedWell) },
             { label: 'Volumen bombeado', value: periodVolumeText(selectedWell) },
             { label: 'Totalizador actual', value: totalizerCurrentText(selectedWell) },
             { label: 'Flujo actual', value: flowText(selectedWell) },
-            { label: 'Actividad', value: activityText(selectedWell) },
             { label: 'Tiempo activo', value: formatMinutes(activeMinutesValue(selectedWell)) },
-            { label: 'Encendidos periodo', value: startCountText(selectedWell) },
-            { label: 'Comunicación', value: String(selectedWell.estado_comunicacion || 'Sin estado') },
+            { label: 'Encendidos', value: startCountText(selectedWell) },
+            ...(sensorIdOf(selectedWell) ? [{
+              label: 'Periodo seleccionado',
+              value: <DetailHistoryPeriodMetric
+                summary={detailPeriodSummary}
+                sensorId={sensorIdOf(selectedWell)}
+                volumeLabel="Volumen bombeado"
+              />,
+            }] : []),
             { label: 'Última lectura', value: itemUpdateText(selectedWell) },
           ]}
         >
@@ -108,7 +103,7 @@ function PozosSection({ itemId }: PozosSectionProps) {
             module="well"
             sensorId={sensorIdOf(selectedWell) as number}
             title="Flujo de pozo"
-            sourceLabel="Flujo promedio del pozo · totalizador"
+            onPeriodSummaryChange={setDetailPeriodSummary}
           />
         ) : (
         <section className="panel chart-panel fade-up detail-history-panel">
@@ -133,17 +128,6 @@ function PozosSection({ itemId }: PozosSectionProps) {
 
         <ShiftCutsPanel module="pozos" elementId={String(itemId)} variant="detail" title={`Cortes por turno · ${nameOf(selectedWell)}`} />
 
-        <DetailPeriodStatus
-          rows={[
-            { label: 'Actividad', value: activityText(selectedWell) },
-            { label: 'Comunicación', value: String(selectedWell.estado_comunicacion || 'Sin estado') },
-            { label: 'Validación', value: validationText(selectedWell) },
-            { label: 'Volumen del periodo', value: periodVolumeText(selectedWell) },
-            { label: 'Tiempo activo', value: formatMinutes(activeMinutesValue(selectedWell)) },
-            { label: 'Encendidos periodo', value: startCountText(selectedWell) },
-            { label: 'Última actualización', value: itemUpdateText(selectedWell) },
-          ]}
-        />
 
       </>
     );
