@@ -188,11 +188,11 @@ function historyTtl(startDate: string, endDate: string): number {
   return startDate <= today && today <= endDate ? CURRENT_TTL_MS : HISTORY_TTL_MS;
 }
 
-function historyCacheKey(options: WaterHistoryRequestOptions): string {
+function historyCacheKey(options: WaterHistoryRequestOptions = {} as WaterHistoryRequestOptions): string {
   return ['history', options.module, options.sensorId, options.startDate, options.endDate, options.aggregation].join(':');
 }
 
-export async function fetchWaterHistory(options: WaterHistoryRequestOptions): Promise<WaterHistoryResponse> {
+export async function fetchWaterHistory(options: WaterHistoryRequestOptions = {} as WaterHistoryRequestOptions): Promise<WaterHistoryResponse> {
   const key = historyCacheKey(options);
   const ttlMs = historyTtl(options.startDate, options.endDate);
   const now = Date.now();
@@ -225,11 +225,11 @@ export async function fetchWaterHistory(options: WaterHistoryRequestOptions): Pr
   return request;
 }
 
-function moduleHistoryCacheKey(options: WaterModuleHistoryRequestOptions): string {
+function moduleHistoryCacheKey(options: WaterModuleHistoryRequestOptions = {} as WaterModuleHistoryRequestOptions): string {
   return ['history-module', options.module, options.startDate, options.endDate, options.aggregation].join(':');
 }
 
-export async function fetchWaterModuleHistory(options: WaterModuleHistoryRequestOptions): Promise<WaterModuleHistoryResponse> {
+export async function fetchWaterModuleHistory(options: WaterModuleHistoryRequestOptions = {} as WaterModuleHistoryRequestOptions): Promise<WaterModuleHistoryResponse> {
   const key = moduleHistoryCacheKey(options);
   const pendingKey = `${key}:${options.forceRefresh ? 'force' : 'normal'}`;
   const ttlMs = historyTtl(options.startDate, options.endDate);
