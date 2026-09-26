@@ -11,6 +11,7 @@ import '../styles/insurgentesVisualPolish.css';
 import '../styles/insurgentesTheme.css';
 import '../styles/pages/resumen.css';
 import '../styles/pages/pozos.css';
+import '../styles/pages/tam.css';
 
 const sectionMap = {
   dashboard: {

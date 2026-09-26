@@ -1,0 +1,167 @@
+/* LF-05 — jerarquía visual de la vista general de TAM.
+   Scope local: no modifica detalles, Pozos, Cisterna ni Embotellado. */
+
+[data-section='tam'] .lf-tam-page {
+  display: grid;
+  gap: 1.4rem;
+  min-width: 0;
+}
+
+[data-section='tam'] .lf-tam-hero {
+  align-items: start;
+}
+
+[data-section='tam'] .lf-tam-hero__intro {
+  align-self: center;
+}
+
+[data-section='tam'] .lf-tam-hero__intro h2 {
+  margin-bottom: 0;
+}
+
+[data-section='tam'] .lf-tam-hero__kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+[data-section='tam'] .lf-tam-kpi {
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+[data-section='tam'] .lf-tam-kpi--primary {
+  border-color: color-mix(in srgb, var(--primary, #38bdf8) 55%, transparent);
+  box-shadow: 0 14px 32px rgba(14, 165, 233, 0.12);
+}
+
+[data-section='tam'] .lf-tam-grid {
+  align-items: stretch;
+}
+
+[data-section='tam'] .lf-tam-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 100%;
+}
+
+[data-section='tam'] .lf-tam-card__head {
+  align-items: center;
+  min-height: 42px;
+}
+
+[data-section='tam'] .lf-tam-card__head h3 {
+  margin: 0;
+}
+
+[data-section='tam'] .lf-tam-card__primary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+[data-section='tam'] .lf-tam-card__primary > div {
+  min-width: 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 14px;
+  background: rgba(14, 165, 233, 0.08);
+}
+
+[data-section='tam'] .lf-tam-card__primary span,
+[data-section='tam'] .lf-tam-card__secondary span {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  color: var(--muted, #93a4b8);
+}
+
+[data-section='tam'] .lf-tam-card__primary strong {
+  display: block;
+  margin-top: 0.38rem;
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  line-height: 1.15;
+}
+
+[data-section='tam'] .lf-tam-card__secondary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+[data-section='tam'] .lf-tam-card__secondary > div {
+  min-width: 0;
+  padding: 0.72rem 0.78rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.16);
+}
+
+[data-section='tam'] .lf-tam-card__secondary strong {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+[data-section='tam'] .lf-tam-card__footer {
+  margin-top: auto;
+}
+
+.pozos-shell.theme-light [data-section='tam'] .lf-tam-kpi--primary {
+  border-color: rgba(2, 132, 199, 0.28);
+  box-shadow: 0 14px 30px rgba(2, 132, 199, 0.09);
+}
+
+.pozos-shell.theme-light [data-section='tam'] .lf-tam-card__primary > div {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.pozos-shell.theme-light [data-section='tam'] .lf-tam-card__secondary > div {
+  background: #ffffff;
+  border-color: #dbeafe;
+}
+
+.pozos-shell.theme-light [data-section='tam'] .lf-tam-card__primary span,
+.pozos-shell.theme-light [data-section='tam'] .lf-tam-card__secondary span {
+  color: #475569;
+}
+
+@media (max-width: 1180px) {
+  [data-section='tam'] .lf-tam-hero__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-section='tam'] .lf-tam-card__secondary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-section='tam'] .lf-tam-card__secondary > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  [data-section='tam'] .lf-tam-page {
+    gap: 1rem;
+  }
+
+  [data-section='tam'] .lf-tam-hero__kpis,
+  [data-section='tam'] .lf-tam-card__primary,
+  [data-section='tam'] .lf-tam-card__secondary {
+    grid-template-columns: 1fr;
+  }
+
+  [data-section='tam'] .lf-tam-card__secondary > div:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+
+  [data-section='tam'] .lf-tam-kpi {
+    min-height: 86px;
+  }
+}

@@ -86,6 +86,16 @@ function nameOf(item: FlexibleRecord): string {
   return String(item.name || item.nombre || item.id || 'Elemento');
 }
 
+function matchesAllowedElement(item: FlexibleRecord, allowedSet: Set<string> | null): boolean {
+  if (!allowedSet) return true;
+  const candidates = [
+    idOf(item),
+    item.sensor_id === null || item.sensor_id === undefined ? '' : String(item.sensor_id),
+    String(item.operational_key || ''),
+  ].filter(Boolean);
+  return candidates.some((candidate) => allowedSet.has(candidate));
+}
+
 function seriesKey(prefix: string, id: string): string {
   return `${prefix}_${id.replace(/[^a-zA-Z0-9_]+/g, '_')}`;
 }
@@ -393,11 +403,11 @@ function OperationalModuleHistoryPanel({
     [allowedElementIds?.join('|')],
   );
   const elements = useMemo(
-    () => allowedSet ? rawElements.filter((element) => allowedSet.has(idOf(element))) : rawElements,
+    () => allowedSet ? rawElements.filter((element) => matchesAllowedElement(element, allowedSet)) : rawElements,
     [rawElements, allowedSet],
   );
   const history = useMemo(
-    () => allowedSet ? rawHistory.filter((row) => allowedSet.has(idOf(row))) : rawHistory,
+    () => allowedSet ? rawHistory.filter((row) => matchesAllowedElement(row, allowedSet)) : rawHistory,
     [rawHistory, allowedSet],
   );
   const elementIdsKey = elements.map(idOf).join('|');

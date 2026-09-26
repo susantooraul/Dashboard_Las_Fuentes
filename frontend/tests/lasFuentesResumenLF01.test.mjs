@@ -18,8 +18,9 @@ assert.match(dashboard, /item\.sensor_id/, 'el filtro histórico debe derivarse 
 assert.match(dashboard, /OperationalAlertsPanel subtitle="" hideWhenEmpty/, 'las alertas saludables deben ocultarse en Resumen');
 
 assert.match(history, /allowedElementIds\?: string\[\]/, 'falta contrato de filtro del histórico compartido');
-assert.match(history, /rawElements\.filter\(\(element\) => allowedSet\.has\(idOf\(element\)\)\)/, 'los elementos visibles deben filtrarse');
-assert.match(history, /rawHistory\.filter\(\(row\) => allowedSet\.has\(idOf\(row\)\)\)/, 'las filas históricas deben filtrarse');
+assert.match(history, /matchesAllowedElement\(element, allowedSet\)/, 'los elementos visibles deben filtrarse');
+assert.match(history, /matchesAllowedElement\(row, allowedSet\)/, 'las filas históricas deben filtrarse');
+assert.match(history, /String\(item\.sensor_id\)/, 'el filtro compartido debe aceptar sensor_id además del id operativo');
 assert.match(history, /selectedIds/, 'las exportaciones deben conservar la selección visible');
 assert.match(history, /exportableSensorIds/, 'Excel 5 min debe usar sensores visibles');
 

@@ -8,6 +8,7 @@ import ChartEmptyState from '../components/ChartEmptyState';
 import ChartTooltip from '../components/ChartTooltip';
 import DetailElementNavigator from '../components/DetailElementNavigator';
 import OperationalDetailHero from '../components/OperationalDetailHero';
+import OperationalModuleHistoryPanel from '../components/OperationalModuleHistoryPanel';
 import PanelHeader from '../components/PanelHeader';
 import SqlChartDateControls from '../components/SqlChartDateControls';
 import StatusBadge from '../components/StatusBadge';
@@ -51,6 +52,12 @@ function activityText(item: FlexibleRecord): string {
 
 function detailVolumeLabel(group: FlujosSectionProps['group']): string {
   return group === 'cisterna' ? 'Volumen de salida' : 'Volumen consumido';
+}
+
+function generalVolumeLabel(group: FlujosSectionProps['group']): string {
+  if (group === 'tam') return 'Consumo hoy';
+  if (group === 'cisterna') return 'Salida hoy';
+  return 'Consumo hoy';
 }
 
 function validationText(item: FlexibleRecord): string {
@@ -160,6 +167,74 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
   const totalFlow = sumValues(allFlows, flowValue);
   const totalActiveMinutes = sumValues(allFlows, activeMinutesValue);
   const activeCount = countActive(allFlows);
+
+  if (group === 'tam') {
+    const tamElementIds = allFlows.map(idOf).filter(Boolean);
+
+    return (
+      <div className="lf-tam-page">
+        <section className="insurgentes-hero panel fade-up insurgentes-hero--with-kpis lf-tam-hero">
+          <div className="lf-tam-hero__intro">
+            <span className="section-eyebrow">{eyebrow}</span>
+            <h2>{title}</h2>
+          </div>
+          <div className="insurgentes-hero-kpis lf-tam-hero__kpis" aria-label="Resumen operativo de TAM">
+            <article className="lf-tam-kpi"><span>Operando</span><strong>{activeCount}/{allFlows.length}</strong></article>
+            <article className="lf-tam-kpi lf-tam-kpi--primary"><span>{generalVolumeLabel(group)}</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
+            <article className="lf-tam-kpi"><span>Flujo total</span><strong>{totalFlow === null ? '—' : `${formatNumber(totalFlow)} L/s`}</strong></article>
+            <article className="lf-tam-kpi"><span>Totalizador actual</span><strong>{totalCurrent === null ? '—' : `${formatNumber(totalCurrent)} m³`}</strong></article>
+          </div>
+        </section>
+
+        <section className="insurgentes-equipment-grid two-columns lf-tam-grid" aria-label="Medidores operativos de TAM">
+          {flows.length ? flows.map((flow) => (
+            <Link
+              className="panel insurgentes-equipment-card insurgentes-clickable-card fade-up lf-tam-card"
+              key={idOf(flow)}
+              to={`${basePath}/${encodeURIComponent(idOf(flow))}${suffix}`}
+              aria-label={`Abrir detalle de ${nameOf(flow)}`}
+            >
+              <div className="insurgentes-equipment-head lf-tam-card__head">
+                <h3>{nameOf(flow)}</h3>
+                <StatusBadge type={String(flow.statusType || 'normal')}>{String(flow.status || 'Sin datos')}</StatusBadge>
+              </div>
+
+              <div className="lf-tam-card__primary">
+                <div>
+                  <span>Consumo hoy</span>
+                  <strong>{periodVolumeText(flow)}</strong>
+                </div>
+                <div>
+                  <span>Flujo actual</span>
+                  <strong>{flowText(flow)}</strong>
+                </div>
+              </div>
+
+              <div className="lf-tam-card__secondary">
+                <div><span>Totalizador actual</span><strong>{totalizerCurrentText(flow)}</strong></div>
+                <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(flow))}</strong></div>
+                <div><span>Encendidos</span><strong>{startCountText(flow)}</strong></div>
+              </div>
+
+              <div className="insurgentes-equipment-footer lf-tam-card__footer">
+                <span>{itemUpdateText(flow)}</span>
+                <strong>Abrir detalle →</strong>
+              </div>
+            </Link>
+          )) : <ChartEmptyState message={controller.loading ? 'Cargando medidores...' : 'Sin datos operativos de los medidores configurados.'} />}
+        </section>
+
+        <OperationalModuleHistoryPanel
+          initialModule="flujos"
+          lockedModule="flujos"
+          allowedElementIds={tamElementIds}
+          titleOverride="Histórico operativo · TAM"
+        />
+
+        <ShiftCutsPanel module="flujos" group="tam" title="Cortes por turno · Medidores de TAM" />
+      </div>
+    );
+  }
 
   return (
     <>
