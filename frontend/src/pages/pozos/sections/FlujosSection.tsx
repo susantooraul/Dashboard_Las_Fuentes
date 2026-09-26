@@ -16,7 +16,7 @@ import ShiftCutsPanel from '../components/ShiftCutsPanel';
 import useSqlChartDashboard from '../hooks/useSqlChartDashboard';
 import useWaterModuleHistory from '../hooks/useWaterModuleHistory';
 import { asRecord, asRows, formatNumber, pivotCommonHistorySeries } from '../insurgentesUtils';
-import { activeMinutesValue, countActive, currentTotalizerValue, flowText, flowValue, itemUpdateText, periodVolumeText, periodVolumeValue, previousTotalizerValue, startCountText, sumValues, totalizerCurrentText, totalizerStartText, formatMinutes } from '../operationalPresentation';
+import { activeMinutesValue, countActive, currentTotalizerValue, flowText, flowValue, itemUpdateText, periodVolumeText, periodVolumeValue, startCountText, sumValues, totalizerCurrentText, totalizerStartText, formatMinutes } from '../operationalPresentation';
 import type { FlexibleRecord } from '../types';
 
 const colors = ['#38bdf8', '#34d399'];
@@ -44,12 +44,6 @@ function sensorIdOf(item: FlexibleRecord): number | null {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
-function activityText(item: FlexibleRecord): string {
-  if (item.active === true) return 'Con actividad';
-  if (item.active === false) return 'Sin actividad';
-  return String(item.status || 'Sin estado');
-}
-
 function detailVolumeLabel(group: FlujosSectionProps['group']): string {
   return group === 'cisterna' ? 'Volumen de salida' : 'Volumen consumido';
 }
@@ -60,14 +54,6 @@ function generalVolumeLabel(group: FlujosSectionProps['group']): string {
   return 'Consumo hoy';
 }
 
-function validationText(item: FlexibleRecord): string {
-  const status = String(item.period_status || '').toLowerCase();
-  if (status === 'ok' || status === 'valid' || status === 'validado') return 'Válida';
-  if (status === 'parcial' || status === 'partial' || status === 'validacion_parcial') return 'Validación parcial';
-  if (status === 'dato_en_revision') return 'Validación parcial';
-  if (status === 'sin_datos') return 'No disponible';
-  return periodVolumeText(item) === 'Sin datos' ? 'No disponible' : 'Válida';
-}
 
 function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectionProps) {
   const location = useLocation();
@@ -161,11 +147,9 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
     );
   }
 
-  const totalPrevious = sumValues(allFlows, previousTotalizerValue);
   const totalCurrent = sumValues(allFlows, currentTotalizerValue);
   const totalPeriod = sumValues(allFlows, periodVolumeValue);
   const totalFlow = sumValues(allFlows, flowValue);
-  const totalActiveMinutes = sumValues(allFlows, activeMinutesValue);
   const activeCount = countActive(allFlows);
 
   if (group === 'tam') {
@@ -305,61 +289,75 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
     );
   }
 
-  return (
-    <>
-      <section className="insurgentes-hero panel fade-up insurgentes-hero--with-kpis">
-        <div>
-          <span className="section-eyebrow">{eyebrow}</span>
-          <h2>{title}</h2>
-          <p>Lecturas instantáneas y totalizadores de los medidores confirmados para esta área.</p>
-        </div>
-        <div className="insurgentes-hero-kpis" aria-label="Resumen operativo de flujos">
-          <article><span>Con actividad</span><strong>{activeCount}/{allFlows.length}</strong></article>
-          <article><span>Flujo total</span><strong>{totalFlow === null ? '—' : `${formatNumber(totalFlow)} L/s`}</strong></article>
-          <article><span>Total día anterior</span><strong>{totalPrevious === null ? '—' : `${formatNumber(totalPrevious)} m³`}</strong></article>
-          <article><span>Volumen del periodo</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
-          <article><span>Totalizador actual</span><strong>{totalCurrent === null ? '—' : `${formatNumber(totalCurrent)} m³`}</strong></article>
-          <article><span>Tiempo activo</span><strong>{formatMinutes(totalActiveMinutes)}</strong></article>
-        </div>
-      </section>
+  if (group === 'cisterna') {
+    const cisternaElementIds = allFlows.map(idOf).filter(Boolean);
 
-      <ShiftCutsPanel module="flujos" group={group} title={`Cortes por turno · ${title}`} />
+    return (
+      <div className="lf-cisterna-page">
+        <section className="insurgentes-hero panel fade-up insurgentes-hero--with-kpis lf-cisterna-hero">
+          <div className="lf-cisterna-hero__intro">
+            <span className="section-eyebrow">{eyebrow}</span>
+            <h2>{title}</h2>
+          </div>
+          <div className="insurgentes-hero-kpis lf-cisterna-hero__kpis" aria-label="Resumen operativo de Cisterna">
+            <article className="lf-cisterna-kpi"><span>Operando</span><strong>{activeCount}/{allFlows.length}</strong></article>
+            <article className="lf-cisterna-kpi lf-cisterna-kpi--primary"><span>{generalVolumeLabel(group)}</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
+            <article className="lf-cisterna-kpi"><span>Flujo actual</span><strong>{totalFlow === null ? '—' : `${formatNumber(totalFlow)} L/s`}</strong></article>
+            <article className="lf-cisterna-kpi"><span>Totalizador actual</span><strong>{totalCurrent === null ? '—' : `${formatNumber(totalCurrent)} m³`}</strong></article>
+          </div>
+        </section>
 
-      <section className="insurgentes-equipment-grid two-columns">
-        {flows.length ? flows.map((flow) => (
-          <Link
-            className="panel insurgentes-equipment-card insurgentes-clickable-card fade-up"
-            key={idOf(flow)}
-            to={`${basePath}/${encodeURIComponent(idOf(flow))}${suffix}`}
-            aria-label={`Abrir detalle de ${nameOf(flow)}`}
-          >
-            <div className="insurgentes-equipment-head">
-              <div>
-                <span>Medidor configurado</span>
+        <section className="insurgentes-equipment-grid lf-cisterna-grid" aria-label="Medidor operativo de Cisterna">
+          {flows.length ? flows.map((flow) => (
+            <Link
+              className="panel insurgentes-equipment-card insurgentes-clickable-card fade-up lf-cisterna-card"
+              key={idOf(flow)}
+              to={`${basePath}/${encodeURIComponent(idOf(flow))}${suffix}`}
+              aria-label={`Abrir detalle de ${nameOf(flow)}`}
+            >
+              <div className="insurgentes-equipment-head lf-cisterna-card__head">
                 <h3>{nameOf(flow)}</h3>
+                <StatusBadge type={String(flow.statusType || 'normal')}>{String(flow.status || 'Sin datos')}</StatusBadge>
               </div>
-              <StatusBadge type={String(flow.statusType || 'normal')}>{String(flow.status || 'Sin datos')}</StatusBadge>
-            </div>
-            <div className="insurgentes-metric-list">
-              <div><span>Total día anterior</span><strong>{totalizerStartText(flow)}</strong></div>
-              <div><span>Volumen del periodo</span><strong>{periodVolumeText(flow)}</strong></div>
-              <div><span>Totalizador actual</span><strong>{totalizerCurrentText(flow)}</strong></div>
-              <div><span>Flujo actual</span><strong>{flowText(flow)}</strong></div>
-              <div><span>Actividad</span><strong>{activityText(flow)}</strong></div>
-              <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(flow))}</strong></div>
-              <div><span>Encendidos periodo</span><strong>{startCountText(flow)}</strong></div>
-              <div><span>Comunicación</span><strong>{String(flow.estado_comunicacion || 'Sin estado')}</strong></div>
-              <div><span>Validación</span><strong>{validationText(flow)}</strong></div>
-            </div>
-            <div className="insurgentes-equipment-footer">
-              <span>{itemUpdateText(flow)}</span>
-              <strong>Abrir detalle →</strong>
-            </div>
-          </Link>
-        )) : <ChartEmptyState message={controller.loading ? 'Cargando medidores...' : 'Sin datos operativos de los medidores configurados.'} />}
-      </section>
-    </>
-  );
+
+              <div className="lf-cisterna-card__primary">
+                <div>
+                  <span>Salida hoy</span>
+                  <strong>{periodVolumeText(flow)}</strong>
+                </div>
+                <div>
+                  <span>Flujo actual</span>
+                  <strong>{flowText(flow)}</strong>
+                </div>
+              </div>
+
+              <div className="lf-cisterna-card__secondary">
+                <div><span>Totalizador actual</span><strong>{totalizerCurrentText(flow)}</strong></div>
+                <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(flow))}</strong></div>
+                <div><span>Encendidos</span><strong>{startCountText(flow)}</strong></div>
+              </div>
+
+              <div className="insurgentes-equipment-footer lf-cisterna-card__footer">
+                <span>{itemUpdateText(flow)}</span>
+                <strong>Abrir detalle →</strong>
+              </div>
+            </Link>
+          )) : <ChartEmptyState message={controller.loading ? 'Cargando medidor...' : 'Sin datos operativos del medidor de cisterna.'} />}
+        </section>
+
+        <OperationalModuleHistoryPanel
+          initialModule="flujos"
+          lockedModule="flujos"
+          allowedElementIds={cisternaElementIds}
+          titleOverride="Histórico operativo · Cisterna"
+        />
+
+        <ShiftCutsPanel module="flujos" group="cisterna" title="Cortes por turno · Cisterna" />
+      </div>
+    );
+  }
+
+  return <ChartEmptyState message="Grupo de flujos no disponible." />;
 }
 
 export default FlujosSection;

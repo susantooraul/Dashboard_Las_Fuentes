@@ -13,6 +13,7 @@ import '../styles/pages/resumen.css';
 import '../styles/pages/pozos.css';
 import '../styles/pages/tam.css';
 import '../styles/pages/embotellado.css';
+import '../styles/pages/cisterna.css';
 
 const sectionMap = {
   dashboard: {
