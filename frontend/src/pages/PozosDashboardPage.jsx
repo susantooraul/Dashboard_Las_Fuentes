@@ -9,6 +9,7 @@ import ReportesSection from './pozos/sections/ReportesSection';
 import '../styles/reportes.css';
 import '../styles/insurgentesVisualPolish.css';
 import '../styles/insurgentesTheme.css';
+import '../styles/pages/resumen.css';
 
 const sectionMap = {
   dashboard: {

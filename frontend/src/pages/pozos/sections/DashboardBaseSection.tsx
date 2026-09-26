@@ -1,10 +1,21 @@
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import KpiCard from '../../../components/KpiCard';
 import ChartEmptyState from '../components/ChartEmptyState';
-import PanelHeader from '../components/PanelHeader';
+import OperationalAlertsPanel from '../components/OperationalAlertsPanel';
+import OperationalModuleHistoryPanel from '../components/OperationalModuleHistoryPanel';
 import useSqlChartDashboard from '../hooks/useSqlChartDashboard';
 import { asRecord, asRows, formatLocalDate, formatNumber, numberOrNull } from '../insurgentesUtils';
 import type { FlexibleRecord } from '../types';
+
+type SummaryScopeKey = 'pozos' | 'tam' | 'embotellado' | 'cisterna';
+
+type SummaryProcess = {
+  key: SummaryScopeKey;
+  title: string;
+  route: string;
+  volumeLabel: string;
+  items: FlexibleRecord[];
+};
 
 function isActive(item: FlexibleRecord): boolean {
   return item.active === true || String(item.status || '').toLowerCase().includes('activo');
@@ -21,12 +32,17 @@ function flowSummary(items: FlexibleRecord[]): { value: number; hasData: boolean
   return { value: values.reduce((sum, value) => sum + value, 0), hasData: values.length > 0 };
 }
 
-function volumeSummary(items: FlexibleRecord[]): { value: number; included: number; total: number } {
+function volumeSummary(items: FlexibleRecord[]): { value: number; hasData: boolean; included: number; total: number } {
   const values = items
     .filter((item) => String(item.period_status || '').toLowerCase() === 'valid')
     .map((item) => numberOrNull(item.period_m3 ?? item.period_delta_m3))
     .filter((value): value is number => value !== null);
-  return { value: values.reduce((sum, value) => sum + value, 0), included: values.length, total: items.length };
+  return {
+    value: values.reduce((sum, value) => sum + value, 0),
+    hasData: values.length > 0,
+    included: values.length,
+    total: items.length,
+  };
 }
 
 function summaryDayLabel(dashboard: FlexibleRecord): string {
@@ -35,16 +51,45 @@ function summaryDayLabel(dashboard: FlexibleRecord): string {
   return match ? `${match[3]}/${match[2]}/${match[1]} · 00:00 → última lectura` : 'Hoy · 00:00 → última lectura';
 }
 
-function flowCard(label: string, items: FlexibleRecord[], accent: 'blue' | 'cyan' | 'green' = 'blue') {
-  const summary = flowSummary(items);
+function historySensorIds(items: FlexibleRecord[]): string[] {
+  return items
+    .map((item) => numberOrNull(item.sensor_id))
+    .filter((value): value is number => value !== null && Number.isInteger(value) && value > 0)
+    .map(String);
+}
+
+function SummaryProcessCard({ process }: { process: SummaryProcess }) {
+  const flow = flowSummary(process.items);
+  const volume = volumeSummary(process.items);
+  const active = activityCount(process.items);
+
   return (
-    <KpiCard
-      label={label}
-      value={summary.hasData ? formatNumber(summary.value) : '—'}
-      unit={summary.hasData ? 'L/s' : ''}
-      trend={`${activityCount(items)}/${items.length} medidores con actividad`}
-      accent={accent}
-    />
+    <Link className="las-fuentes-summary-process-card" to={process.route}>
+      <div className="las-fuentes-summary-process-head">
+        <span>{process.title}</span>
+        <em>Abrir módulo →</em>
+      </div>
+      <div className="las-fuentes-summary-process-primary">
+        <small>{process.volumeLabel}</small>
+        <div>
+          <strong>{volume.hasData ? formatNumber(volume.value) : '—'}</strong>
+          <span>{volume.hasData ? 'm³' : ''}</span>
+        </div>
+      </div>
+      <div className="las-fuentes-summary-process-secondary">
+        <div>
+          <small>Flujo actual</small>
+          <strong>{flow.hasData ? `${formatNumber(flow.value)} L/s` : '—'}</strong>
+        </div>
+        <div>
+          <small>Con actividad</small>
+          <strong>{active}/{process.items.length}</strong>
+        </div>
+      </div>
+      <div className="las-fuentes-summary-process-foot">
+        <span>{volume.included}/{volume.total} con volumen válido</span>
+      </div>
+    </Link>
   );
 }
 
@@ -53,79 +98,74 @@ function DashboardBaseSection() {
     includeHistory: false,
     includePeriodDeltas: true,
   });
+  const [historyScope, setHistoryScope] = useState<SummaryScopeKey>('pozos');
   const dashboard = asRecord(controller.dashboard);
   const wells = asRows(dashboard.wells || dashboard.pozos);
   const flows = asRows(dashboard.flows);
   const tam = flows.filter((item) => String(item.module_group || '') === 'tam');
   const bottling = flows.filter((item) => String(item.module_group || '') === 'embotellado');
   const cistern = flows.filter((item) => String(item.module_group || '') === 'cisterna');
-  const wellsFlow = flowSummary(wells);
-  const wellsVolume = volumeSummary(wells);
   const periodLabel = summaryDayLabel(dashboard);
 
-  const quickLinks = [
-    { to: '/pozos/pozos', title: 'Pozos', items: wells, unit: 'pozos', detail: 'Pozo 1 a Pozo 5' },
-    { to: '/pozos/tam', title: 'Medidores de TAM', items: tam, unit: 'medidores', detail: 'Salidas DEF, entradas PC, llegada de pozo y entrada TAM' },
-    { to: '/pozos/cisterna', title: 'Medidor de cisterna', items: cistern, unit: 'medidor', detail: 'Salida de cisterna' },
-    { to: '/pozos/embotellado', title: 'Medidores de embotellado', items: bottling, unit: 'medidores', detail: 'Entradas PC 1–3 y CIP' },
-  ];
+  const processes = useMemo<SummaryProcess[]>(() => [
+    { key: 'pozos', title: 'Pozos', route: '/pozos/pozos', volumeLabel: 'Bombeado hoy', items: wells },
+    { key: 'tam', title: 'TAM', route: '/pozos/tam', volumeLabel: 'Consumo hoy', items: tam },
+    { key: 'embotellado', title: 'Embotellado', route: '/pozos/embotellado', volumeLabel: 'Consumo hoy', items: bottling },
+    { key: 'cisterna', title: 'Cisterna', route: '/pozos/cisterna', volumeLabel: 'Salida hoy', items: cistern },
+  ], [wells, tam, bottling, cistern]);
+
+  const selectedProcess = processes.find((process) => process.key === historyScope) || processes[0];
+  const selectedHistoryModule = selectedProcess.key === 'pozos' ? 'pozos' : 'flujos';
+  const selectedHistoryIds = selectedProcess.key === 'pozos' ? undefined : historySensorIds(selectedProcess.items);
 
   return (
     <>
-      <section className="insurgentes-hero panel fade-up insurgentes-summary-hero">
+      <section className="insurgentes-hero panel fade-up insurgentes-summary-hero las-fuentes-summary-hero">
         <div className="insurgentes-summary-head">
           <div className="insurgentes-summary-copy">
             <span className="section-eyebrow">DASHBOARD ARCA · PLANTA LAS FUENTES</span>
             <h2>Resumen operativo de agua</h2>
-            <p>Vista general de los medidores confirmados de pozos, TAM, cisterna y embotellado.</p>
           </div>
           <div className="insurgentes-hero-state">
             <span>Estado general</span>
             <strong>{controller.loading ? 'Actualizando información' : 'Información actualizada'}</strong>
             <small>Última actualización: {formatLocalDate(dashboard.last_update)}</small>
-            <small>Volúmenes del resumen: {periodLabel}</small>
+            <small>{periodLabel}</small>
           </div>
         </div>
 
-        <div className="cards-grid insurgentes-kpi-grid insurgentes-summary-kpis">
-          <KpiCard
-            label="Flujo actual · pozos"
-            value={wellsFlow.hasData ? formatNumber(wellsFlow.value) : '—'}
-            unit={wellsFlow.hasData ? 'L/s' : ''}
-            trend={`${activityCount(wells)}/${wells.length} pozos con actividad`}
-            accent="blue"
-          />
-          <KpiCard
-            label="Volumen de pozos · hoy"
-            value={wellsVolume.included ? formatNumber(wellsVolume.value) : '—'}
-            unit={wellsVolume.included ? 'm³' : ''}
-            trend={`${periodLabel} · ${wellsVolume.included}/${wellsVolume.total} con volumen válido`}
-            accent="cyan"
-          />
-          {flowCard('Flujo actual · TAM', tam, 'blue')}
-          {flowCard('Flujo actual · embotellado', bottling, 'green')}
-          {flowCard('Flujo actual · salida de cisterna', cistern, 'cyan')}
-        </div>
-      </section>
-
-      <section className="panel fade-up insurgentes-access-panel">
-        <PanelHeader title="Accesos operativos" subtitle="Módulos y medidores confirmados para Planta Las Fuentes." />
-        <div className="insurgentes-quick-grid">
-          {quickLinks.map((item) => (
-            <Link className="insurgentes-quick-card insurgentes-clickable-card" to={item.to} key={item.to}>
-              <span className="insurgentes-quick-title">{item.title}</span>
-              <div className="insurgentes-quick-value">
-                <strong>{item.items.length}</strong>
-                <small>{item.unit}</small>
-              </div>
-              <p>{item.detail}</p>
-              <em>Abrir módulo →</em>
-            </Link>
+        <div className="las-fuentes-summary-process-grid" aria-label="Procesos principales de Las Fuentes">
+          {processes.map((process) => (
+            <SummaryProcessCard process={process} key={process.key} />
           ))}
         </div>
       </section>
 
-      {controller.error ? <ChartEmptyState message="No se pudo actualizar el resumen actual. Se conservan los módulos disponibles." /> : null}
+      <section className="las-fuentes-summary-history-shell">
+        <div className="las-fuentes-summary-history-switch" role="group" aria-label="Proceso del histórico del resumen">
+          {processes.map((process) => (
+            <button
+              key={process.key}
+              type="button"
+              className={historyScope === process.key ? 'active' : ''}
+              onClick={() => setHistoryScope(process.key)}
+            >
+              {process.title}
+            </button>
+          ))}
+        </div>
+        <OperationalModuleHistoryPanel
+          key={selectedProcess.key}
+          initialModule={selectedHistoryModule}
+          lockedModule={selectedHistoryModule}
+          allowedElementIds={selectedHistoryIds}
+          titleOverride={`Histórico operativo · ${selectedProcess.title}`}
+        />
+      </section>
+
+      <OperationalAlertsPanel subtitle="" hideWhenEmpty />
+
+      {controller.error ? <ChartEmptyState message="No se pudo actualizar el resumen actual. Se conserva la última información disponible cuando existe." /> : null}
     </>
   );
 }

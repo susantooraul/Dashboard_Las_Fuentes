@@ -350,9 +350,16 @@ function pdfMetricFor(metric: MetricKey): ModuleHistoryExportMetric {
 interface OperationalModuleHistoryPanelProps {
   initialModule?: ModuleKey;
   lockedModule?: ModuleKey;
+  allowedElementIds?: string[];
+  titleOverride?: string;
 }
 
-function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }: OperationalModuleHistoryPanelProps) {
+function OperationalModuleHistoryPanel({
+  initialModule = 'pozos',
+  lockedModule,
+  allowedElementIds,
+  titleOverride,
+}: OperationalModuleHistoryPanelProps) {
   const [moduleKey, setModuleKey] = useState<ModuleKey>(lockedModule || initialModule);
   const [metric, setMetric] = useState<MetricKey>('flow');
   const [totalizerDisplay, setTotalizerDisplay] = useState<TotalizerDisplay>('delta');
@@ -375,12 +382,24 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
   const controller = hydraulicModule ? commonController : legacyController;
   const dashboard = asRecord(legacyController.dashboard);
   const commonSeries = hydraulicModule ? (commonController.data?.series || []) : [];
-  const elements = hydraulicModule
+  const rawElements = hydraulicModule
     ? commonHistoryElements(commonSeries)
     : asRows(dashboard[moduleConfig.elementsField]);
-  const history = hydraulicModule
+  const rawHistory = hydraulicModule
     ? commonHistoryRows(commonSeries)
     : asRows(dashboard[moduleConfig.historyField]);
+  const allowedSet = useMemo(
+    () => allowedElementIds ? new Set(allowedElementIds.map(String)) : null,
+    [allowedElementIds?.join('|')],
+  );
+  const elements = useMemo(
+    () => allowedSet ? rawElements.filter((element) => allowedSet.has(idOf(element))) : rawElements,
+    [rawElements, allowedSet],
+  );
+  const history = useMemo(
+    () => allowedSet ? rawHistory.filter((row) => allowedSet.has(idOf(row))) : rawHistory,
+    [rawHistory, allowedSet],
+  );
   const elementIdsKey = elements.map(idOf).join('|');
 
   useEffect(() => {
@@ -537,7 +556,7 @@ function OperationalModuleHistoryPanel({ initialModule = 'pozos', lockedModule }
   return (
     <section className="panel chart-panel fade-up insurgentes-history-module-panel">
       <PanelHeader
-        title={lockedModule ? `Histórico de ${moduleConfig.title.toLowerCase()}` : 'Histórico operativo por módulo'}
+        title={titleOverride || (lockedModule ? `Histórico de ${moduleConfig.title.toLowerCase()}` : 'Histórico operativo por módulo')}
         subtitle={lockedModule && !cleanLockedHydraulicModule
           ? `${moduleConfig.subtitle} Cero conserva lectura válida; los huecos permanecen como ausencia de registro.`
           : undefined}
