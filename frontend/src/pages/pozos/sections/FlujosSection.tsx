@@ -236,6 +236,75 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
     );
   }
 
+
+  if (group === 'embotellado') {
+    const embotelladoElementIds = allFlows.map(idOf).filter(Boolean);
+
+    return (
+      <div className="lf-embotellado-page">
+        <section className="insurgentes-hero panel fade-up insurgentes-hero--with-kpis lf-embotellado-hero">
+          <div className="lf-embotellado-hero__intro">
+            <span className="section-eyebrow">{eyebrow}</span>
+            <h2>{title}</h2>
+          </div>
+          <div className="insurgentes-hero-kpis lf-embotellado-hero__kpis" aria-label="Resumen operativo de Embotellado">
+            <article className="lf-embotellado-kpi"><span>Operando</span><strong>{activeCount}/{allFlows.length}</strong></article>
+            <article className="lf-embotellado-kpi lf-embotellado-kpi--primary"><span>{generalVolumeLabel(group)}</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
+            <article className="lf-embotellado-kpi"><span>Flujo total</span><strong>{totalFlow === null ? '—' : `${formatNumber(totalFlow)} L/s`}</strong></article>
+            <article className="lf-embotellado-kpi"><span>Totalizador actual</span><strong>{totalCurrent === null ? '—' : `${formatNumber(totalCurrent)} m³`}</strong></article>
+          </div>
+        </section>
+
+        <section className="insurgentes-equipment-grid two-columns lf-embotellado-grid" aria-label="Medidores operativos de Embotellado">
+          {flows.length ? flows.map((flow) => (
+            <Link
+              className="panel insurgentes-equipment-card insurgentes-clickable-card fade-up lf-embotellado-card"
+              key={idOf(flow)}
+              to={`${basePath}/${encodeURIComponent(idOf(flow))}${suffix}`}
+              aria-label={`Abrir detalle de ${nameOf(flow)}`}
+            >
+              <div className="insurgentes-equipment-head lf-embotellado-card__head">
+                <h3>{nameOf(flow)}</h3>
+                <StatusBadge type={String(flow.statusType || 'normal')}>{String(flow.status || 'Sin datos')}</StatusBadge>
+              </div>
+
+              <div className="lf-embotellado-card__primary">
+                <div>
+                  <span>Consumo hoy</span>
+                  <strong>{periodVolumeText(flow)}</strong>
+                </div>
+                <div>
+                  <span>Flujo actual</span>
+                  <strong>{flowText(flow)}</strong>
+                </div>
+              </div>
+
+              <div className="lf-embotellado-card__secondary">
+                <div><span>Totalizador actual</span><strong>{totalizerCurrentText(flow)}</strong></div>
+                <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(flow))}</strong></div>
+                <div><span>Encendidos</span><strong>{startCountText(flow)}</strong></div>
+              </div>
+
+              <div className="insurgentes-equipment-footer lf-embotellado-card__footer">
+                <span>{itemUpdateText(flow)}</span>
+                <strong>Abrir detalle →</strong>
+              </div>
+            </Link>
+          )) : <ChartEmptyState message={controller.loading ? 'Cargando medidores...' : 'Sin datos operativos de los medidores configurados.'} />}
+        </section>
+
+        <OperationalModuleHistoryPanel
+          initialModule="flujos"
+          lockedModule="flujos"
+          allowedElementIds={embotelladoElementIds}
+          titleOverride="Histórico operativo · Embotellado"
+        />
+
+        <ShiftCutsPanel module="flujos" group="embotellado" title="Cortes por turno · Medidores de Embotellado" />
+      </div>
+    );
+  }
+
   return (
     <>
       <section className="insurgentes-hero panel fade-up insurgentes-hero--with-kpis">
