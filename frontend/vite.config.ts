@@ -10,6 +10,7 @@ export default defineConfig({
       '.ngrok-free.dev',
       '.ngrok-free.app',
       'pozoslasfuentes',
+      "lasfuentes.dashboardrsrc.com.mx",
     ],
     proxy: {
       '/api': {

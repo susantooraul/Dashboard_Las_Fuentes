@@ -18,7 +18,6 @@ ARCA CONTINENTAL - PLANTA LAS FUENTES - SETUP RAPIDO
 
 3. Primer administrador
    python -m app.scripts.create_admin
-
 4. Frontend
    cd ..\frontend
    npm install
