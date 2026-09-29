@@ -112,8 +112,8 @@
 .pozos-shell .sidebar .session-identity small { font-size: 11px; color: var(--lf-muted); }
 .pozos-shell .sidebar :is(.session-password-button, .session-logout-button) { min-height: 34px; border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--lf-muted); background: transparent; border-color: var(--lf-border); box-shadow: none; }
 .pozos-shell .sidebar.collapsed .brand-row { display: flex; min-height: 70px; padding: 16px 0; background: transparent; }
-.pozos-shell .sidebar.collapsed .menu-button { flex: 0 0 36px; }
-.pozos-shell .sidebar.collapsed .sidebar-theme-control { padding: 12px 0 0; }
+.pozos-shell .sidebar.collapsed .menu-button { width: 44px; height: 44px; flex: 0 0 44px; }
+.pozos-shell .sidebar.collapsed .sidebar-theme-control { display: grid; justify-items: center; padding: 12px 0 0; }
 .pozos-shell .sidebar.collapsed .sidebar-nav { padding: 16px 0; }
 .pozos-shell .sidebar.collapsed .nav-item { width: 44px; max-width: 44px; height: 44px; min-height: 44px; padding: 0; margin: 0 auto 6px; border-radius: 8px; }
 .pozos-shell .sidebar.collapsed .sidebar-footer { padding: 12px 6px; }
@@ -285,6 +285,7 @@
 .pozos-shell .sidebar .nav-group-title { margin: 0 12px 10px; line-height: 1.4; }
 .pozos-shell .sidebar .nav-item { display: flex; align-items: center; justify-content: flex-start; }
 .pozos-shell .sidebar .nav-item svg,
+.pozos-shell .sidebar .menu-button svg,
 .pozos-shell .sidebar .sidebar-session-control svg {
   display: block;
   width: 18px !important;
@@ -311,14 +312,15 @@
 .pozos-shell .sidebar .sidebar-session-control .session-actions { display: grid; gap: 8px; width: 100%; }
 .pozos-shell .sidebar .sidebar-session-control .session-actions .arca-button { justify-content: flex-start; width: 100%; }
 .pozos-shell .sidebar.collapsed .brand-row { justify-content: center; }
-.pozos-shell .sidebar.collapsed .sidebar-theme-control { padding: 12px 0 0; }
+.pozos-shell .sidebar.collapsed .sidebar-theme-control { display: grid; justify-items: center; padding: 12px 0 0; }
 .pozos-shell .sidebar.collapsed .sidebar-nav { padding: 12px 0 8px; }
 .pozos-shell .sidebar.collapsed .nav-item { justify-content: center; }
-.pozos-shell .sidebar.collapsed .theme-toggle-button { width: 44px; height: 44px; padding: 0 !important; justify-content: center; }
+.pozos-shell .sidebar.collapsed .sidebar-theme-control .theme-toggle-button { width: 44px; height: 44px; margin: 0; padding: 0 !important; justify-content: center; }
 .pozos-shell .sidebar.collapsed .sidebar-footer { padding: 12px 0; }
 .pozos-shell .sidebar.collapsed .sidebar-session-control { width: 100%; padding: 0; align-items: center; gap: 8px; }
 .pozos-shell .sidebar.collapsed .sidebar-session-control .session-main { width: 100%; flex: 0 0 auto; justify-content: center; }
-.pozos-shell .sidebar.collapsed .sidebar-session-control .session-actions { justify-items: center; }
+.pozos-shell .sidebar.collapsed .sidebar-session-control .session-actions { width: 100%; grid-template-columns: 44px; justify-content: center; justify-items: center; }
+.pozos-shell .sidebar.collapsed .sidebar-session-control .session-actions .arca-button { width: 44px; justify-content: center; }
 .pozos-shell .sidebar.collapsed .sidebar-session-control :is(.session-avatar, .session-password-button, .session-logout-button) {
   width: 44px; height: 44px; min-width: 44px; min-height: 44px !important; flex: 0 0 44px;
   padding: 0 !important; margin: 0; justify-content: center; border-radius: 8px;

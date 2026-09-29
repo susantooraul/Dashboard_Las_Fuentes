@@ -14,7 +14,9 @@ for (const key of ['pozos', 'tam', 'embotellado', 'cisterna']) {
 assert.doesNotMatch(dashboard, /Accesos operativos/, 'Resumen no debe conservar Accesos operativos');
 assert.match(dashboard, /OperationalModuleHistoryPanel/, 'falta histórico operativo');
 assert.match(dashboard, /allowedElementIds=\{selectedHistoryIds\}/, 'el histórico debe filtrar los grupos de flujos');
-assert.match(dashboard, /item\.sensor_id/, 'el filtro histórico debe derivarse de sensores reales');
+assert.match(dashboard, /historyElementIds\(selectedProcess\.items\)/, 'el filtro histórico debe derivarse de los elementos del proceso seleccionado');
+const historyIds = readFileSync(new URL('../src/pages/pozos/historyElementIds.ts', import.meta.url), 'utf8');
+assert.match(historyIds, /item\.sensor_id/, 'el filtro compartido debe incluir sensores reales');
 assert.match(dashboard, /OperationalAlertsPanel subtitle="" hideWhenEmpty/, 'las alertas saludables deben ocultarse en Resumen');
 
 assert.match(history, /allowedElementIds\?: string\[\]/, 'falta contrato de filtro del histórico compartido');

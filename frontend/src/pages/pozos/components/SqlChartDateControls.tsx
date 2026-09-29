@@ -19,6 +19,7 @@ interface SqlChartDateControlsProps {
   title?: string;
   subtitle?: string;
   extraAction?: ReactNode;
+  leadingAction?: ReactNode;
   showHeader?: boolean;
   showMeta?: boolean;
   showStatus?: boolean;
@@ -29,6 +30,7 @@ function SqlChartDateControls({
   title = 'Fechas de la gráfica',
   subtitle = 'Este rango solo afecta esta gráfica y no modifica los estados actuales.',
   extraAction,
+  leadingAction,
   showHeader = true,
   showMeta = true,
   showStatus = true,
@@ -38,6 +40,7 @@ function SqlChartDateControls({
   return (
     <DateRangeControls
       className="chart-date-range-panel"
+      showDateIcons={false}
       showHeader={showHeader}
       showMeta={showMeta}
       showStatus={showStatus}
@@ -52,6 +55,7 @@ function SqlChartDateControls({
       aggregation={controller.aggregation}
       onAggregationChange={controller.setAggregation}
       extraAction={extraAction}
+      leadingAction={leadingAction}
     />
   );
 }

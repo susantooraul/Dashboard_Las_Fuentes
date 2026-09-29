@@ -54,7 +54,7 @@ for (const fragment of [
 }
 
 assert.match(section, /const allFlows = asRows\(dashboard\.flows\)\.filter\(\(item\) => String\(item\.module_group \|\| ''\) === group\)/, 'cada vista debe partir del filtro por module_group');
-assert.match(view, /const embotelladoElementIds = allFlows\.map\(idOf\)\.filter\(Boolean\)/, 'el histórico debe derivar IDs únicamente del grupo Embotellado ya filtrado');
+assert.match(view, /const embotelladoElementIds = historyElementIds\(allFlows\)/, 'el histórico debe derivar IDs únicamente del grupo Embotellado ya filtrado');
 assert.ok(config.includes('\"id\": \"salida-cisterna\"') && config.includes('\"sensor_id\": 3036'), 'Cisterna debe seguir existiendo como elemento separado');
 
 assert.match(page, /styles\/pages\/embotellado\.css/, 'embotellado.css debe estar importado por runtime');

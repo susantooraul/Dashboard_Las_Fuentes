@@ -1195,7 +1195,7 @@ def _volume_bar_chart_image(title: str, items: list[tuple[str, Any, str]], width
     fig_height = max(1.8, 0.34 * row_count + 0.85)
     fig, ax = plt.subplots(figsize=(7.4, fig_height), dpi=_REPORT_CHART_DPI)
     y_positions = list(range(row_count))
-    colors = ['#f59e0b' if index == 0 else '#0ea5e9' for index in range(row_count)]
+    colors = ['#0ea5e9'] * row_count
     for index, (_, value, _) in enumerate(cleaned):
         if value is None:
             colors[index] = '#e5edf4'

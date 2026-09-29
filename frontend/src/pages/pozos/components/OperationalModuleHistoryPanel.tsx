@@ -364,6 +364,7 @@ interface OperationalModuleHistoryPanelProps {
   lockedModule?: ModuleKey;
   allowedElementIds?: string[];
   titleOverride?: string;
+  elementsLabel?: string;
 }
 
 function OperationalModuleHistoryPanel({
@@ -371,6 +372,7 @@ function OperationalModuleHistoryPanel({
   lockedModule,
   allowedElementIds,
   titleOverride,
+  elementsLabel,
 }: OperationalModuleHistoryPanelProps) {
   const [moduleKey, setModuleKey] = useState<ModuleKey>(lockedModule || initialModule);
   const [metric, setMetric] = useState<MetricKey>('flow');
@@ -574,80 +576,84 @@ function OperationalModuleHistoryPanel({
           : undefined}
       />
 
-      <div className="insurgentes-history-controls">
-        {!lockedModule ? (
-          <div className="insurgentes-history-control-group" aria-label="Módulo histórico">
-            {(Object.keys(MODULES) as ModuleKey[]).map((key) => (
-              <DashboardButton variant="secondary"
-                key={key}
-                type="button"
-                className={key === moduleKey ? 'active' : ''}
-                onClick={() => setModuleKey(key)}
-              >
-                {MODULES[key].title}
-              </DashboardButton>
-            ))}
-          </div>
-        ) : cleanLockedHydraulicModule ? null : <span className="insurgentes-history-locked-module">{moduleConfig.title}</span>}
-        <div className="insurgentes-history-metric-actions">
-          {moduleConfig.metrics.length > 1 ? (
-            <div className="insurgentes-history-control-group" aria-label="Métrica histórica">
-              {moduleConfig.metrics.map((option) => (
-                <DashboardButton variant="secondary"
-                  key={option}
-                  type="button"
-                  className={option === metric ? 'active' : ''}
-                  onClick={() => setMetric(option)}
-                >
-                  {getMetricLabel(option)}
-                </DashboardButton>
-              ))}
-            </div>
-          ) : (
-            <span className="insurgentes-history-fixed-metric">{getMetricLabel(moduleConfig.metrics[0])}</span>
-          )}
-          <div className="insurgentes-history-export-actions">
-            {(hydraulicModule || moduleKey === 'niveles' || moduleKey === 'uv') ? (
-              <DashboardButton variant="pdf"
-                type="button"
-                className="module-history-pdf-button"
-                onClick={() => void exportVisiblePdf()}
-                disabled={pdfLoading || !selectedIds.length || !chart.chartRows.length}
-                title="Exportar la vista histórica actual a PDF"
-              >
-                {pdfLoading ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : <FileText size={17} aria-hidden="true" />}
-                <span>{pdfLoading ? 'Generando...' : 'PDF'}</span>
-              </DashboardButton>
-            ) : null}
-            <DashboardButton variant="excel"
-              type="button"
-              className="five-minute-excel-button"
-              onClick={exportVisibleExcel}
-              disabled={!selectedIds.length || !chart.chartRows.length}
-              title="Exportar exactamente los datos visibles, módulo, métrica, rango y selección actuales"
-            >
-              <FileSpreadsheet size={17} aria-hidden="true" />
-              <span>Excel</span>
-            </DashboardButton>
-            {fiveMinuteModuleKey ? (
-              <DashboardButton variant="excel"
-                type="button"
-                className="five-minute-excel-button"
-                onClick={() => void exportFiveMinuteExcel()}
-                disabled={fiveMinuteLoading || !exportableSensorIds.length}
-                title="Exportar los elementos seleccionados en intervalos reales de 5 minutos (máximo 3 días)"
-              >
-                {fiveMinuteLoading ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : <FileSpreadsheet size={17} aria-hidden="true" />}
-                <span>{fiveMinuteLoading ? 'Generando...' : 'Excel 5 min'}</span>
-              </DashboardButton>
-            ) : null}
-          </div>
-        </div>
-      </div>
       {exportMessage ? <div className={`insurgentes-history-export-message${exportError ? ' is-error' : ''}`}>{exportMessage}</div> : null}
 
       <SqlChartDateControls
         controller={controller}
+        leadingAction={(
+          <div className="insurgentes-history-controls">
+            {!lockedModule ? (
+              <div className="insurgentes-history-control-group" aria-label="Módulo histórico">
+                {(Object.keys(MODULES) as ModuleKey[]).map((key) => (
+                  <DashboardButton variant="secondary"
+                    key={key}
+                    type="button"
+                    className={key === moduleKey ? 'active' : ''}
+                    onClick={() => setModuleKey(key)}
+                  >
+                    {MODULES[key].title}
+                  </DashboardButton>
+                ))}
+              </div>
+            ) : cleanLockedHydraulicModule ? null : <span className="insurgentes-history-locked-module">{moduleConfig.title}</span>}
+            <div className="insurgentes-history-metric-actions">
+              {moduleConfig.metrics.length > 1 ? (
+                <div className="insurgentes-history-control-group" aria-label="Métrica histórica">
+                  {moduleConfig.metrics.map((option) => (
+                    <DashboardButton variant="secondary"
+                      key={option}
+                      type="button"
+                      className={option === metric ? 'active' : ''}
+                      aria-pressed={option === metric}
+                      onClick={() => setMetric(option)}
+                    >
+                      {getMetricLabel(option)}
+                    </DashboardButton>
+                  ))}
+                </div>
+              ) : (
+                <span className="insurgentes-history-fixed-metric">{getMetricLabel(moduleConfig.metrics[0])}</span>
+              )}
+              <div className="insurgentes-history-export-actions">
+                {(hydraulicModule || moduleKey === 'niveles' || moduleKey === 'uv') ? (
+                  <DashboardButton variant="pdf"
+                    type="button"
+                    className="module-history-pdf-button"
+                    onClick={() => void exportVisiblePdf()}
+                    disabled={pdfLoading || !selectedIds.length || !chart.chartRows.length}
+                    title="Exportar la vista histórica actual a PDF"
+                  >
+                    {pdfLoading ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : <FileText size={17} aria-hidden="true" />}
+                    <span>{pdfLoading ? 'Generando...' : 'PDF'}</span>
+                  </DashboardButton>
+                ) : null}
+                <DashboardButton variant="excel"
+                  type="button"
+                  className="five-minute-excel-button"
+                  onClick={exportVisibleExcel}
+                  disabled={!selectedIds.length || !chart.chartRows.length}
+                  title="Exportar exactamente los datos visibles, módulo, métrica, rango y selección actuales"
+                >
+                  <FileSpreadsheet size={17} aria-hidden="true" />
+                  <span>Excel</span>
+                </DashboardButton>
+                {fiveMinuteModuleKey ? (
+                  <DashboardButton variant="excel"
+                    type="button"
+                    className="five-minute-excel-button"
+                    onClick={() => void exportFiveMinuteExcel()}
+                    disabled={fiveMinuteLoading || !exportableSensorIds.length}
+                    title="Exportar los elementos seleccionados en intervalos reales de 5 minutos (máximo 3 días)"
+                  >
+                    {fiveMinuteLoading ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : <FileSpreadsheet size={17} aria-hidden="true" />}
+                    <span>{fiveMinuteLoading ? 'Generando...' : 'Excel 5 min'}</span>
+                  </DashboardButton>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        )}
+        showHeader={false}
         title="Fechas del histórico"
         subtitle={cleanLockedHydraulicModule ? undefined : moduleConfig.subtitle}
         showMeta={Boolean(lockedModule) && !cleanLockedHydraulicModule}
@@ -706,7 +712,7 @@ function OperationalModuleHistoryPanel({
         <>
           <div className="insurgentes-series-toolbar">
             <div>
-              <span>Elementos visibles · {moduleConfig.title}</span>
+              <span>Elementos visibles · {elementsLabel || moduleConfig.title}</span>
               <strong>{selectedIds.length}/{elements.length} seleccionados</strong>
             </div>
             <div className="insurgentes-series-actions">
@@ -721,7 +727,7 @@ function OperationalModuleHistoryPanel({
                 const id = idOf(element);
                 const checked = selectedIds.includes(id);
                 return (
-                  <DashboardButton variant="secondary" key={id} type="button" className={checked ? 'active' : ''} onClick={() => toggleElement(id)}>
+                  <DashboardButton variant="secondary" key={id} type="button" className={checked ? 'active' : ''} aria-pressed={checked} onClick={() => toggleElement(id)}>
                     {checked ? '✓ ' : ''}{nameOf(element)}
                   </DashboardButton>
                 );

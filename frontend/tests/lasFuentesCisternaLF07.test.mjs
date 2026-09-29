@@ -49,7 +49,7 @@ assert.ok(config.includes('"name": "Salida de cisterna"'), 'falta nombre físico
 assert.ok(config.includes('"sensor_id": 3036'), 'Cisterna debe conservar sensor 3036');
 assert.ok(config.includes('"module_group": "cisterna"'), '3036 debe permanecer en module_group cisterna');
 assert.match(section, /const allFlows = asRows\(dashboard\.flows\)\.filter\(\(item\) => String\(item\.module_group \|\| ''\) === group\)/, 'cada vista debe partir del filtro por module_group');
-assert.match(view, /const cisternaElementIds = allFlows\.map\(idOf\)\.filter\(Boolean\)/, 'el histórico debe derivar IDs únicamente del grupo Cisterna ya filtrado');
+assert.match(view, /const cisternaElementIds = historyElementIds\(allFlows\)/, 'el histórico debe derivar IDs únicamente del grupo Cisterna ya filtrado');
 
 assert.match(page, /styles\/pages\/cisterna\.css/, 'cisterna.css debe estar importado por runtime');
 assert.match(css, /\[data-section='cisterna'\] \.lf-cisterna-page/, 'CSS debe estar scoped a Cisterna');

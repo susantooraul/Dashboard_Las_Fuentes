@@ -1,3 +1,4 @@
+import { historyElementIds } from '../historyElementIds';
 import DashboardButton from '../../../components/DashboardButton';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -50,13 +51,6 @@ function summaryDayLabel(dashboard: FlexibleRecord): string {
   const raw = String(asRecord(dashboard.date_range).start_date || '').trim();
   const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
   return match ? `${match[3]}/${match[2]}/${match[1]} · 00:00 → última lectura` : 'Hoy · 00:00 → última lectura';
-}
-
-function historySensorIds(items: FlexibleRecord[]): string[] {
-  return items
-    .map((item) => numberOrNull(item.sensor_id))
-    .filter((value): value is number => value !== null && Number.isInteger(value) && value > 0)
-    .map(String);
 }
 
 function SummaryProcessCard({ process }: { process: SummaryProcess }) {
@@ -117,7 +111,7 @@ function DashboardBaseSection() {
 
   const selectedProcess = processes.find((process) => process.key === historyScope) || processes[0];
   const selectedHistoryModule = selectedProcess.key === 'pozos' ? 'pozos' : 'flujos';
-  const selectedHistoryIds = selectedProcess.key === 'pozos' ? undefined : historySensorIds(selectedProcess.items);
+  const selectedHistoryIds = selectedProcess.key === 'pozos' ? undefined : historyElementIds(selectedProcess.items);
 
   return (
     <>
@@ -161,6 +155,7 @@ function DashboardBaseSection() {
           lockedModule={selectedHistoryModule}
           allowedElementIds={selectedHistoryIds}
           titleOverride={`Histórico operativo · ${selectedProcess.title}`}
+          elementsLabel={selectedProcess.key === 'pozos' ? 'Pozos' : `Medidores de ${selectedProcess.title}`}
         />
       </section>
 

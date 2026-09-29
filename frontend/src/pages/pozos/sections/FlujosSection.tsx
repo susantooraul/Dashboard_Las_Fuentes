@@ -1,3 +1,4 @@
+import { historyElementIds } from '../historyElementIds';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -155,7 +156,7 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
   const activeCount = countActive(allFlows);
 
   if (group === 'tam') {
-    const tamElementIds = allFlows.map(idOf).filter(Boolean);
+    const tamElementIds = historyElementIds(allFlows);
 
     return (
       <div className="lf-tam-page">
@@ -215,6 +216,7 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
           lockedModule="flujos"
           allowedElementIds={tamElementIds}
           titleOverride="Histórico operativo · TAM"
+          elementsLabel="Medidores de TAM"
         />
 
         <ShiftCutsPanel module="flujos" group="tam" title="Cortes por turno · Medidores de TAM" />
@@ -224,7 +226,7 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
 
 
   if (group === 'embotellado') {
-    const embotelladoElementIds = allFlows.map(idOf).filter(Boolean);
+    const embotelladoElementIds = historyElementIds(allFlows);
 
     return (
       <div className="lf-embotellado-page">
@@ -284,6 +286,7 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
           lockedModule="flujos"
           allowedElementIds={embotelladoElementIds}
           titleOverride="Histórico operativo · Embotellado"
+          elementsLabel="Medidores de Embotellado"
         />
 
         <ShiftCutsPanel module="flujos" group="embotellado" title="Cortes por turno · Medidores de Embotellado" />
@@ -292,7 +295,7 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
   }
 
   if (group === 'cisterna') {
-    const cisternaElementIds = allFlows.map(idOf).filter(Boolean);
+    const cisternaElementIds = historyElementIds(allFlows);
 
     return (
       <div className="lf-cisterna-page">
@@ -352,6 +355,7 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
           lockedModule="flujos"
           allowedElementIds={cisternaElementIds}
           titleOverride="Histórico operativo · Cisterna"
+          elementsLabel="Medidores de Cisterna"
         />
 
         <ShiftCutsPanel module="flujos" group="cisterna" title="Cortes por turno · Cisterna" />

@@ -25,6 +25,7 @@ export interface DateRangeControlsProps {
   aggregation?: HistoryAggregation;
   onAggregationChange?: (value: HistoryAggregation) => void;
   extraAction?: ReactNode;
+  leadingAction?: ReactNode;
   showHeader?: boolean;
   showMeta?: boolean;
   showStatus?: boolean;
@@ -55,6 +56,7 @@ function DateRangeControls({
   aggregation,
   onAggregationChange,
   extraAction,
+  leadingAction,
   showHeader = true,
   showMeta = true,
   showStatus = true,
@@ -79,7 +81,7 @@ function DateRangeControls({
 
   return (
     <section className={`date-range-panel panel fade-up ${className}`.trim()}>
-      <div>
+      {showHeader || showMeta ? <div>
         {showHeader ? (
           <>
             <div className="panel-title">{title}</div>
@@ -92,8 +94,9 @@ function DateRangeControls({
             <span>{meta.rangeLabel}</span>
           </div>
         ) : null}
-      </div>
+      </div> : null}
       <div className="date-range-fields">
+        {leadingAction}
         <label>
           <span>Desde</span>
           {renderDateInput('startDate')}
