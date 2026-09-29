@@ -64,7 +64,7 @@ function NivelesSection({ itemId }: NivelesSectionProps) {
             { label: 'Mínimo operativo', value: `${formatNumber(selectedLevel.minimum_m)} m` },
             { label: 'Máximo operativo', value: `${formatNumber(selectedLevel.maximum_m)} m` },
             { label: 'Comunicación', value: String(selectedLevel.estado_comunicacion || 'Sin estado') },
-            { label: 'Última lectura', value: formatLocalDate(selectedLevel.updated || selectedLevel.ultima_lectura) },
+            { label: 'Última lectura', value: formatLocalDate(selectedLevel.updated || selectedLevel.ultima_lectura), context: true },
           ]}
         >
           <DetailElementNavigator items={allLevels} currentId={String(itemId)} basePath="/pozos/niveles" moduleLabel="Niveles" />

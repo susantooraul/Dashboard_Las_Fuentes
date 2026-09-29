@@ -14,7 +14,6 @@ import { fetchWaterDashboard } from './services/waterService';
 import { NotificationProvider } from './pages/pozos/components/NotificationCenter';
 import { WaterOperationalAlertsProvider } from './pages/pozos/components/WaterOperationalAlertsProvider';
 import './styles/sessionPassword.css';
-import './styles/lasFuentesUiRefresh.css';
 
 const DEFAULT_POZOS_SECTION = 'dashboard';
 const THEME_STORAGE_KEY = 'arca-las-fuentes-theme';

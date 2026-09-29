@@ -98,7 +98,7 @@ function LineasSection({ itemId }: LineasSectionProps) {
             { label: 'Tiempo activo', value: formatMinutes(activeMinutesValue(selectedLine)) },
             { label: 'Encendidos periodo', value: startCountText(selectedLine) },
             { label: 'Comunicación', value: String(selectedLine.estado_comunicacion || 'Sin estado') },
-            { label: 'Última lectura', value: itemUpdateText(selectedLine) },
+            { label: 'Última lectura', value: itemUpdateText(selectedLine), context: true },
           ]}
         >
           <DetailElementNavigator items={allLines} currentId={String(itemId)} basePath="/pozos/lineas" moduleLabel="Líneas" />

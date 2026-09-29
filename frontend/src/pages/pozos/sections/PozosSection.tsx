@@ -86,13 +86,15 @@ function PozosSection({ itemId }: PozosSectionProps) {
             { label: 'Encendidos', value: startCountText(selectedWell) },
             ...(sensorIdOf(selectedWell) ? [{
               label: 'Periodo seleccionado',
+              context: true,
+              wide: true,
               value: <DetailHistoryPeriodMetric
                 summary={detailPeriodSummary}
                 sensorId={sensorIdOf(selectedWell)}
                 volumeLabel="Volumen bombeado"
               />,
             }] : []),
-            { label: 'Última lectura', value: itemUpdateText(selectedWell) },
+            { label: 'Última lectura', value: itemUpdateText(selectedWell), context: true },
           ]}
         >
           <DetailElementNavigator items={allWells} currentId={String(itemId)} basePath="/pozos/pozos" moduleLabel="Pozos" />

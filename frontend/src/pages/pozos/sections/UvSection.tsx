@@ -157,7 +157,7 @@ function UvSection({ itemId }: UvSectionProps) {
             { label: 'State', value: String(selectedLamp.state || 'Sin lectura') },
             { label: 'Status', value: metricValue(selectedLamp.status_reading, '%') },
             { label: 'Comunicación', value: String(selectedLamp.estado_comunicacion || 'Sin estado') },
-            { label: 'Última lectura', value: formatLocalDate(selectedLamp.updated || selectedLamp.ultima_lectura) },
+            { label: 'Última lectura', value: formatLocalDate(selectedLamp.updated || selectedLamp.ultima_lectura), context: true },
           ]}
         >
           <DetailElementNavigator items={allLamps} currentId={String(itemId)} basePath="/pozos/uv" moduleLabel="Lámparas UV" />

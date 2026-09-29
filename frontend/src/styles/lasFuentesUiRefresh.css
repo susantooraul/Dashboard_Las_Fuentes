@@ -1,718 +1,262 @@
-/*
- * Las Fuentes UI refresh.
- * Presentation-only overrides: no data contracts, endpoints, auth, sensors, units, or calculations.
- */
-
+/* Presentation only. Load after global.css; keep the existing ARCA palette. */
 .pozos-shell {
-  --lf-ui-radius: 14px;
-  --lf-ui-radius-sm: 10px;
-  --lf-ui-gap: 10px;
-}
-
-.pozos-shell .main-shell {
-  min-width: 0;
-}
-
-.pozos-shell .page-content {
-  padding: 10px 16px 18px;
-}
-
-.pozos-shell .plant-context-bar {
-  min-height: 34px;
-  padding: 8px 16px 0;
-  font-size: 10px;
-  letter-spacing: .14em;
-}
-
-.pozos-shell .plant-context-bar > .plant-context-name {
-  padding: 6px 10px;
-}
-
-.pozos-shell .insurgentes-page {
-  gap: var(--lf-ui-gap);
-}
-
-.pozos-shell .insurgentes-page .panel {
-  border-radius: var(--lf-ui-radius);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, .18);
-}
-
-.pozos-shell .insurgentes-page .insurgentes-hero,
-.pozos-shell .insurgentes-page .insurgentes-summary-hero {
-  padding: 14px 16px;
-  gap: 12px;
-}
-
-.pozos-shell .insurgentes-page .section-eyebrow {
-  font-size: 9px;
-  letter-spacing: .12em;
-}
-
-.pozos-shell .insurgentes-page .insurgentes-hero h2,
-.pozos-shell .insurgentes-page .insurgentes-summary-copy h2 {
-  margin: 2px 0 0;
-  font-size: clamp(1.45rem, 1.9vw, 2rem);
-  line-height: 1.08;
-}
-
-.pozos-shell .insurgentes-page .insurgentes-hero-state {
-  min-height: 70px;
-  padding: 10px 12px;
-  border-radius: var(--lf-ui-radius);
-}
-
-.pozos-shell .insurgentes-page .insurgentes-hero-state > span,
-.pozos-shell .insurgentes-page .insurgentes-hero-state > small {
-  font-size: 10px;
-  line-height: 1.2;
-}
-
-.pozos-shell .insurgentes-page .insurgentes-hero-state > strong {
-  font-size: .94rem;
-}
-
-.pozos-shell .insurgentes-page .insurgentes-hero-kpis {
-  gap: 8px;
-}
-
-.pozos-shell .insurgentes-page .insurgentes-hero-kpis article,
-.pozos-shell .insurgentes-page :is(.lf-pozos-kpi, .lf-tam-kpi, .lf-embotellado-kpi, .lf-cisterna-kpi) {
-  min-height: 76px;
-  padding: 10px 11px;
-  border-radius: var(--lf-ui-radius);
-}
-
-.pozos-shell .insurgentes-page .insurgentes-hero-kpis article span {
-  min-height: 0;
-  font-size: 9px;
-  letter-spacing: .08em;
-}
-
-.pozos-shell .insurgentes-page .insurgentes-hero-kpis article strong {
-  margin-top: 5px;
-  font-size: clamp(1rem, 1.3vw, 1.24rem);
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-card {
-  min-height: 166px;
-  padding: 13px;
-  gap: 9px;
-  border-radius: var(--lf-ui-radius);
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-head,
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-secondary,
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-foot {
-  gap: 8px;
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-head > span {
-  font-size: .9rem;
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-head > em,
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-foot {
-  font-size: .66rem;
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-primary {
-  gap: 4px;
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-primary strong {
-  font-size: clamp(1.35rem, 1.9vw, 1.72rem);
-  line-height: 1;
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-primary span {
-  font-size: .74rem;
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-secondary {
-  padding-top: 8px;
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-secondary small,
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-primary > small {
-  font-size: .62rem;
-}
-
-.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-secondary strong {
-  font-size: .84rem;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-page,
-  .lf-tam-page,
-  .lf-embotellado-page,
-  .lf-cisterna-page
-) {
-  gap: 10px;
-}
-
-.pozos-shell .insurgentes-page .insurgentes-equipment-grid,
-.pozos-shell .insurgentes-page .insurgentes-equipment-grid.two-columns {
-  grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
-  gap: 10px;
-}
-
-.pozos-shell .insurgentes-page .lf-cisterna-grid {
-  grid-template-columns: repeat(auto-fit, minmax(258px, 390px));
-  justify-content: start;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card,
-  .lf-tam-card,
-  .lf-embotellado-card,
-  .lf-cisterna-card
-) {
-  min-height: 0;
-  padding: 12px;
-  gap: 8px;
-  border-radius: var(--lf-ui-radius);
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__head,
-  .lf-tam-card__head,
-  .lf-embotellado-card__head,
-  .lf-cisterna-card__head
-) {
-  min-height: 34px;
-  margin-bottom: 0;
-  gap: 8px;
-  align-items: flex-start;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__head,
-  .lf-tam-card__head,
-  .lf-embotellado-card__head,
-  .lf-cisterna-card__head
-) h3 {
-  font-size: .98rem;
-  line-height: 1.12;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__head,
-  .lf-tam-card__head,
-  .lf-embotellado-card__head,
-  .lf-cisterna-card__head
-) .resumen-status-pill {
-  max-width: 138px;
-  padding: 4px 8px;
-  font-size: .62rem;
-  line-height: 1.1;
-  letter-spacing: .06em;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__primary,
-  .lf-tam-card__primary,
-  .lf-embotellado-card__primary,
-  .lf-cisterna-card__primary
-) {
-  gap: 6px;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__primary,
-  .lf-tam-card__primary,
-  .lf-embotellado-card__primary,
-  .lf-cisterna-card__primary
-) > div {
-  min-height: 58px;
-  padding: 8px 9px;
-  border-radius: var(--lf-ui-radius-sm);
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__primary,
-  .lf-tam-card__primary,
-  .lf-embotellado-card__primary,
-  .lf-cisterna-card__primary,
-  .lf-pozos-card__secondary,
-  .lf-tam-card__secondary,
-  .lf-embotellado-card__secondary,
-  .lf-cisterna-card__secondary
-) span {
-  font-size: .62rem;
-  letter-spacing: .045em;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__primary,
-  .lf-tam-card__primary,
-  .lf-embotellado-card__primary,
-  .lf-cisterna-card__primary
-) strong {
-  margin-top: 4px;
-  font-size: clamp(1rem, 1.35vw, 1.18rem);
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__secondary,
-  .lf-tam-card__secondary,
-  .lf-embotellado-card__secondary,
-  .lf-cisterna-card__secondary
-) {
-  gap: 6px;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__secondary,
-  .lf-tam-card__secondary,
-  .lf-embotellado-card__secondary,
-  .lf-cisterna-card__secondary
-) > div {
-  min-height: 50px;
-  padding: 7px 8px;
-  border-radius: var(--lf-ui-radius-sm);
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__secondary,
-  .lf-tam-card__secondary,
-  .lf-embotellado-card__secondary,
-  .lf-cisterna-card__secondary
-) strong {
-  margin-top: 3px;
-  font-size: .82rem;
-  line-height: 1.15;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__footer,
-  .lf-tam-card__footer,
-  .lf-embotellado-card__footer,
-  .lf-cisterna-card__footer
-) {
-  min-height: 26px;
-  margin-top: auto;
-  padding-top: 7px;
-  gap: 8px;
-  font-size: .68rem;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .lf-pozos-card__footer,
-  .lf-tam-card__footer,
-  .lf-embotellado-card__footer,
-  .lf-cisterna-card__footer
-) strong {
-  font-size: .7rem;
-}
-
-.pozos-shell .insurgentes-page .operational-detail-hero {
-  grid-template-columns: minmax(260px, .68fr) minmax(0, 1.32fr);
-  gap: 12px;
-  padding: 46px 16px 16px;
-  border-radius: var(--lf-ui-radius);
-}
-
-.pozos-shell .insurgentes-page .operational-detail-back-row {
-  top: 10px;
-  left: 10px;
-}
-
-.pozos-shell .insurgentes-page .detail-back-link {
-  min-height: 32px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: .76rem;
-}
-
-.pozos-shell .insurgentes-page .operational-detail-main {
-  gap: 8px;
-}
-
-.pozos-shell .insurgentes-page .detail-element-navigator {
-  gap: 6px;
-}
-
-.pozos-shell .insurgentes-page .detail-element-nav-link,
-.pozos-shell .insurgentes-page .detail-element-nav-current {
-  min-height: 34px;
-  padding: 6px 9px;
-  border-radius: var(--lf-ui-radius-sm);
-  font-size: .72rem;
-}
-
-.pozos-shell .insurgentes-page .operational-detail-title-block {
-  gap: 5px;
-  margin-top: 0;
-}
-
-.pozos-shell .insurgentes-page .operational-detail-title-row {
-  gap: 8px;
-}
-
-.pozos-shell .insurgentes-page .operational-detail-title-row h2 {
-  font-size: clamp(1.3rem, 1.7vw, 1.78rem);
-}
-
-.pozos-shell .insurgentes-page .operational-detail-kpis {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 7px;
-  align-content: stretch;
-}
-
-.pozos-shell .insurgentes-page .operational-detail-kpi {
-  min-height: 60px;
-  padding: 9px;
-  gap: 4px;
-  border-radius: var(--lf-ui-radius-sm);
-}
-
-.pozos-shell .insurgentes-page .operational-detail-kpi span {
-  font-size: .58rem;
-  letter-spacing: .07em;
-}
-
-.pozos-shell .insurgentes-page .operational-detail-kpi strong {
-  font-size: clamp(.82rem, 1vw, 1rem);
-  line-height: 1.12;
-}
-
-.pozos-shell .insurgentes-page .chart-panel > .panel-header,
-.pozos-shell .insurgentes-page .detail-history-panel > .panel-header,
-.pozos-shell .insurgentes-page .insurgentes-history-module-panel > .panel-header {
-  padding: 14px 16px 6px;
-}
-
-.pozos-shell .insurgentes-page .panel-title {
-  font-size: .98rem;
-}
-
-.pozos-shell .insurgentes-page .panel-subtitle {
-  font-size: .78rem;
-}
-
-.pozos-shell .insurgentes-page .chart-date-range-panel {
-  margin: 0 16px 8px;
-  gap: 8px;
-}
-
-.pozos-shell .insurgentes-page .chart-date-range-panel .date-range-fields {
-  gap: 6px;
-}
-
-.pozos-shell .insurgentes-page .chart-date-range-panel .date-range-fields label > span {
-  font-size: .64rem;
-}
-
-.pozos-shell .insurgentes-page :is(
-  .date-range-fields input,
-  .history-aggregation-native,
-  .date-range-apply,
-  .date-range-reset,
-  .date-range-status,
-  .module-history-pdf-button,
-  .five-minute-excel-button
-) {
-  min-height: 32px;
-  border-radius: var(--lf-ui-radius-sm);
-  font-size: .74rem;
-}
-
-.pozos-shell .insurgentes-page .detail-history-export-actions,
-.pozos-shell .insurgentes-page .insurgentes-history-export-actions {
-  gap: 6px;
-  align-items: end;
-}
-
-.pozos-shell .insurgentes-page .detail-history-export-actions :is(.module-history-pdf-button, .five-minute-excel-button) {
-  padding: 7px 10px;
-}
-
-.pozos-shell .insurgentes-page .insurgentes-history-totalizer-control {
-  margin: 0 16px 8px;
-  gap: 8px;
-}
-
-.pozos-shell .insurgentes-page .insurgentes-history-control-group button {
-  min-height: 30px;
-  padding: 5px 9px;
-  font-size: .72rem;
-}
-
-.pozos-shell .insurgentes-page .chart-panel > .recharts-responsive-container,
-.pozos-shell .insurgentes-page .detail-history-panel > .recharts-responsive-container,
-.pozos-shell .insurgentes-page .insurgentes-history-module-panel > .recharts-responsive-container {
-  width: calc(100% - 32px) !important;
-  margin: 0 16px 12px;
-}
-
-.pozos-shell .insurgentes-page .advanced-history-table-panel {
-  padding: 12px;
-}
-
-.pozos-shell .insurgentes-page .advanced-history-table-panel > .panel-header {
-  padding: 0;
-  margin-bottom: 8px;
-}
-
-.pozos-shell .insurgentes-page .advanced-history-table th,
-.pozos-shell .insurgentes-page .advanced-history-table td {
-  padding: 8px 9px;
-  font-size: .76rem;
-}
-
+  --lf-surface: #061a28;
+  --lf-raised: #0a2638;
+  --lf-border: #224151;
+  --lf-text: #eef6fa;
+  --lf-muted: #a7bdc9;
+  --lf-accent: #73d1f3;
+  --lf-active: #103e53;
+}
+.pozos-shell.theme-light {
+  --lf-surface: #ffffff;
+  --lf-raised: #f2f7fa;
+  --lf-border: #cfdee6;
+  --lf-text: #163344;
+  --lf-muted: #526b7a;
+  --lf-accent: #096d94;
+  --lf-active: #e2f3fa;
+}
+.pozos-shell .main-shell { min-width: 0; }
+.pozos-shell .page-content { padding: 16px 24px 28px; }
+.pozos-shell .plant-context-bar { padding: 16px 24px 0; min-height: 32px; }
+.pozos-shell .plant-context-name { font-size: 11px; letter-spacing: 0; }
+.pozos-shell .insurgentes-page { gap: 20px; }
+
+/* Logo and identity occupy separate rows so neither can squeeze the other. */
 .pozos-shell .sidebar {
-  flex-basis: 252px;
+  width: 252px;
+  flex: 0 0 252px;
   min-width: 252px;
   max-width: 252px;
+  background: var(--lf-surface);
+  border-right: 1px solid var(--lf-border);
+  box-shadow: none;
 }
-
-.pozos-shell .sidebar.collapsed {
-  width: 76px;
-  min-width: 76px;
-  max-width: 76px;
-  flex-basis: 76px;
+.pozos-shell .sidebar.collapsed { width: 72px; flex-basis: 72px; min-width: 72px; max-width: 72px; }
+.pozos-shell .sidebar:not(.collapsed) .brand-row,
+.pozos-shell .sidebar.mobile-open .brand-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px;
+  grid-template-areas: 'logo toggle' 'identity identity';
+  gap: 16px 12px;
+  padding: 20px;
+  min-height: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--lf-border);
 }
-
-.pozos-shell .brand-row {
-  min-height: 72px;
-  padding: 12px;
-  gap: 10px;
-}
-
-.pozos-shell .brand-mark.logo-mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-}
-
-.pozos-shell .sidebar-logo {
-  width: 82px;
-  max-width: 82px;
-}
-
-.pozos-shell .brand-title {
-  font-size: .78rem;
-  line-height: 1.12;
-}
-
-.pozos-shell .brand-subtitle {
-  font-size: .66rem;
-}
-
-.pozos-shell .menu-button {
+.pozos-shell .sidebar .menu-button {
+  grid-area: toggle;
   width: 36px;
   height: 36px;
-  border-radius: var(--lf-ui-radius-sm);
+  padding: 0;
+  border: 1px solid var(--lf-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--lf-muted);
 }
-
-.pozos-shell .sidebar-theme-control {
-  padding: 10px 8px 2px;
+.pozos-shell .sidebar .brand-mark.logo-mark {
+  grid-area: logo;
+  width: 108px;
+  height: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
-
-.pozos-shell .sidebar-nav {
-  padding: 10px 8px 12px;
+.pozos-shell .sidebar .brand-mark .sidebar-logo,
+.pozos-shell .sidebar.mobile-open .sidebar-logo { display: block; width: 108px; max-width: 100%; height: auto; object-fit: contain; }
+.pozos-shell .sidebar .brand-copy { grid-area: identity; min-width: 0; gap: 4px; }
+.pozos-shell .sidebar .brand-title,
+.pozos-shell .sidebar.mobile-open .brand-title {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--lf-text);
+  white-space: normal;
 }
-
-.pozos-shell .nav-group {
-  margin-bottom: 12px;
-}
-
-.pozos-shell .nav-group-title {
-  margin: 0 8px 6px;
-  font-size: .58rem;
-  letter-spacing: .14em;
-}
-
-.pozos-shell .nav-item {
-  min-height: 40px;
-  margin-bottom: 4px;
-  padding: 9px 10px;
-  gap: 10px;
-  border-radius: 12px;
-  font-size: .82rem;
-}
-
-.pozos-shell .nav-item svg {
-  width: 15px;
-  height: 15px;
-}
-
-.pozos-shell .nav-item:hover {
-  transform: translateX(1px);
-}
-
-.pozos-shell .nav-item.active {
-  box-shadow: inset 3px 0 0 rgba(191, 232, 247, .9), 0 8px 18px rgba(14, 116, 144, .20);
-}
-
-.pozos-shell .sidebar-footer {
-  gap: 8px;
-  padding: 10px 8px 12px;
-}
-
-.pozos-shell .sidebar-session-control {
-  padding: 10px;
-  gap: 9px;
-  border-radius: var(--lf-ui-radius);
-}
-
-.pozos-shell .session-avatar {
-  width: 36px;
-  height: 36px;
-  flex-basis: 36px;
-  border-radius: 12px;
-}
-
-.pozos-shell .session-identity strong {
-  font-size: .82rem;
-}
-
-.pozos-shell .session-identity small {
-  font-size: .66rem;
-}
-
-.pozos-shell .session-logout-button,
-.pozos-shell .session-password-button {
-  min-height: 36px;
-  border-radius: 12px;
-  font-size: .72rem;
-}
-
-.pozos-shell .sidebar.collapsed .brand-row {
-  min-height: 64px;
-  padding: 10px 8px;
-}
-
-.pozos-shell .sidebar.collapsed .menu-button {
-  flex-basis: 36px;
-}
-
-.pozos-shell .sidebar.collapsed .nav-item,
-.pozos-shell .sidebar.collapsed .switch-domain-link {
-  width: 42px;
-  max-width: 42px;
-  height: 42px;
+.pozos-shell .sidebar .brand-subtitle { font-size: 12px; color: var(--lf-muted); max-width: none; }
+.pozos-shell .sidebar-theme-control { padding: 12px 12px 0; }
+.pozos-shell .sidebar .sidebar-nav { padding: 20px 12px 12px; }
+.pozos-shell .sidebar .nav-group { margin-bottom: 12px; }
+.pozos-shell .sidebar .nav-group-title { margin: 0 12px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0; color: var(--lf-muted); }
+.pozos-shell .sidebar .nav-item {
   min-height: 42px;
-  border-radius: 12px;
+  margin-bottom: 4px;
+  padding: 10px 12px;
+  gap: 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--lf-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 500;
+  letter-spacing: 0;
+  box-shadow: none;
+  transform: none;
 }
+.pozos-shell .sidebar .nav-item span { min-width: 0; white-space: normal; }
+.pozos-shell .sidebar .nav-item svg { width: 18px; height: 18px; color: inherit; flex-shrink: 0; }
+.pozos-shell .sidebar .nav-item:hover { background: var(--lf-raised); color: var(--lf-text); transform: none; }
+.pozos-shell .sidebar .nav-item.active { color: var(--lf-text); background: var(--lf-active); border-color: var(--lf-border); box-shadow: inset 3px 0 var(--lf-accent); font-weight: 650; }
+.pozos-shell .sidebar .nav-item.active svg { color: var(--lf-accent); }
+.pozos-shell .sidebar .theme-toggle-button { width: 100%; border-color: var(--lf-border); }
+.pozos-shell .sidebar .sidebar-footer { padding: 12px; border-top: 1px solid var(--lf-border); }
+.pozos-shell .sidebar .sidebar-session-control { padding: 0; gap: 12px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.pozos-shell .sidebar .sidebar-session-control::after { display: none; }
+.pozos-shell .sidebar .session-avatar { width: 34px; height: 34px; min-width: 34px; border-radius: 8px; }
+.pozos-shell .sidebar .session-label { font-size: 10px; letter-spacing: 0; color: var(--lf-muted); }
+.pozos-shell .sidebar .session-identity strong { font-size: 13px; color: var(--lf-text); }
+.pozos-shell .sidebar .session-identity small { font-size: 11px; color: var(--lf-muted); }
+.pozos-shell .sidebar :is(.session-password-button, .session-logout-button) { min-height: 34px; border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--lf-muted); background: transparent; border-color: var(--lf-border); box-shadow: none; }
+.pozos-shell .sidebar.collapsed .brand-row { display: flex; min-height: 70px; padding: 16px 0; background: transparent; }
+.pozos-shell .sidebar.collapsed .menu-button { flex: 0 0 36px; }
+.pozos-shell .sidebar.collapsed .sidebar-theme-control { padding: 12px 0 0; }
+.pozos-shell .sidebar.collapsed .sidebar-nav { padding: 16px 0; }
+.pozos-shell .sidebar.collapsed .nav-item { width: 44px; max-width: 44px; height: 44px; min-height: 44px; padding: 0; margin: 0 auto 6px; border-radius: 8px; }
+.pozos-shell .sidebar.collapsed .sidebar-footer { padding: 12px 6px; }
+.pozos-shell .sidebar.collapsed .sidebar-session-control { width: 58px; padding: 0 6px; }
+.pozos-shell .sidebar.collapsed .sidebar-session-control :is(.session-avatar, .session-password-button, .session-logout-button) { width: 36px; height: 36px; min-height: 36px; border-radius: 8px; }
 
-.pozos-shell .sidebar.collapsed .sidebar-footer {
-  padding: 10px 6px 12px;
-}
+/* Keep overview metric groups, with readable type and quieter surfaces. */
+.pozos-shell .insurgentes-page :is(.lf-pozos-page, .lf-tam-page, .lf-embotellado-page, .lf-cisterna-page) { gap: 20px; }
+.pozos-shell .insurgentes-page :is(.insurgentes-hero, .insurgentes-summary-hero) { padding: 0 0 20px; gap: 18px; border: 0; border-bottom: 1px solid var(--lf-border); border-radius: 0; background: transparent; box-shadow: none; }
+.pozos-shell .insurgentes-page :is(.insurgentes-hero, .insurgentes-summary-hero)::after { display: none; }
+.pozos-shell .insurgentes-page :is(.insurgentes-hero, .insurgentes-summary-copy) h2 { margin: 4px 0 0; font-size: 28px; line-height: 1.2; letter-spacing: 0; }
+.pozos-shell .insurgentes-page .section-eyebrow { font-size: 11px; letter-spacing: 0; color: var(--lf-muted); }
+.pozos-shell .insurgentes-page .insurgentes-hero-kpis { gap: 12px; }
+.pozos-shell .insurgentes-page .insurgentes-hero-kpis article { min-height: 84px; padding: 14px 16px; border: 1px solid var(--lf-border); border-radius: 8px; background: var(--lf-surface); box-shadow: none; }
+.pozos-shell .insurgentes-page .insurgentes-hero-kpis article span { min-height: 0; font-size: 11px; letter-spacing: 0; color: var(--lf-muted); }
+.pozos-shell .insurgentes-page .insurgentes-hero-kpis article strong { margin-top: 8px; font-size: 23px; letter-spacing: 0; color: var(--lf-text); }
+.pozos-shell .insurgentes-page :is(.insurgentes-equipment-grid, .insurgentes-equipment-grid.two-columns) { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; align-items: stretch; }
+.pozos-shell .insurgentes-page .lf-cisterna-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 420px)); }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card, .lf-tam-card, .lf-embotellado-card, .lf-cisterna-card) { padding: 18px; min-height: 0; gap: 16px; border: 1px solid var(--lf-border); border-radius: 8px; background: var(--lf-surface); box-shadow: none; transform: none; }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card, .lf-tam-card, .lf-embotellado-card, .lf-cisterna-card):hover { border-color: var(--lf-accent); }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__head, .lf-tam-card__head, .lf-embotellado-card__head, .lf-cisterna-card__head) { min-height: 32px; margin: 0; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__head, .lf-tam-card__head, .lf-embotellado-card__head, .lf-cisterna-card__head) h3 { font-size: 17px; line-height: 1.3; letter-spacing: 0; }
+.pozos-shell .insurgentes-page .resumen-status-pill { font-size: 10px; letter-spacing: 0; padding: 5px 8px; line-height: 1.3; }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__primary, .lf-tam-card__primary, .lf-embotellado-card__primary, .lf-cisterna-card__primary) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__primary, .lf-tam-card__primary, .lf-embotellado-card__primary, .lf-cisterna-card__primary) > div { min-width: 0; min-height: 76px; padding: 12px; border-radius: 6px; border-color: var(--lf-border); background: var(--lf-raised); }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__primary, .lf-tam-card__primary, .lf-embotellado-card__primary, .lf-cisterna-card__primary) span { font-size: 11px; font-weight: 600; line-height: 1.4; letter-spacing: 0; color: var(--lf-muted); }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__primary, .lf-tam-card__primary, .lf-embotellado-card__primary, .lf-cisterna-card__primary) strong { margin-top: 7px; font-size: 21px; line-height: 1.25; letter-spacing: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; color: var(--lf-text); }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__secondary, .lf-tam-card__secondary, .lf-embotellado-card__secondary, .lf-cisterna-card__secondary) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__secondary, .lf-tam-card__secondary, .lf-embotellado-card__secondary, .lf-cisterna-card__secondary) > div { min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; grid-column: auto; }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__secondary, .lf-tam-card__secondary, .lf-embotellado-card__secondary, .lf-cisterna-card__secondary) > div:first-child:nth-last-child(odd) { grid-column: 1 / -1; }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__secondary, .lf-tam-card__secondary, .lf-embotellado-card__secondary, .lf-cisterna-card__secondary) > div:last-child:nth-child(odd) { grid-column: auto; }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__secondary, .lf-tam-card__secondary, .lf-embotellado-card__secondary, .lf-cisterna-card__secondary) span { font-size: 11px; line-height: 1.4; letter-spacing: 0; color: var(--lf-muted); }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__secondary, .lf-tam-card__secondary, .lf-embotellado-card__secondary, .lf-cisterna-card__secondary) strong { font-size: 15px; line-height: 1.4; margin-top: 4px; color: var(--lf-text); overflow-wrap: anywhere; }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__footer, .lf-tam-card__footer, .lf-embotellado-card__footer, .lf-cisterna-card__footer) { margin-top: auto; padding-top: 12px; gap: 8px; flex-wrap: wrap; font-size: 11px; border-color: var(--lf-border); color: var(--lf-muted); }
+.pozos-shell .insurgentes-page :is(.lf-pozos-card__footer, .lf-tam-card__footer, .lf-embotellado-card__footer, .lf-cisterna-card__footer) strong { font-size: 12px; color: var(--lf-accent); }
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px; }
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-card { padding: 18px; min-height: 190px; gap: 12px; border-radius: 8px; background: var(--lf-surface); border-color: var(--lf-border); box-shadow: none; }
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-primary strong { font-size: 28px; letter-spacing: 0; }
 
-.pozos-shell .sidebar.collapsed .sidebar-session-control {
-  width: 58px;
-  padding: 8px 6px;
-  border-radius: var(--lf-ui-radius);
-}
+/* Full-width identity and metrics replace the empty two-column detail hero. */
+.pozos-shell .insurgentes-page .operational-detail-hero { display: flex; flex-direction: column; align-items: stretch; gap: 20px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; overflow: visible; }
+.pozos-shell .insurgentes-page .operational-detail-hero::after { display: none; }
+.pozos-shell .insurgentes-page .operational-detail-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-width: 0; }
+.pozos-shell .insurgentes-page .detail-back-link { min-height: 36px; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; background: var(--lf-surface); color: var(--lf-text); border-color: var(--lf-border); }
+.pozos-shell .insurgentes-page .operational-detail-breadcrumb { font-size: 12px; color: var(--lf-muted); overflow-wrap: anywhere; }
+.pozos-shell .insurgentes-page .detail-element-navigator { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.pozos-shell .insurgentes-page .detail-element-nav-slot { grid-column: auto; }
+.pozos-shell .insurgentes-page .detail-element-nav-slot:empty { display: none; }
+.pozos-shell .insurgentes-page .detail-element-nav-link { min-height: 36px; padding: 8px 12px; border-radius: 6px; font-size: 12px; color: var(--lf-text); background: var(--lf-surface); border-color: var(--lf-border); }
+.pozos-shell .insurgentes-page .detail-element-nav-link strong { white-space: normal; overflow-wrap: anywhere; }
+.pozos-shell .insurgentes-page .operational-detail-main { display: flex; flex-direction: row; align-items: center; gap: 14px; }
+.pozos-shell .insurgentes-page .operational-detail-icon { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 48px; border-radius: 8px; background: var(--lf-active); color: var(--lf-accent); }
+.pozos-shell .insurgentes-page .operational-detail-title-block { min-width: 0; margin: 0; gap: 4px; }
+.pozos-shell .insurgentes-page .operational-detail-title-row { gap: 14px; }
+.pozos-shell .insurgentes-page .operational-detail-title-row h2 { font-size: 28px; line-height: 1.2; font-weight: 650; letter-spacing: 0; overflow-wrap: anywhere; color: var(--lf-text); }
+.pozos-shell .insurgentes-page .operational-detail-title-row .status-pill { font-size: 10px; padding: 5px 9px; letter-spacing: 0; }
+.pozos-shell .insurgentes-page .operational-detail-title-block p { font-size: 13px; color: var(--lf-muted); }
+.pozos-shell .insurgentes-page .operational-detail-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 0; border: 1px solid var(--lf-border); border-radius: 8px; overflow: hidden; background: var(--lf-surface); }
+.pozos-shell .insurgentes-page .operational-detail-kpi { min-height: 92px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; border: 0; border-radius: 0; background: transparent; box-shadow: inset -1px 0 var(--lf-border); }
+.pozos-shell .insurgentes-page .operational-detail-kpi > span { font-size: 11px; line-height: 1.4; font-weight: 500; letter-spacing: 0; color: var(--lf-muted); text-transform: none; }
+.pozos-shell .insurgentes-page .operational-detail-value { font-size: 22px; line-height: 1.3; font-weight: 650; color: var(--lf-text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.pozos-shell .insurgentes-page .operational-detail-value small { font-size: 13px; }
+.pozos-shell .insurgentes-page .operational-detail-context { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px 32px; padding-bottom: 20px; border-bottom: 1px solid var(--lf-border); }
+.pozos-shell .insurgentes-page .operational-detail-context-item { display: grid; gap: 8px; min-width: 0; }
+.pozos-shell .insurgentes-page .operational-detail-context-item.is-wide { flex: 1 1 480px; }
+.pozos-shell .insurgentes-page .operational-detail-context-label { color: var(--lf-muted); font-size: 11px; font-weight: 500; }
+.pozos-shell .insurgentes-page .operational-detail-context-value { font-size: 13px; color: var(--lf-text); }
+.pozos-shell .insurgentes-page .detail-period-kpi-content { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
+.pozos-shell .insurgentes-page .detail-period-kpi-values { display: flex; flex-wrap: wrap; gap: 20px; }
+.pozos-shell .insurgentes-page .detail-period-kpi-values > span { display: flex; flex-direction: column; gap: 3px; }
+.pozos-shell .insurgentes-page .detail-period-kpi-values b { font-size: 17px; line-height: 1.3; color: var(--lf-text); }
+.pozos-shell .insurgentes-page :is(.detail-period-kpi-values small, .detail-period-kpi-range, .detail-period-kpi-content--loading small) { font-size: 11px; line-height: 1.4; font-weight: 400; color: var(--lf-muted); letter-spacing: 0; text-transform: none; }
+.pozos-shell .insurgentes-page .detail-period-kpi-range { max-width: 280px; }
+.pozos-shell .insurgentes-page .detail-period-kpi-error { flex-basis: 100%; }
 
-.pozos-shell .sidebar.collapsed .sidebar-session-control .session-avatar,
-.pozos-shell .sidebar.collapsed .sidebar-session-control .session-logout-button,
-.pozos-shell .sidebar.collapsed .sidebar-session-control .session-password-button {
-  width: 36px;
-  min-height: 36px;
-}
+/* Filters left, exports right, graph on its own row. */
+.pozos-shell .insurgentes-page :is(.detail-history-panel, .advanced-history-table-panel) { padding: 20px; border-radius: 8px; border-color: var(--lf-border); background: var(--lf-surface); box-shadow: none; }
+.pozos-shell .insurgentes-page :is(.detail-history-panel, .advanced-history-table-panel) > .panel-header { padding: 0; margin: 0 0 18px; }
+.pozos-shell .insurgentes-page .detail-history-panel .panel-title { font-size: 16px; font-weight: 650; letter-spacing: 0; }
+.pozos-shell .insurgentes-page .detail-history-panel .panel-subtitle { font-size: 12px; }
+.pozos-shell .insurgentes-page .detail-history-panel .chart-date-range-panel { display: block; padding: 0 0 16px; margin: 0 0 16px; border: 0; border-bottom: 1px solid var(--lf-border); border-radius: 0; background: transparent; box-shadow: none; }
+.pozos-shell .insurgentes-page .detail-history-panel .chart-date-range-panel > div:empty { display: none; }
+.pozos-shell .insurgentes-page .detail-history-panel .date-range-fields { display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: flex-end; gap: 10px; width: 100%; }
+.pozos-shell .insurgentes-page .detail-history-panel .date-range-fields label { flex: 0 1 164px; width: auto; min-width: 0; }
+.pozos-shell .insurgentes-page .detail-history-panel .date-range-fields label > span { font-size: 11px; font-weight: 500; letter-spacing: 0; color: var(--lf-muted); }
+.pozos-shell .insurgentes-page .detail-history-panel :is(.date-range-fields input, .history-aggregation-native) { width: 100%; min-width: 0; min-height: 36px; border-radius: 6px; font-size: 12px; color: var(--lf-text); background: var(--lf-raised); border-color: var(--lf-border); box-shadow: none; }
+.pozos-shell .insurgentes-page .detail-history-panel :is(.date-range-apply, .date-range-reset, .module-history-pdf-button, .five-minute-excel-button) { width: auto; min-width: 0; min-height: 36px; padding: 8px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; box-shadow: none; }
+.pozos-shell .insurgentes-page .detail-history-export-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; padding-left: 12px; border-left: 1px solid var(--lf-border); }
+.pozos-shell .insurgentes-page .detail-history-panel .insurgentes-history-totalizer-control { margin: 0 0 16px; gap: 12px; flex-wrap: wrap; }
+.pozos-shell .insurgentes-page .detail-history-panel .insurgentes-history-totalizer-control > span { font-size: 11px; letter-spacing: 0; color: var(--lf-muted); }
+.pozos-shell .insurgentes-page .detail-history-panel .insurgentes-history-control-group { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; border-radius: 7px; background: var(--lf-raised); border-color: var(--lf-border); }
+.pozos-shell .insurgentes-page .detail-history-panel .insurgentes-history-control-group button { min-height: 32px; padding: 6px 10px; border-radius: 5px; font-size: 12px; background: transparent; color: var(--lf-muted); border-color: transparent; box-shadow: none; }
+.pozos-shell .insurgentes-page .detail-history-panel .insurgentes-history-control-group button.active { color: var(--lf-text); background: var(--lf-active); border-color: var(--lf-border); }
+.pozos-shell .insurgentes-page .advanced-history-table { font-size: 12px; }
+.pozos-shell .insurgentes-page .advanced-history-table :is(th, td) { padding: 12px; }
 
-@media (min-width: 1500px) {
-  .pozos-shell .insurgentes-page .insurgentes-equipment-grid,
-  .pozos-shell .insurgentes-page .insurgentes-equipment-grid.two-columns {
-    grid-template-columns: repeat(auto-fit, minmax(246px, 1fr));
-  }
+/* The existing light theme deliberately keeps navigation blue. */
+.pozos-shell.theme-light .sidebar {
+  --lf-surface: #061a28;
+  --lf-raised: #0a2638;
+  --lf-border: #224151;
+  --lf-text: #eef6fa;
+  --lf-muted: #a7bdc9;
+  --lf-accent: #73d1f3;
+  --lf-active: #103e53;
+  background: var(--lf-surface);
+  box-shadow: none;
 }
+.pozos-shell.theme-light .sidebar .nav-item.active { background: var(--lf-active); box-shadow: inset 3px 0 var(--lf-accent); }
+.pozos-shell.theme-light .insurgentes-page :is(.operational-detail-hero, .insurgentes-hero, .insurgentes-summary-hero) { background: transparent; box-shadow: none; }
+.pozos-shell.theme-light .insurgentes-page .operational-detail-kpi { background: transparent; box-shadow: inset -1px 0 var(--lf-border); }
+.pozos-shell.theme-light .insurgentes-page .operational-detail-kpi > span { color: var(--lf-muted); }
+.pozos-shell.theme-light .insurgentes-page :is(.detail-history-panel, .advanced-history-table-panel) { box-shadow: none; }
+.pozos-shell :is(.nav-item, .menu-button, .detail-back-link, .detail-element-nav-link, .insurgentes-equipment-card):focus-visible,
+.pozos-shell .detail-history-panel :is(button, input, select):focus-visible { outline: 2px solid var(--lf-accent); outline-offset: 3px; }
 
 @media (max-width: 1280px) {
-  .pozos-shell .insurgentes-page .operational-detail-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .pozos-shell .insurgentes-page .operational-detail-kpis {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  .pozos-shell .insurgentes-page .operational-detail-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pozos-shell .insurgentes-page .operational-detail-kpi { box-shadow: inset -1px -1px var(--lf-border); }
+  .pozos-shell .insurgentes-page .detail-history-export-actions { margin-left: 0; }
 }
-
-@media (max-width: 1024px) {
-  .pozos-shell .insurgentes-page .operational-detail-kpis,
-  .pozos-shell .insurgentes-page .insurgentes-hero-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 800px) {
-  .pozos-shell .page-content,
-  .page-content {
-    padding: 10px;
-  }
-
-  .pozos-shell .mobile-topbar {
-    min-height: 50px;
-    padding: 8px 10px;
-  }
-
-  .pozos-shell .mobile-menu-button {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-  }
-
-  .pozos-shell .insurgentes-page .insurgentes-hero,
-  .pozos-shell .insurgentes-page .insurgentes-summary-hero,
-  .pozos-shell .insurgentes-page .operational-detail-hero {
-    padding: 14px;
-  }
-
-  .pozos-shell .insurgentes-page .operational-detail-hero {
-    padding-top: 48px;
-  }
-
-  .pozos-shell .insurgentes-page .insurgentes-equipment-grid,
-  .pozos-shell .insurgentes-page .insurgentes-equipment-grid.two-columns,
-  .pozos-shell .insurgentes-page .lf-cisterna-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .pozos-shell .insurgentes-page :is(
-    .lf-pozos-card__primary,
-    .lf-tam-card__primary,
-    .lf-embotellado-card__primary,
-    .lf-cisterna-card__primary
-  ) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .pozos-shell .page-content { padding: 16px; }
+  .pozos-shell .insurgentes-page { gap: 16px; }
+  .pozos-shell .insurgentes-page .insurgentes-hero-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pozos-shell .insurgentes-page .detail-history-panel { padding: 16px; }
+  .pozos-shell .insurgentes-page .operational-detail-breadcrumb { display: none; }
+  .pozos-shell .insurgentes-page .detail-history-panel .date-range-fields label { flex: 1 1 150px; }
+  .pozos-shell .insurgentes-page .detail-history-export-actions { width: 100%; padding: 10px 0 0; border-left: 0; border-top: 1px solid var(--lf-border); }
+  .pozos-shell .insurgentes-page .detail-history-panel :is(button, .date-range-fields input, .history-aggregation-native) { min-height: 40px; }
 }
-
-@media (max-width: 620px) {
-  .pozos-shell .insurgentes-page .operational-detail-kpis,
-  .pozos-shell .insurgentes-page .insurgentes-hero-kpis,
-  .pozos-shell .insurgentes-page :is(
-    .lf-pozos-card__primary,
-    .lf-tam-card__primary,
-    .lf-embotellado-card__primary,
-    .lf-cisterna-card__primary,
-    .lf-pozos-card__secondary,
-    .lf-tam-card__secondary,
-    .lf-embotellado-card__secondary,
-    .lf-cisterna-card__secondary
-  ) {
-    grid-template-columns: 1fr;
-  }
-
-  .pozos-shell .insurgentes-page :is(
-    .lf-pozos-card__secondary,
-    .lf-tam-card__secondary,
-    .lf-embotellado-card__secondary,
-    .lf-cisterna-card__secondary
-  ) > div:last-child:nth-child(odd) {
-    grid-column: auto;
-  }
-
-  .pozos-shell .insurgentes-page .chart-date-range-panel,
-  .pozos-shell .insurgentes-page .insurgentes-history-totalizer-control {
-    margin-left: 10px;
-    margin-right: 10px;
-  }
+@media (max-width: 480px) {
+  .pozos-shell .page-content { padding: 12px; }
+  .pozos-shell .insurgentes-page .operational-detail-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pozos-shell .insurgentes-page .operational-detail-kpi { padding: 14px; min-height: 90px; }
+  .pozos-shell .insurgentes-page .operational-detail-value { font-size: 19px; }
+  .pozos-shell .insurgentes-page .operational-detail-context-item.is-wide { flex-basis: 100%; }
+  .pozos-shell .insurgentes-page .operational-detail-title-row h2 { font-size: 25px; }
+  .pozos-shell .insurgentes-page :is(.lf-pozos-card, .lf-tam-card, .lf-embotellado-card, .lf-cisterna-card) { padding: 14px; }
+  .pozos-shell .insurgentes-page .detail-history-panel .date-range-fields label { flex-basis: calc(50% - 10px); }
+  .pozos-shell .insurgentes-page .detail-history-panel .date-range-fields label:has(select) { flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pozos-shell .insurgentes-page .fade-up { animation: none; }
+  .pozos-shell .sidebar .nav-item { transition: none; }
 }

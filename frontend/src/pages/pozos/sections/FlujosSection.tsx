@@ -101,13 +101,15 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
             { label: 'Encendidos', value: startCountText(selectedFlow) },
             ...(sensorIdOf(selectedFlow) ? [{
               label: 'Periodo seleccionado',
+              context: true,
+              wide: true,
               value: <DetailHistoryPeriodMetric
                 summary={detailPeriodSummary}
                 sensorId={sensorIdOf(selectedFlow)}
                 volumeLabel={detailVolumeLabel(group)}
               />,
             }] : []),
-            { label: 'Última lectura', value: itemUpdateText(selectedFlow) },
+            { label: 'Última lectura', value: itemUpdateText(selectedFlow), context: true },
           ]}
         >
           <DetailElementNavigator items={allFlows} currentId={String(itemId)} basePath={basePath} moduleLabel={title} />
