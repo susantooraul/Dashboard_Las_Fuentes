@@ -5,12 +5,14 @@ import hmac
 import re
 import secrets
 
+from email_validator import EmailNotValidError, validate_email
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerifyMismatchError
 
 _PASSWORD_HASHER = PasswordHasher()
 _DUMMY_HASH = _PASSWORD_HASHER.hash("Dashboard-Dummy-Password-2026")
 _USERNAME_RE = re.compile(r"^[a-zA-Z0-9._-]{3,64}$")
+_MAX_LOGIN_IDENTIFIER_LENGTH = 254
 
 
 class PasswordPolicyError(ValueError):
@@ -19,11 +21,23 @@ class PasswordPolicyError(ValueError):
 
 def normalize_username(username: str) -> str:
     value = username.strip().lower()
-    if not _USERNAME_RE.fullmatch(value):
-        raise ValueError(
-            "El usuario debe tener entre 3 y 64 caracteres y usar letras, números, punto, guion o guion bajo."
-        )
-    return value
+    if _USERNAME_RE.fullmatch(value):
+        return value
+
+    if 3 <= len(value) <= _MAX_LOGIN_IDENTIFIER_LENGTH and "@" in value:
+        try:
+            validated = validate_email(value, check_deliverability=False)
+        except EmailNotValidError as exc:
+            raise ValueError(
+                "Usa un usuario de 3 a 64 caracteres o un correo electrónico válido."
+            ) from exc
+        normalized = str(validated.normalized).lower()
+        if len(normalized) <= _MAX_LOGIN_IDENTIFIER_LENGTH:
+            return normalized
+
+    raise ValueError(
+        "Usa un usuario de 3 a 64 caracteres o un correo electrónico válido."
+    )
 
 
 def validate_password(password: str) -> None:

@@ -22,7 +22,7 @@ def main() -> int:
     service.initialize()
 
     print('Crear administrador local de Planta Las Fuentes')
-    username = input('Usuario: ').strip()
+    username = input('Usuario o correo: ').strip()
     display_name = input('Nombre visible: ').strip()
     password = getpass.getpass('Contraseña: ')
     confirmation = getpass.getpass('Confirmar contraseña: ')

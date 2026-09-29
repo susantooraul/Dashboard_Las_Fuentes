@@ -55,8 +55,8 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           </div>
         </div>
         <form className="login-form" onSubmit={handleSubmit}>
-          <label className="field-label">Usuario</label>
-          <div className="field-wrap"><UserIcon size={16} /><input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Usuario" /></div>
+          <label className="field-label">Usuario o correo</label>
+          <div className="field-wrap"><UserIcon size={16} /><input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Usuario o correo" /></div>
           <label className="field-label">Contraseña</label>
           <div className="field-wrap"><Lock size={16} /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" /></div>
           {error ? <div className="login-error">{error}</div> : null}

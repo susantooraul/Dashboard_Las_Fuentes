@@ -298,6 +298,8 @@ def update_user(user_id: int, payload: UserUpdateRequest, request: Request):
         )
     except UserNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except DuplicateUserError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except LastAdministratorError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:

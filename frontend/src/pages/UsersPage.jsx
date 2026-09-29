@@ -75,6 +75,7 @@ export default function UsersPage() {
       setBusyId(user.id ?? null);
       setError('');
       await updateUser(user.id, {
+        username: user.username || '',
         display_name: user.display_name || user.name || '',
         role: user.role,
       });
@@ -159,7 +160,7 @@ export default function UsersPage() {
       <section className="panel fade-up users-create-panel">
         <PanelHeader title="Crear usuario" subtitle="La contraseña debe tener al menos 10 caracteres, una letra y un número." />
         <form className="users-create-form" onSubmit={handleCreate}>
-          <label><span>Usuario</span><input value={form.username} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))} autoComplete="off" required /></label>
+          <label><span>Usuario o correo</span><input value={form.username} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))} autoComplete="off" maxLength={254} placeholder="usuario o correo@empresa.com" required /></label>
           <label><span>Nombre visible</span><input value={form.display_name} onChange={(event) => setForm((current) => ({ ...current, display_name: event.target.value }))} required /></label>
           <label><span>Contraseña inicial</span><input type="password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} autoComplete="new-password" minLength={10} required /></label>
           <label><span>Rol</span><select value={form.role} onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}><option value="viewer">Consulta</option><option value="operator">Operador</option><option value="admin">Administrador</option></select></label>
@@ -183,11 +184,11 @@ export default function UsersPage() {
         <div className="users-list-heading"><PanelHeader title="Usuarios registrados" subtitle={`${users.length} usuarios · ${activeAdmins} administradores activos`} /><button type="button" className="ghost-action" onClick={() => void load()} disabled={loading}><RefreshCw size={15} /> Actualizar</button></div>
         <div className="users-table-wrap">
           <table className="users-table">
-            <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Usuario o correo</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Acciones</th></tr></thead>
             <tbody>
               {users.map((user) => (
                 <tr key={String(user.id)}>
-                  <td><strong>{user.username}</strong></td>
+                  <td><input className="users-inline-input" value={user.username || ''} onChange={(event) => editLocal(user.id, { username: event.target.value })} disabled={busyId === user.id} maxLength={254} autoComplete="off" aria-label={`Usuario o correo de ${user.display_name || user.name || user.username}`} /></td>
                   <td><input className="users-inline-input" value={user.display_name || user.name || ''} onChange={(event) => editLocal(user.id, { display_name: event.target.value, name: event.target.value })} disabled={busyId === user.id} aria-label={`Nombre visible de ${user.username}`} /></td>
                   <td><select value={user.role} onChange={(event) => editLocal(user.id, { role: event.target.value })} disabled={busyId === user.id} aria-label={`Rol de ${user.username}`}><option value="admin">{ROLE_LABELS.admin}</option><option value="operator">{ROLE_LABELS.operator}</option><option value="viewer">{ROLE_LABELS.viewer}</option></select></td>
                   <td><span className={`status-pill ${user.is_active ? 'normal' : 'alert'}`}>{user.is_locked ? 'Bloqueado temporalmente' : user.is_active ? 'Activo' : 'Desactivado'}</span></td>

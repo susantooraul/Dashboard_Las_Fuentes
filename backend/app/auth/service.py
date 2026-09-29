@@ -200,7 +200,7 @@ class AuthService:
                 row = connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         except Exception as exc:
             if "UNIQUE constraint failed" in str(exc):
-                raise DuplicateUserError("El nombre de usuario ya existe.") from exc
+                raise DuplicateUserError("El usuario o correo ya existe.") from exc
             raise
         return self._serialize_user(row)
 
@@ -220,6 +220,7 @@ class AuthService:
         self,
         user_id: int,
         *,
+        username: str | None = None,
         display_name: str | None = None,
         role: str | None = None,
         is_active: bool | None = None,
@@ -228,6 +229,7 @@ class AuthService:
     ) -> dict[str, Any]:
         if role is not None and role not in ROLES:
             raise ValueError("Rol no válido.")
+        username_value = normalize_username(username) if username is not None else None
         with self.database.connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             current = connection.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
@@ -245,6 +247,17 @@ class AuthService:
             fields: list[str] = []
             values: list[Any] = []
             audit_changes: dict[str, Any] = {}
+            if username_value is not None:
+                duplicate = connection.execute(
+                    "SELECT id FROM users WHERE username = ? COLLATE NOCASE AND id <> ? LIMIT 1",
+                    (username_value, user_id),
+                ).fetchone()
+                if duplicate:
+                    connection.rollback()
+                    raise DuplicateUserError("El usuario o correo ya existe.")
+                fields.append("username = ?")
+                values.append(username_value)
+                audit_changes["username_changed"] = username_value != str(current["username"]).lower()
             if display_name is not None:
                 clean_name = display_name.strip()
                 if not clean_name:

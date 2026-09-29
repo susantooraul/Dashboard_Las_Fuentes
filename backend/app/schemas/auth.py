@@ -8,7 +8,7 @@ RoleName = Literal['admin', 'operator', 'viewer']
 
 
 class LoginRequest(BaseModel):
-    username: str = Field(min_length=1, max_length=64)
+    username: str = Field(min_length=1, max_length=254)
     password: str = Field(min_length=1, max_length=1024)
 
 
@@ -47,7 +47,7 @@ class SetupStatusResponse(BaseModel):
 
 
 class UserCreateRequest(BaseModel):
-    username: str = Field(min_length=3, max_length=64)
+    username: str = Field(min_length=3, max_length=254)
     display_name: str = Field(min_length=1, max_length=120)
     password: str = Field(min_length=10, max_length=1024)
     role: RoleName
@@ -55,6 +55,7 @@ class UserCreateRequest(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
+    username: str | None = Field(default=None, min_length=3, max_length=254)
     display_name: str | None = Field(default=None, min_length=1, max_length=120)
     role: RoleName | None = None
     is_active: bool | None = None
