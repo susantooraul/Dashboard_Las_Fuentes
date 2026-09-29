@@ -1,3 +1,4 @@
+import DashboardButton from '../../../components/DashboardButton';
 import type { ReactNode } from 'react';
 import { CalendarDays } from 'lucide-react';
 import type { DateRange, HistoryAggregation, Period } from '../types';
@@ -117,8 +118,8 @@ function DateRangeControls({
             </select>
           </label>
         ) : null}
-        <button type="button" className="date-range-apply" onClick={onApply}>Actualizar</button>
-        {onReset ? <button type="button" className="date-range-reset" onClick={onReset}>Restablecer</button> : null}
+        <DashboardButton variant="primary" type="button" className="date-range-apply" onClick={onApply}>Actualizar</DashboardButton>
+        {onReset ? <DashboardButton variant="secondary" type="button" className="date-range-reset" onClick={onReset}>Restablecer</DashboardButton> : null}
         {extraAction}
         {showStatus ? <div className="date-range-status">{status || `${meta.periodTitle} · ${meta.rangeLabel}`}</div> : null}
       </div>

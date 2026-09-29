@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.services.report_visual_theme import pdf_table, pdf_footer
+
 from io import BytesIO
 from datetime import datetime, timedelta
 from typing import Any
@@ -592,26 +594,10 @@ def export_insurgentes_module_history_pdf(
             'Estado',
         ], *_summary_rows(series, table_totalizer_display)]
         table = Table(table_data, colWidths=[48 * mm, 24 * mm, 31 * mm, 27 * mm, 37 * mm, 39 * mm, 30 * mm], repeatRows=1)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0B5F8F')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 7.8),
-        ('ALIGN', (1, 1), (-2, -1), 'RIGHT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 7.6),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#17334A')),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F2F8FC')]),
-        ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#B8D7E8')),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-        ('LEFTPADDING', (0, 0), (-1, -1), 5),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-    ]))
+    table = pdf_table(table_data, table._argW, font_size=8, max_width=doc.width)
     story.append(table)
 
-    doc.build(story)
+    doc.build(story, onFirstPage=pdf_footer, onLaterPages=pdf_footer)
     content = output.getvalue()
     safe_module = str(module).replace('/', '-').replace('\\', '-')
     filename = f'las_fuentes_historico_{safe_module}_{start_date}_{end_date}.pdf'

@@ -1,3 +1,4 @@
+import DashboardButton from '../components/DashboardButton';
 import { useState, type FormEvent } from 'react';
 import { Lock, User as UserIcon } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
@@ -60,7 +61,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
           <label className="field-label">Contraseña</label>
           <div className="field-wrap"><Lock size={16} /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" /></div>
           {error ? <div className="login-error">{error}</div> : null}
-          <button className="login-button" disabled={loading}>{loading ? 'Entrando…' : 'Entrar'}</button>
+          <DashboardButton variant="primary" className="login-button" disabled={loading}>{loading ? 'Entrando…' : 'Entrar'}</DashboardButton>
         </form>
         <div className="login-hint">Usa las credenciales asignadas para esta planta.</div>
       </div>

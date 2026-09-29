@@ -1,3 +1,5 @@
+import { REPORT_VISUAL_CSS } from '../../../services/reportVisualTheme';
+import DashboardButton from '../../../components/DashboardButton';
 import { useEffect, useMemo, useState } from 'react';
 import { FileSpreadsheet, FileText, LoaderCircle } from 'lucide-react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -148,7 +150,7 @@ function downloadVisibleHistoryExcel(
       <tr>${headers.map((header) => `<th>${escapeExcelHtml(header)}</th>`).join('')}</tr>
       ${rows.map((row) => `<tr>${row.map((value) => `<td>${escapeExcelHtml(value)}</td>`).join('')}</tr>`).join('')}
     </table>`;
-  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${REPORT_VISUAL_CSS}</style></head><body>
     <h2>ARCA Las Fuentes — Histórico operativo por módulo</h2>
     <p><strong>Módulo:</strong> ${escapeExcelHtml(moduleTitle)}</p>
     <p><strong>Métrica:</strong> ${escapeExcelHtml(getMetricLabel(metric))}</p>
@@ -576,14 +578,14 @@ function OperationalModuleHistoryPanel({
         {!lockedModule ? (
           <div className="insurgentes-history-control-group" aria-label="Módulo histórico">
             {(Object.keys(MODULES) as ModuleKey[]).map((key) => (
-              <button
+              <DashboardButton variant="secondary"
                 key={key}
                 type="button"
                 className={key === moduleKey ? 'active' : ''}
                 onClick={() => setModuleKey(key)}
               >
                 {MODULES[key].title}
-              </button>
+              </DashboardButton>
             ))}
           </div>
         ) : cleanLockedHydraulicModule ? null : <span className="insurgentes-history-locked-module">{moduleConfig.title}</span>}
@@ -591,14 +593,14 @@ function OperationalModuleHistoryPanel({
           {moduleConfig.metrics.length > 1 ? (
             <div className="insurgentes-history-control-group" aria-label="Métrica histórica">
               {moduleConfig.metrics.map((option) => (
-                <button
+                <DashboardButton variant="secondary"
                   key={option}
                   type="button"
                   className={option === metric ? 'active' : ''}
                   onClick={() => setMetric(option)}
                 >
                   {getMetricLabel(option)}
-                </button>
+                </DashboardButton>
               ))}
             </div>
           ) : (
@@ -606,7 +608,7 @@ function OperationalModuleHistoryPanel({
           )}
           <div className="insurgentes-history-export-actions">
             {(hydraulicModule || moduleKey === 'niveles' || moduleKey === 'uv') ? (
-              <button
+              <DashboardButton variant="pdf"
                 type="button"
                 className="module-history-pdf-button"
                 onClick={() => void exportVisiblePdf()}
@@ -615,9 +617,9 @@ function OperationalModuleHistoryPanel({
               >
                 {pdfLoading ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : <FileText size={17} aria-hidden="true" />}
                 <span>{pdfLoading ? 'Generando...' : 'PDF'}</span>
-              </button>
+              </DashboardButton>
             ) : null}
-            <button
+            <DashboardButton variant="excel"
               type="button"
               className="five-minute-excel-button"
               onClick={exportVisibleExcel}
@@ -626,9 +628,9 @@ function OperationalModuleHistoryPanel({
             >
               <FileSpreadsheet size={17} aria-hidden="true" />
               <span>Excel</span>
-            </button>
+            </DashboardButton>
             {fiveMinuteModuleKey ? (
-              <button
+              <DashboardButton variant="excel"
                 type="button"
                 className="five-minute-excel-button"
                 onClick={() => void exportFiveMinuteExcel()}
@@ -637,7 +639,7 @@ function OperationalModuleHistoryPanel({
               >
                 {fiveMinuteLoading ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : <FileSpreadsheet size={17} aria-hidden="true" />}
                 <span>{fiveMinuteLoading ? 'Generando...' : 'Excel 5 min'}</span>
-              </button>
+              </DashboardButton>
             ) : null}
           </div>
         </div>
@@ -662,22 +664,22 @@ function OperationalModuleHistoryPanel({
         <div className="insurgentes-history-totalizer-control" aria-label="Modo de visualización del totalizador">
           <span>Totalizador</span>
           <div className="insurgentes-history-control-group" role="group">
-            <button
+            <DashboardButton variant="secondary"
               type="button"
               className={totalizerDisplay === 'delta' ? 'active' : ''}
               onClick={() => setTotalizerDisplay('delta')}
               title="Resta la primera lectura válida del rango a cada lectura observada."
             >
               Variación del periodo
-            </button>
-            <button
+            </DashboardButton>
+            <DashboardButton variant="secondary"
               type="button"
               className={totalizerDisplay === 'absolute' ? 'active' : ''}
               onClick={() => setTotalizerDisplay('absolute')}
               title="Muestra el valor absoluto observado del totalizador."
             >
               Valor absoluto
-            </button>
+            </DashboardButton>
           </div>
         </div>
       ) : null}
@@ -695,9 +697,9 @@ function OperationalModuleHistoryPanel({
             <strong>{metric === 'uv_flow' ? 'Flow compartido del sistema UV' : 'Selecciona ambas o una sola lámpara'}</strong>
           </div>
           <div className="insurgentes-history-control-group" role="group" aria-label="Seleccionar lámpara UV histórica">
-            <button type="button" className={uvSelectionMode === 'both' ? 'active' : ''} onClick={() => selectUvLamps('both')}>Ambas</button>
-            <button type="button" className={uvSelectionMode === 'uv1' ? 'active' : ''} onClick={() => selectUvLamps('uv1')}>UV 1</button>
-            <button type="button" className={uvSelectionMode === 'uv2' ? 'active' : ''} onClick={() => selectUvLamps('uv2')}>UV 2</button>
+            <DashboardButton variant="secondary" type="button" className={uvSelectionMode === 'both' ? 'active' : ''} onClick={() => selectUvLamps('both')}>Ambas</DashboardButton>
+            <DashboardButton variant="secondary" type="button" className={uvSelectionMode === 'uv1' ? 'active' : ''} onClick={() => selectUvLamps('uv1')}>UV 1</DashboardButton>
+            <DashboardButton variant="secondary" type="button" className={uvSelectionMode === 'uv2' ? 'active' : ''} onClick={() => selectUvLamps('uv2')}>UV 2</DashboardButton>
           </div>
         </div>
       ) : (
@@ -708,8 +710,8 @@ function OperationalModuleHistoryPanel({
               <strong>{selectedIds.length}/{elements.length} seleccionados</strong>
             </div>
             <div className="insurgentes-series-actions">
-              <button type="button" onClick={selectAll}>Seleccionar todos</button>
-              <button type="button" onClick={clearAll}>Deseleccionar todos</button>
+              <DashboardButton variant="secondary" type="button" onClick={selectAll}>Seleccionar todos</DashboardButton>
+              <DashboardButton variant="secondary" type="button" onClick={clearAll}>Deseleccionar todos</DashboardButton>
             </div>
           </div>
 
@@ -719,9 +721,9 @@ function OperationalModuleHistoryPanel({
                 const id = idOf(element);
                 const checked = selectedIds.includes(id);
                 return (
-                  <button key={id} type="button" className={checked ? 'active' : ''} onClick={() => toggleElement(id)}>
+                  <DashboardButton variant="secondary" key={id} type="button" className={checked ? 'active' : ''} onClick={() => toggleElement(id)}>
                     {checked ? '✓ ' : ''}{nameOf(element)}
-                  </button>
+                  </DashboardButton>
                 );
               })}
             </div>

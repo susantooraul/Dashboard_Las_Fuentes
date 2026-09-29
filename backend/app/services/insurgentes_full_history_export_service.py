@@ -9,6 +9,7 @@ from time import monotonic
 from typing import Any, Iterable
 from zoneinfo import ZoneInfo
 
+from app.services.report_visual_theme import NAVY, BLUE, pdf_table, pdf_footer, excel_sheet_setup
 from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -1124,20 +1125,33 @@ def _header_cells(ws: Any, values: Iterable[Any]) -> list[WriteOnlyCell]:
     for value in values:
         cell = WriteOnlyCell(ws, value=value)
         cell.font = Font(bold=True, color='FFFFFF')
-        cell.fill = PatternFill('solid', fgColor='0B3558')
+        cell.fill = PatternFill('solid', fgColor=NAVY)
         cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         cells.append(cell)
     return cells
 
 
 def _append_header(ws: Any, values: Iterable[Any]) -> None:
-    ws.freeze_panes = 'A2'
+    values = list(values)
+    excel_sheet_setup(ws, 1)
+    ws.row_dimensions[1].height = 46
+    for index, value in enumerate(values, 1):
+        ws.column_dimensions[get_column_letter(index)].width = {'Indicador': 48, 'Valor': 110, 'Regla': 24, 'Descripción': 110, 'Elemento': 34}.get(str(value), min(45, max(20, len(str(value)) * .8)))
     ws.append(_header_cells(ws, values))
 
 
 def _append_rows(ws: Any, rows: Iterable[Iterable[Any]]) -> None:
-    for row in rows:
-        ws.append(list(row))
+    font = Font(name='Calibri', size=11, color=NAVY)
+    alignment = Alignment(vertical='top', wrap_text=True)
+    for row_index, row in enumerate(rows, start=2):
+        cells = []
+        for value in row:
+            cell = WriteOnlyCell(ws, value=value)
+            cell.font = font
+            cell.alignment = alignment
+            cells.append(cell)
+        ws.row_dimensions[row_index].height = 42
+        ws.append(cells)
 
 
 def _minute_maps(iot_rows: list[dict[str, Any]], sosa_rows: list[dict[str, Any]]) -> tuple[dict[int, dict[datetime, dict[str, Any]]], dict[datetime, dict[str, Any]]]:
@@ -1288,20 +1302,8 @@ def _build_excel(data: dict[str, Any]) -> bytes:
 
 
 def _pdf_table(data: list[list[Any]], widths: list[float] | None = None, font_size: float = 7.5) -> Table:
-    table = Table(data, colWidths=widths, repeatRows=1, hAlign='LEFT')
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0B3558')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), font_size),
-        ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#B7C9D6')),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-    ]))
-    return table
+    return pdf_table(data, widths, font_size, max_width=273 * mm)
+
 
 
 def _build_pdf(data: dict[str, Any]) -> bytes:
@@ -1309,8 +1311,8 @@ def _build_pdf(data: dict[str, Any]) -> bytes:
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), leftMargin=12 * mm, rightMargin=12 * mm, topMargin=12 * mm, bottomMargin=12 * mm)
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle('TitleARCA', parent=styles['Title'], fontName='Helvetica-Bold', fontSize=18, leading=22, textColor=colors.HexColor('#0B3558'), alignment=TA_CENTER)
-    h2 = ParagraphStyle('H2ARCA', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=11, leading=14, textColor=colors.HexColor('#0B3558'), spaceBefore=8, spaceAfter=6)
+    title_style = ParagraphStyle('TitleARCA', parent=styles['Title'], fontName='Helvetica-Bold', fontSize=18, leading=22, textColor=colors.HexColor('#' + NAVY), alignment=0)
+    h2 = ParagraphStyle('H2ARCA', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=11, leading=14, textColor=colors.HexColor('#' + NAVY), spaceBefore=8, spaceAfter=6)
     normal = ParagraphStyle('NormalARCA', parent=styles['BodyText'], fontSize=8.5, leading=11, textColor=colors.HexColor('#263746'))
     table_text = ParagraphStyle('TableTextARCA', parent=normal, fontSize=6.5, leading=8)
     story: list[Any] = [
@@ -1404,7 +1406,7 @@ def _build_pdf(data: dict[str, Any]) -> bytes:
         ['1002', 'Incluido como evidencia cruda y excluido de cálculos operativos por falta de mapeo confirmado.'],
     ], [38 * mm, 200 * mm], font_size=7.5))
 
-    doc.build(story)
+    doc.build(story, onFirstPage=pdf_footer, onLaterPages=pdf_footer)
     logger.info('Insurgentes full history PDF build complete seconds=%.2f bytes=%d', monotonic() - started, buffer.tell())
     return buffer.getvalue()
 

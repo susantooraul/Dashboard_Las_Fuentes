@@ -1,3 +1,4 @@
+import DashboardButton from '../components/DashboardButton';
 import { useEffect, useMemo, useState } from 'react';
 import { KeyRound, RefreshCw, Save, ShieldCheck, UserPlus, UserX } from 'lucide-react';
 import PanelHeader from './pozos/components/PanelHeader';
@@ -164,7 +165,7 @@ export default function UsersPage() {
           <label><span>Nombre visible</span><input value={form.display_name} onChange={(event) => setForm((current) => ({ ...current, display_name: event.target.value }))} required /></label>
           <label><span>Contraseña inicial</span><input type="password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} autoComplete="new-password" minLength={10} required /></label>
           <label><span>Rol</span><select value={form.role} onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}><option value="viewer">Consulta</option><option value="operator">Operador</option><option value="admin">Administrador</option></select></label>
-          <button type="submit" className="primary-action users-create-button"><UserPlus size={16} /> Crear usuario</button>
+          <DashboardButton variant="primary" type="submit" className="primary-action users-create-button"><UserPlus size={16} /> Crear usuario</DashboardButton>
         </form>
         {error ? <div className="status-pill alert users-status" role="alert">{error}</div> : null}
       </section>
@@ -175,13 +176,13 @@ export default function UsersPage() {
             <div><h3>Restablecer contraseña</h3><p>Usuario: {resetTarget.username}</p></div>
             <label className="report-email-field"><span>Nueva contraseña</span><input type="password" value={resetPasswordValue} onChange={(event) => setResetPasswordValue(event.target.value)} autoComplete="new-password" minLength={10} required autoFocus /></label>
             <p className="panel-subtitle">Todas las sesiones existentes de este usuario serán revocadas.</p>
-            <div className="report-email-actions"><button type="button" className="ghost-action" onClick={() => { setResetTarget(null); setResetPasswordValue(''); }} disabled={busyId === resetTarget.id}>Cancelar</button><button type="submit" className="primary-action" disabled={busyId === resetTarget.id}>Actualizar contraseña</button></div>
+            <div className="report-email-actions"><DashboardButton variant="secondary" type="button" className="ghost-action" onClick={() => { setResetTarget(null); setResetPasswordValue(''); }} disabled={busyId === resetTarget.id}>Cancelar</DashboardButton><DashboardButton variant="primary" type="submit" className="primary-action" disabled={busyId === resetTarget.id}>Actualizar contraseña</DashboardButton></div>
           </form>
         </div>
       ) : null}
 
       <section className="panel fade-up users-list-panel">
-        <div className="users-list-heading"><PanelHeader title="Usuarios registrados" subtitle={`${users.length} usuarios · ${activeAdmins} administradores activos`} /><button type="button" className="ghost-action" onClick={() => void load()} disabled={loading}><RefreshCw size={15} /> Actualizar</button></div>
+        <div className="users-list-heading"><PanelHeader title="Usuarios registrados" subtitle={`${users.length} usuarios · ${activeAdmins} administradores activos`} /><DashboardButton variant="secondary" type="button" className="ghost-action" onClick={() => void load()} disabled={loading}><RefreshCw size={15} /> Actualizar</DashboardButton></div>
         <div className="users-table-wrap">
           <table className="users-table">
             <thead><tr><th>Usuario o correo</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Acciones</th></tr></thead>
@@ -193,7 +194,7 @@ export default function UsersPage() {
                   <td><select value={user.role} onChange={(event) => editLocal(user.id, { role: event.target.value })} disabled={busyId === user.id} aria-label={`Rol de ${user.username}`}><option value="admin">{ROLE_LABELS.admin}</option><option value="operator">{ROLE_LABELS.operator}</option><option value="viewer">{ROLE_LABELS.viewer}</option></select></td>
                   <td><span className={`status-pill ${user.is_active ? 'normal' : 'alert'}`}>{user.is_locked ? 'Bloqueado temporalmente' : user.is_active ? 'Activo' : 'Desactivado'}</span></td>
                   <td>{localDate(user.last_login_at)}</td>
-                  <td><div className="users-row-actions"><button type="button" className="ghost-action" onClick={() => void saveUser(user)} disabled={busyId === user.id}><Save size={14} /> Guardar</button><button type="button" className="ghost-action" onClick={() => { setResetTarget(user); setResetPasswordValue(''); setError(''); }} disabled={busyId === user.id}><KeyRound size={14} /> Contraseña</button><button type="button" className="ghost-action" onClick={() => void revoke(user)} disabled={busyId === user.id}><ShieldCheck size={14} /> Cerrar sesiones</button><button type="button" className="ghost-action" onClick={() => void toggleActive(user)} disabled={busyId === user.id}><UserX size={14} /> {user.is_active ? 'Desactivar' : 'Activar'}</button></div></td>
+                  <td><div className="users-row-actions"><DashboardButton variant="secondary" type="button" className="ghost-action" onClick={() => void saveUser(user)} disabled={busyId === user.id}><Save size={14} /> Guardar</DashboardButton><DashboardButton variant="secondary" type="button" className="ghost-action" onClick={() => { setResetTarget(user); setResetPasswordValue(''); setError(''); }} disabled={busyId === user.id}><KeyRound size={14} /> Contraseña</DashboardButton><DashboardButton variant="secondary" type="button" className="ghost-action" onClick={() => void revoke(user)} disabled={busyId === user.id}><ShieldCheck size={14} /> Cerrar sesiones</DashboardButton><DashboardButton variant="secondary" type="button" className="ghost-action" onClick={() => void toggleActive(user)} disabled={busyId === user.id}><UserX size={14} /> {user.is_active ? 'Desactivar' : 'Activar'}</DashboardButton></div></td>
                 </tr>
               ))}
               {!loading && !users.length ? <tr><td colSpan={6}>No hay usuarios registrados.</td></tr> : null}

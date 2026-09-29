@@ -260,3 +260,74 @@
   .pozos-shell .insurgentes-page .fade-up { animation: none; }
   .pozos-shell .sidebar .nav-item { transition: none; }
 }
+
+/* LF14: stable sidebar tracks. Header and session cannot shrink into neighbours. */
+.pozos-shell .sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+.pozos-shell .sidebar :is(.brand-row, .sidebar-theme-control, .sidebar-footer) { flex: 0 0 auto; }
+.pozos-shell .sidebar:not(.collapsed) .brand-row,
+.pozos-shell .sidebar.mobile-open .brand-row {
+  height: auto;
+  max-height: none;
+  padding: 18px 16px 16px;
+  gap: 12px;
+  align-content: start;
+}
+.pozos-shell .sidebar .brand-copy { display: grid; position: static; margin: 0; gap: 4px; }
+.pozos-shell .sidebar .brand-subtitle { margin: 0; line-height: 1.4; white-space: normal; }
+.pozos-shell .sidebar .sidebar-theme-control { padding: 12px 12px 0; }
+.pozos-shell .sidebar .sidebar-nav { flex: 1 1 0; min-height: 0; padding: 16px 12px 8px; overflow-y: auto; }
+.pozos-shell .sidebar .nav-group-title { margin: 0 12px 10px; line-height: 1.4; }
+.pozos-shell .sidebar .nav-item { display: flex; align-items: center; justify-content: flex-start; }
+.pozos-shell .sidebar .nav-item svg,
+.pozos-shell .sidebar .sidebar-session-control svg {
+  display: block;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px;
+  flex: 0 0 18px;
+  stroke-width: 1.8;
+}
+.pozos-shell .sidebar .theme-toggle-button { justify-content: flex-start; gap: 12px !important; }
+.pozos-shell .sidebar .sidebar-session-control .session-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pozos-shell .sidebar .sidebar-session-control .session-avatar {
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  flex: 0 0 36px;
+  border-radius: 8px;
+  background: var(--lf-raised);
+  border: 1px solid var(--lf-border);
+  box-shadow: none;
+}
+.pozos-shell .sidebar .session-identity { flex: 1; min-width: 0; }
+.pozos-shell .sidebar .session-identity :is(strong, small) { overflow-wrap: anywhere; }
+.pozos-shell .sidebar .sidebar-session-control .session-actions { display: grid; gap: 8px; width: 100%; }
+.pozos-shell .sidebar .sidebar-session-control .session-actions .arca-button { justify-content: flex-start; width: 100%; }
+.pozos-shell .sidebar.collapsed .brand-row { justify-content: center; }
+.pozos-shell .sidebar.collapsed .sidebar-theme-control { padding: 12px 0 0; }
+.pozos-shell .sidebar.collapsed .sidebar-nav { padding: 12px 0 8px; }
+.pozos-shell .sidebar.collapsed .nav-item { justify-content: center; }
+.pozos-shell .sidebar.collapsed .theme-toggle-button { width: 44px; height: 44px; padding: 0 !important; justify-content: center; }
+.pozos-shell .sidebar.collapsed .sidebar-footer { padding: 12px 0; }
+.pozos-shell .sidebar.collapsed .sidebar-session-control { width: 100%; padding: 0; align-items: center; gap: 8px; }
+.pozos-shell .sidebar.collapsed .sidebar-session-control .session-main { width: 100%; flex: 0 0 auto; justify-content: center; }
+.pozos-shell .sidebar.collapsed .sidebar-session-control .session-actions { justify-items: center; }
+.pozos-shell .sidebar.collapsed .sidebar-session-control :is(.session-avatar, .session-password-button, .session-logout-button) {
+  width: 44px; height: 44px; min-width: 44px; min-height: 44px !important; flex: 0 0 44px;
+  padding: 0 !important; margin: 0; justify-content: center; border-radius: 8px;
+}
+.pozos-shell .sidebar.collapsed .sidebar-session-control .session-avatar::after {
+  width: 7px; height: 7px; right: 5px; bottom: 5px; box-shadow: none;
+}
+@media (max-height: 640px) {
+  /* On short windows allow the complete menu to scroll, including account actions. */
+  .pozos-shell .sidebar { overflow-y: auto; }
+  .pozos-shell .sidebar .sidebar-nav { flex: 1 0 auto; overflow: visible; }
+}

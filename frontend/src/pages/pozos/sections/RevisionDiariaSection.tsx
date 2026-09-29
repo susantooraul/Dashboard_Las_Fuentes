@@ -1,3 +1,4 @@
+import DashboardButton from '../../../components/DashboardButton';
 import { useMemo } from 'react';
 import KpiCard from '../../../components/KpiCard';
 import ChartEmptyState from '../components/ChartEmptyState';
@@ -123,8 +124,8 @@ export default function RevisionDiariaSection() {
         </div>
         <div className="daily-modern-datebox">
           <label><span>Día</span><input type="date" value={review.draftDate || selectedDate} onChange={(event) => review.setDraftDate(event.target.value)} /></label>
-          <button type="button" className="btn primary" onClick={review.apply}>Actualizar</button>
-          <button type="button" className="btn secondary" onClick={review.reset}>Restablecer</button>
+          <DashboardButton variant="primary" type="button" className="btn primary" onClick={review.apply}>Actualizar</DashboardButton>
+          <DashboardButton variant="secondary" type="button" className="btn secondary" onClick={review.reset}>Restablecer</DashboardButton>
           <em>{review.refreshing ? 'Actualizando…' : review.isToday ? 'Actualización automática cada 60 s' : 'Día histórico sin polling activo'}</em>
         </div>
       </section>

@@ -1,3 +1,4 @@
+import DashboardButton from '../../../components/DashboardButton';
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import ChartEmptyState from './ChartEmptyState';
@@ -296,8 +297,8 @@ function ShiftCutsPanel({ module, elementId, title, variant = 'module', group }:
             {allShifts.map((shift) => <option key={String(shift.id)} value={String(shift.id)}>{String(shift.label)}</option>)}
           </select>
         </label>
-        <button type="button" className="btn primary" onClick={controller.refresh}>Actualizar</button>
-        <button type="button" className="btn secondary" onClick={controller.reset}>Restablecer</button>
+        <DashboardButton variant="primary" type="button" className="btn primary" onClick={controller.refresh}>Actualizar</DashboardButton>
+        <DashboardButton variant="secondary" type="button" className="btn secondary" onClick={controller.reset}>Restablecer</DashboardButton>
         {showSelectionSummary ? <span className="shift-chip">{turnFilter === 'all' ? 'Todos los turnos' : String(selectedShift?.label || turnFilter)} · {selectionInterval}</span> : null}
       </div>
       {controller.error && !payload.shifts ? <ChartEmptyState message={controller.error} /> : null}
@@ -331,10 +332,10 @@ function ShiftCutsPanel({ module, elementId, title, variant = 'module', group }:
               const isOpen = expanded.includes(id) || turnFilter !== 'all';
               return (
                 <article className="shift-accordion-item" key={id}>
-                  <button type="button" onClick={() => toggle(id)} aria-expanded={isOpen}>
+                  <DashboardButton variant="secondary" type="button" onClick={() => toggle(id)} aria-expanded={isOpen}>
                     <span><strong>{String(shift.label)}</strong><small>{formatShiftDateTimeRange(controller.date, shift.schedule)}</small></span>
                     <StatusBadge type={statusType(shift.status)}>{String(shift.status_label || 'Sin estado')}</StatusBadge>
-                  </button>
+                  </DashboardButton>
                   {isOpen ? <div className="shift-accordion-body">{renderDetailRows(items, module, isDetail, payloadForModule)}</div> : null}
                 </article>
               );

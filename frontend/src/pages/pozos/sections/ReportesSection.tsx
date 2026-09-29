@@ -1,3 +1,4 @@
+import DashboardButton from '../../../components/DashboardButton';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Mail } from 'lucide-react';
@@ -640,7 +641,7 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
           <div className="report-actions-panel">
             <span className="eyebrow">Acciones</span>
             <div className="report-actions">
-              <button
+              <DashboardButton variant="pdf"
                 type="button"
                 className={`primary-action report-action-button report-export-pdf${exportingFormat === 'pdf' ? ' is-loading' : ''}`}
                 onClick={() => void exportReport('pdf')}
@@ -649,8 +650,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
               >
                 {exportingFormat === 'pdf' && <span className="report-action-spinner" aria-hidden="true" />}
                 {exportingFormat === 'pdf' ? 'Generando PDF...' : 'Generar PDF'}
-              </button>
-              <button
+              </DashboardButton>
+              <DashboardButton variant="excel"
                 type="button"
                 className={`ghost-action report-action-button report-export-excel${exportingFormat === 'excel' ? ' is-loading' : ''}`}
                 onClick={() => void exportReport('excel')}
@@ -659,8 +660,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
               >
                 {exportingFormat === 'excel' && <span className="report-action-spinner" aria-hidden="true" />}
                 {exportingFormat === 'excel' ? 'Generando Excel...' : 'Exportar Excel'}
-              </button>
-              <button
+              </DashboardButton>
+              <DashboardButton variant="secondary"
                 type="button"
                 className={`ghost-action report-action-button report-export-html${exportingFormat === 'html' ? ' is-loading' : ''}`}
                 onClick={() => void exportReport('html')}
@@ -669,8 +670,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
               >
                 {exportingFormat === 'html' && <span className="report-action-spinner" aria-hidden="true" />}
                 {exportingFormat === 'html' ? 'Preparando HTML...' : 'Vista HTML'}
-              </button>
-              {canEmail ? <button type="button" className="ghost-action report-action-button" onClick={openEmailModal} disabled={Boolean(exportingFormat)}>Enviar por correo</button> : null}
+              </DashboardButton>
+              {canEmail ? <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={openEmailModal} disabled={Boolean(exportingFormat)}>Enviar por correo</DashboardButton> : null}
             </div>
             <span className={`report-action-feedback${exportingFormat ? ' is-active' : ''}`} role="status" aria-live="polite">
               {exportingFormat === 'pdf' && 'Generando el PDF. Espera a que inicie la descarga.'}
@@ -691,9 +692,9 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
             </div>
             <div className="report-schedule-toolbar-actions">
               <span className="report-schedule-count">{emailSchedules.filter((item) => item.enabled).length} activas</span>
-              <button type="button" className="ghost-action report-action-button report-schedule-new" onClick={openNewSchedule}>
+              <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button report-schedule-new" onClick={openNewSchedule}>
                 <Mail size={16} /> Nueva programación
-              </button>
+              </DashboardButton>
             </div>
           </div>
           {scheduleLoading && <span className="status-pill report-status-pill">Actualizando...</span>}
@@ -719,10 +720,10 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
                   <small>{schedule.enabled ? `Próximo envío: ${formatLocalDate(schedule.next_run_at)}` : 'La programación está pausada.'}</small>
                 </div>
                 <div className="report-schedule-actions">
-                  <button type="button" className="ghost-action report-action-button" onClick={() => editSchedule(schedule)}>Editar</button>
-                  <button type="button" className="ghost-action report-action-button" onClick={() => void toggleScheduleEnabled(schedule)}>{schedule.enabled ? 'Pausar' : 'Activar'}</button>
-                  <button type="button" className="ghost-action report-action-button" onClick={() => void runScheduleNow(schedule)}>Enviar ahora</button>
-                  <button type="button" className="ghost-action report-action-button report-schedule-delete" onClick={() => void removeSchedule(schedule)}>Eliminar</button>
+                  <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={() => editSchedule(schedule)}>Editar</DashboardButton>
+                  <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={() => void toggleScheduleEnabled(schedule)}>{schedule.enabled ? 'Pausar' : 'Activar'}</DashboardButton>
+                  <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={() => void runScheduleNow(schedule)}>Enviar ahora</DashboardButton>
+                  <DashboardButton variant="danger" type="button" className="ghost-action report-action-button report-schedule-delete" onClick={() => void removeSchedule(schedule)}>Eliminar</DashboardButton>
                 </div>
               </article>
             ))}
@@ -736,7 +737,7 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
           <p>Soporte integral desde el primer registro disponible.</p>
         </div>
         <div className="report-history-support-actions">
-          <button
+          <DashboardButton variant="pdf"
             type="button"
             className={`ghost-action report-action-button report-export-pdf${exportingFormat === 'history-pdf' ? ' is-loading' : ''}`}
             onClick={() => void exportReport('history-pdf')}
@@ -745,8 +746,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
           >
             {exportingFormat === 'history-pdf' && <span className="report-action-spinner" aria-hidden="true" />}
             {exportingFormat === 'history-pdf' ? 'Generando histórico...' : 'PDF histórico completo'}
-          </button>
-          <button
+          </DashboardButton>
+          <DashboardButton variant="excel"
             type="button"
             className={`ghost-action report-action-button report-export-excel${exportingFormat === 'history-excel' ? ' is-loading' : ''}`}
             onClick={() => void exportReport('history-excel')}
@@ -755,7 +756,7 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
           >
             {exportingFormat === 'history-excel' && <span className="report-action-spinner" aria-hidden="true" />}
             {exportingFormat === 'history-excel' ? 'Generando histórico...' : 'Excel histórico completo'}
-          </button>
+          </DashboardButton>
         </div>
         {(exportingFormat === 'history-excel' || exportingFormat === 'history-pdf') && (
           <small className="report-history-support-status">
@@ -829,11 +830,11 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
 
               {scheduleError && <div className="status-pill alert report-status-pill">{scheduleError}</div>}
               <div className="report-email-actions report-schedule-save-actions">
-                <button type="button" className="ghost-action report-action-button" onClick={closeScheduleModal} disabled={scheduleSaving}>Cancelar</button>
-                <button type="submit" className="primary-action report-action-button" disabled={scheduleSaving}>
+                <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={closeScheduleModal} disabled={scheduleSaving}>Cancelar</DashboardButton>
+                <DashboardButton variant="primary" type="submit" className="primary-action report-action-button" disabled={scheduleSaving}>
                   {scheduleSaving && <span className="report-action-spinner" aria-hidden="true" />}
                   {scheduleSaving ? 'Guardando...' : scheduleEditingId ? 'Guardar cambios' : 'Guardar programación'}
-                </button>
+                </DashboardButton>
               </div>
             </div>
           </form>
@@ -872,8 +873,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
             <label className="report-email-field"><span>Mensaje</span><textarea value={emailMessage} onChange={(event) => setEmailMessage(event.target.value)} rows={4} /></label>
             {emailError && <div className="status-pill alert report-status-pill">{emailError}</div>}
             <div className="report-email-actions">
-              <button type="button" className="ghost-action report-action-button" onClick={() => setEmailModalOpen(false)} disabled={emailSending}>Cancelar</button>
-              <button type="submit" className="primary-action report-action-button" disabled={emailSending}>{emailSending ? 'Enviando...' : 'Enviar'}</button>
+              <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={() => setEmailModalOpen(false)} disabled={emailSending}>Cancelar</DashboardButton>
+              <DashboardButton variant="primary" type="submit" className="primary-action report-action-button" disabled={emailSending}>{emailSending ? 'Enviando...' : 'Enviar'}</DashboardButton>
             </div>
           </form>
         </div>,

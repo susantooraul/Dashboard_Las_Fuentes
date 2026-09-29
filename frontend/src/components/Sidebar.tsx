@@ -1,3 +1,4 @@
+import DashboardButton from './DashboardButton';
 import {
   Activity,
   ArrowLeftRight,
@@ -146,7 +147,7 @@ export default function Sidebar({
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`.trim()}>
       <div className="brand-row">
-        <button className="menu-button" onClick={handleMenuClick} aria-label={menuLabel} title={menuLabel}><Menu size={18} /></button>
+        <DashboardButton variant="icon" className="menu-button" onClick={handleMenuClick} aria-label={menuLabel} title={menuLabel}><Menu size={18} /></DashboardButton>
         {!collapsed && (
           <>
             <div className="brand-mark logo-mark"><BrandLogo className="brand-logo sidebar-logo" /></div>
@@ -160,7 +161,7 @@ export default function Sidebar({
 
       {onThemeToggle ? (
         <div className="sidebar-theme-control">
-          <button
+          <DashboardButton variant="secondary"
             type="button"
             className="nav-item theme-toggle-button"
             onClick={onThemeToggle}
@@ -170,7 +171,7 @@ export default function Sidebar({
           >
             {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
             {!collapsed && <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>}
-          </button>
+          </DashboardButton>
         </div>
       ) : null}
 

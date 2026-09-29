@@ -1,3 +1,4 @@
+import DashboardButton from './components/DashboardButton';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
@@ -61,7 +62,7 @@ function SessionControl({ user, onLogout, onChangePassword, pending = false, com
         </div>
       </div>
       <div className="session-actions">
-        <button
+        <DashboardButton variant="secondary"
           type="button"
           className="session-password-button"
           onClick={onChangePassword}
@@ -71,8 +72,8 @@ function SessionControl({ user, onLogout, onChangePassword, pending = false, com
         >
           <KeyRound size={16} />
           <span>Cambiar contraseña</span>
-        </button>
-        <button
+        </DashboardButton>
+        <DashboardButton variant="secondary"
           type="button"
           className="session-logout-button"
           onClick={onLogout}
@@ -82,7 +83,7 @@ function SessionControl({ user, onLogout, onChangePassword, pending = false, com
         >
           <LogOut size={16} />
           <span>{pending ? 'Saliendo…' : 'Cerrar sesión'}</span>
-        </button>
+        </DashboardButton>
       </div>
     </div>
   );
@@ -157,9 +158,9 @@ function PasswordChangeModal({ open, displayName, onClose, onSubmit }) {
             <h2 id="password-modal-title">Cambiar contraseña</h2>
             <p>{displayName ? `Actualiza la contraseña de ${displayName}.` : 'Actualiza la contraseña de tu usuario.'}</p>
           </div>
-          <button type="button" className="password-modal-close" onClick={onClose} disabled={status.pending} aria-label="Cerrar">
+          <DashboardButton variant="icon" type="button" className="password-modal-close" onClick={onClose} disabled={status.pending} aria-label="Cerrar">
             <X size={18} />
-          </button>
+          </DashboardButton>
         </header>
 
         <form className="password-modal-form" onSubmit={handleSubmit}>
@@ -181,11 +182,11 @@ function PasswordChangeModal({ open, displayName, onClose, onSubmit }) {
           {status.success ? <div className="password-modal-message success" role="status">{status.success}</div> : null}
 
           <div className="password-modal-actions">
-            <button type="button" className="password-modal-secondary" onClick={onClose} disabled={status.pending}>Cerrar</button>
-            <button type="submit" className="password-modal-primary" disabled={status.pending || Boolean(status.success)}>
+            <DashboardButton variant="secondary" type="button" className="password-modal-secondary" onClick={onClose} disabled={status.pending}>Cerrar</DashboardButton>
+            <DashboardButton variant="primary" type="submit" className="password-modal-primary" disabled={status.pending || Boolean(status.success)}>
               <KeyRound size={16} />
               {status.pending ? 'Actualizando…' : 'Actualizar contraseña'}
-            </button>
+            </DashboardButton>
           </div>
         </form>
       </section>
@@ -258,8 +259,8 @@ function InitialPlantLoader({ status, error, onRetry, onSkip }) {
           <>
             <div className="initial-loader-error">{error || 'La fuente operativa no respondió dentro del tiempo esperado.'}</div>
             <div className="initial-loader-actions">
-              <button type="button" onClick={onRetry}>Reintentar</button>
-              <button type="button" className="secondary" onClick={onSkip}>Abrir dashboard sin precarga</button>
+              <DashboardButton variant="secondary" type="button" onClick={onRetry}>Reintentar</DashboardButton>
+              <DashboardButton variant="secondary" type="button" className="secondary" onClick={onSkip}>Abrir dashboard sin precarga</DashboardButton>
             </div>
           </>
         ) : (
@@ -352,7 +353,7 @@ function Shell({ user, onLogout, sidebarProps, children, headerMeta, shellClass 
       />
       <div className="main-shell">
         <div className="mobile-topbar" aria-label="Navegación móvil">
-          <button
+          <DashboardButton variant="icon"
             type="button"
             className="mobile-menu-button"
             aria-label="Abrir menú"
@@ -360,7 +361,7 @@ function Shell({ user, onLogout, sidebarProps, children, headerMeta, shellClass 
             onClick={() => setMobileDrawerOpen(true)}
           >
             ☰
-          </button>
+          </DashboardButton>
           <span className="mobile-plant-name">{PLANT_NAME}</span>
         </div>
         <Header

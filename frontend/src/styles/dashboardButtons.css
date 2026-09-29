@@ -1,0 +1,76 @@
+/* LF14: single visual contract for DashboardButton and navigation actions.
+   Scoped !important declarations override legacy per-page button rules only. */
+.arca-button,
+.pozos-shell :is(.detail-back-link, .detail-element-nav-link) {
+  --arca-button-bg: var(--lf-surface, #061a28);
+  --arca-button-fg: var(--lf-text, #eef6fa);
+  --arca-button-border: var(--lf-border, #224151);
+  box-sizing: border-box;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center;
+  gap: 8px !important;
+  min-height: 36px !important;
+  max-width: 100%;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 18px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  text-decoration: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  transform: none !important;
+  cursor: pointer;
+  transition: border-color .15s ease, filter .15s ease;
+}
+.arca-button--primary { --arca-button-bg: #087ba5; --arca-button-fg: #fff; --arca-button-border: #1595bc; }
+.arca-button--excel { --arca-button-bg: #14653b; --arca-button-fg: #fff; --arca-button-border: #288652; }
+.arca-button--pdf, .arca-button--danger { --arca-button-bg: #913347; --arca-button-fg: #fff; --arca-button-border: #b75468; }
+.arca-button.active,
+.arca-button.is-active,
+.arca-button[aria-pressed='true'],
+.arca-button[aria-selected='true'] {
+  --arca-button-bg: var(--lf-active, #103e53);
+  --arca-button-fg: var(--lf-accent, #73d1f3);
+  --arca-button-border: var(--lf-accent, #73d1f3);
+}
+.arca-button:not(:disabled):hover,
+.pozos-shell :is(.detail-back-link, .detail-element-nav-link):hover { filter: brightness(1.12); }
+.arca-button:focus-visible,
+.pozos-shell :is(.detail-back-link, .detail-element-nav-link, .nav-item):focus-visible { outline: 2px solid var(--lf-accent, #73d1f3); outline-offset: 3px; }
+.arca-button:disabled { opacity: .5 !important; cursor: not-allowed; filter: none; }
+.arca-button svg { width: 16px !important; height: 16px !important; min-width: 16px; flex: 0 0 16px; color: inherit !important; }
+.arca-button--icon { width: 36px; height: 36px; padding: 0 !important; flex-shrink: 0; }
+.arca-button > :is(span, strong) { font-size: inherit; letter-spacing: inherit; }
+.pozos-shell .insurgentes-page :is(.insurgentes-history-control-group, .insurgentes-series-actions, .insurgentes-series-chips, .insurgentes-history-export-actions) {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+}
+.pozos-shell .insurgentes-page .insurgentes-history-control-group { padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.pozos-shell .insurgentes-page :is(.insurgentes-history-metric-actions, .insurgentes-history-controls, .report-main-actions, .report-email-actions) { flex-wrap: wrap; gap: 8px; }
+.pozos-shell .insurgentes-page .date-range-fields { row-gap: 12px; column-gap: 10px; align-items: end; }
+.pozos-shell .insurgentes-page .date-range-fields :is(input, select, .date-input-with-icon) { min-height: 36px; border-radius: 8px; font-size: 13px; }
+.pozos-shell .insurgentes-page :is(.detail-back-link, .detail-element-nav-link) strong { font-size: inherit; font-weight: inherit; }
+@media (pointer: coarse) {
+  .arca-button, .pozos-shell :is(.detail-back-link, .detail-element-nav-link) { min-height: 44px !important; }
+  .arca-button--icon { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .arca-button { transition: none; } }
+
+/* Important declarations in this layer outrank legacy unlayered export colors. */
+@layer arca-button-colors {
+  .arca-button, .pozos-shell :is(.detail-back-link, .detail-element-nav-link) {
+    border: 1px solid var(--arca-button-border) !important;
+    background: var(--arca-button-bg) !important;
+    color: var(--arca-button-fg) !important;
+    box-shadow: none !important;
+  }
+  .arca-button:not(:disabled):hover,
+  .pozos-shell :is(.detail-back-link, .detail-element-nav-link):hover {
+    border-color: var(--lf-accent, #73d1f3) !important;
+  }
+}

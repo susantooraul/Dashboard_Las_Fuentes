@@ -10,6 +10,7 @@ from time import monotonic
 from typing import Any, Iterable
 from zoneinfo import ZoneInfo
 
+from app.services.report_visual_theme import NAVY, BLUE, PALE, MUTED, REPORT_HTML_CSS, pdf_table, pdf_footer, style_excel_table, style_excel_workbook
 from app.services.insurgentes_config import PLANT_NAME, SHIFT_WINDOWS
 from app.services.insurgentes_daily_review_service import get_insurgentes_review_period
 from app.services.insurgentes_service import get_insurgentes_interval_cut
@@ -1071,27 +1072,9 @@ def _logo_path() -> str | None:
 
 
 def _pdf_table(rows: list[list[Any]], widths: list[float] | None = None):
-    from reportlab.lib import colors
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.platypus import Paragraph, Table, TableStyle
+    from reportlab.lib.units import mm
+    return pdf_table(rows, widths, font_size=7.3, max_width=190 * mm)
 
-    header_style = ParagraphStyle('ReportTableHeader', fontName='Helvetica-Bold', fontSize=6.4, leading=7.6, textColor=colors.HexColor('#334155'))
-    body_style = ParagraphStyle('ReportTableBody', fontName='Helvetica', fontSize=6.25, leading=7.3, textColor=colors.HexColor('#111827'))
-    formatted_rows = []
-    for row_index, row in enumerate(rows):
-        style = header_style if row_index == 0 else body_style
-        formatted_rows.append([Paragraph(escape(_pdf_text(cell)), style) for cell in row])
-    table = Table(formatted_rows, colWidths=widths, repeatRows=1)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#eaf2f8')),
-        ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#d9e1ea')),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 3.5),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 3.5),
-        ('TOPPADDING', (0, 0), (-1, -1), 3.8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3.8),
-    ]))
-    return table
 
 
 def _bar_chart_table(title: str, items: list[tuple[str, Any, str]], width: float):
@@ -1218,7 +1201,8 @@ def _volume_bar_chart_image(title: str, items: list[tuple[str, Any, str]], width
             colors[index] = '#e5edf4'
     ax.barh(y_positions, values, color=colors, height=0.34)
     ax.set_yticks(y_positions)
-    ax.set_yticklabels(names, fontsize=7.2, color='#334155')
+    from textwrap import fill
+    ax.set_yticklabels([fill(name, width=28) for name in names], fontsize=7.2, color='#334155')
     ax.invert_yaxis()
     ax.set_title(title, loc='left', fontsize=9.2, fontweight='bold', color='#1f2937', pad=8)
     ax.set_xlim(0, max(max_value * 1.18, 1.0))
@@ -1230,7 +1214,7 @@ def _volume_bar_chart_image(title: str, items: list[tuple[str, Any, str]], width
         label = 'Sin datos' if value is None else _fmt_num(value, 2, suffix)
         x = (values[index] if value is not None else 0.0) + max(max_value * 0.02, 0.25)
         ax.text(x, index, label, va='center', ha='left', fontsize=7.1, color='#334155', fontweight='bold' if value is not None else 'normal')
-    fig.subplots_adjust(left=0.20, right=0.98, top=0.84, bottom=0.08)
+    fig.subplots_adjust(left=0.30 if any(len(name) > 28 for name in names) else 0.20, right=0.98, top=0.84, bottom=0.08)
     image = _chart_flowable_from_matplotlib(fig, width, height)
     plt.close(fig)
     return image
@@ -1279,7 +1263,7 @@ def build_daily_water_report_pdf(report: dict[str, Any]) -> tuple[bytes, str]:
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import mm
-    from reportlab.platypus import Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer
+    from reportlab.platypus import Image, CondPageBreak, KeepTogether, Paragraph, SimpleDocTemplate, Spacer
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -1288,21 +1272,21 @@ def build_daily_water_report_pdf(report: dict[str, Any]) -> tuple[bytes, str]:
         leftMargin=10 * mm,
         rightMargin=10 * mm,
         topMargin=10 * mm,
-        bottomMargin=10 * mm,
+        bottomMargin=16 * mm,
         title=_pdf_filename(report).replace('.pdf', ''),
     )
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name='ReportTitle', parent=styles['Heading1'], fontSize=17, leading=20, textColor=colors.HexColor('#111827'), alignment=1, spaceAfter=2))
-    styles.add(ParagraphStyle(name='Brand', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.2, leading=10, textColor=colors.HexColor('#d71920'), alignment=1))
+    styles.add(ParagraphStyle(name='ReportTitle', parent=styles['Heading1'], fontSize=17, leading=20, textColor=colors.HexColor('#' + NAVY), alignment=0, spaceAfter=8))
+    styles.add(ParagraphStyle(name='Brand', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.2, leading=10, textColor=colors.HexColor('#' + BLUE), alignment=0))
     styles.add(ParagraphStyle(name='SmallNote', parent=styles['Normal'], fontSize=7.3, leading=9, textColor=colors.HexColor('#64748b')))
-    styles.add(ParagraphStyle(name='Section', parent=styles['Heading2'], fontSize=12.2, leading=15, spaceBefore=6, spaceAfter=5, textColor=colors.HexColor('#111827')))
+    styles.add(ParagraphStyle(name='Section', parent=styles['Heading2'], fontSize=12.2, leading=15, spaceBefore=6, spaceAfter=5, textColor=colors.HexColor('#' + NAVY)))
 
     story: list[Any] = []
     logo = _logo_path()
     if logo:
         try:
             logo_image = Image(logo, width=34 * mm, height=14 * mm, kind='proportional')
-            logo_image.hAlign = 'CENTER'
+            logo_image.hAlign = 'LEFT'
             story.append(logo_image)
         except Exception:
             pass
@@ -1352,7 +1336,7 @@ def build_daily_water_report_pdf(report: dict[str, Any]) -> tuple[bytes, str]:
 
     comparative_rows = (report.get('comparative') or {}).get('rows') or []
     if comparative_rows:
-        story.append(PageBreak())
+        story.append(CondPageBreak(55 * mm))
         story.append(Paragraph('Comparativo del periodo', styles['Section']))
         comparison_headers = (report.get('comparative') or {}).get('headers') or {}
         rows = [['Módulo', 'Elemento', comparison_headers.get('seleccionado') or 'Seleccionado', comparison_headers.get('ayer') or 'Anterior', comparison_headers.get('semana_anterior') or 'Semana anterior', comparison_headers.get('esta_semana') or 'Esta semana']]
@@ -1370,14 +1354,13 @@ def build_daily_water_report_pdf(report: dict[str, Any]) -> tuple[bytes, str]:
                 _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_activity_metrics(row),
                 row.get('comunicacion'), row.get('validacion'),
             ])
-        story.append(PageBreak())
-        story.append(Paragraph(title, styles['Section']))
-        story.append(_pdf_table(rows, [25 * mm, 22 * mm, 31 * mm, 28 * mm, 20 * mm, 27 * mm, 24 * mm, 25 * mm]))
+        section_story = [Spacer(1, 10), Paragraph(title, styles['Section']),
+                         _pdf_table(rows, [25 * mm, 22 * mm, 31 * mm, 28 * mm, 20 * mm, 27 * mm, 24 * mm, 25 * mm])]
         bars = [(row.get('equipo'), row.get('volumen_periodo_m3'), ' m³') for row in data_rows]
         chart = _volume_bar_chart_image(f'Volumen validado · {title}', bars, doc.width, max(42 * mm, (len(bars) * 7 + 24) * mm)) if bars else None
         if chart:
-            story.append(Spacer(1, 8))
-            story.append(chart)
+            section_story.extend([Spacer(1, 8), chart])
+        story.append(KeepTogether(section_story))
 
     section_table('Pozos', (report.get('wells') or {}).get('rows') or [], 'Pozo')
     flow_groups = report.get('flow_groups') or {}
@@ -1392,7 +1375,7 @@ def _thin_red_rule(width: float):
     from reportlab.lib import colors
     from reportlab.platypus import Table, TableStyle
     table = Table([['']], colWidths=[width], rowHeights=[1.8])
-    table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#d71920'))]))
+    table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#' + BLUE))]))
     return table
 
 
@@ -1400,8 +1383,8 @@ def _kpi_table(headers: list[str], values: list[str], width: float):
     from reportlab.lib import colors
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.platypus import Paragraph, Table, TableStyle
-    header_style = ParagraphStyle('KpiHeader', fontName='Helvetica-Bold', fontSize=6.1, leading=7, textColor=colors.HexColor('#64748b'), alignment=1)
-    value_style = ParagraphStyle('KpiValue', fontName='Helvetica-Bold', fontSize=9.3, leading=11, textColor=colors.HexColor('#111827'), alignment=1)
+    header_style = ParagraphStyle('KpiHeader', fontName='Helvetica-Bold', fontSize=8, leading=10, textColor=colors.HexColor('#64748b'), alignment=1)
+    value_style = ParagraphStyle('KpiValue', fontName='Helvetica-Bold', fontSize=13, leading=16, textColor=colors.HexColor('#' + NAVY), alignment=1)
     rows = []
     for i in range(0, len(headers), 4):
         rows.append([Paragraph(escape(x), header_style) for x in headers[i:i+4]])
@@ -1420,12 +1403,8 @@ def _kpi_table(headers: list[str], values: list[str], width: float):
 
 
 def _page_footer(canvas, doc):
-    canvas.saveState()
-    canvas.setFont('Helvetica', 7)
-    canvas.setFillColorRGB(0.45, 0.52, 0.60)
-    canvas.drawString(doc.leftMargin, 8, 'Dashboard ARCA · Control hídrico · Planta Las Fuentes')
-    canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, 8, f'Página {doc.page}')
-    canvas.restoreState()
+    pdf_footer(canvas, doc)
+
 
 
 # ---------------------------------------------------------------------------
@@ -1441,24 +1420,17 @@ def build_daily_water_report_excel(report: dict[str, Any]) -> tuple[bytes, str]:
     ws = wb.active
     ws.title = 'Resumen'
 
-    header_fill = PatternFill('solid', fgColor='DDEBF7')
-    title_fill = PatternFill('solid', fgColor='C00000')
+    header_fill = PatternFill('solid', fgColor=NAVY)
+    title_fill = PatternFill('solid', fgColor=NAVY)
     white_font = Font(color='FFFFFF', bold=True)
     bold_font = Font(bold=True)
     thin = Side(style='thin', color='D9E1EA')
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
     def style_table(sheet, start_row: int, end_row: int, end_col: int) -> None:
-        for row in sheet.iter_rows(min_row=start_row, max_row=end_row, min_col=1, max_col=end_col):
-            for cell in row:
-                cell.border = border
-                cell.alignment = Alignment(vertical='center', wrap_text=True)
-        for cell in sheet[start_row]:
-            cell.fill = header_fill
-            cell.font = bold_font
-        sheet.freeze_panes = 'A2'
         for col in range(1, end_col + 1):
-            sheet.column_dimensions[get_column_letter(col)].width = max(14, min(30, sheet.column_dimensions[get_column_letter(col)].width or 14))
+            sheet.column_dimensions[get_column_letter(col)].width = 25 if col == 1 else 22
+        style_excel_table(sheet, start_row, end_row, end_col)
 
     ws['A1'] = 'DASHBOARD ARCA · PLANTA LAS FUENTES'
     ws['A1'].fill = title_fill
@@ -1520,6 +1492,10 @@ def build_daily_water_report_excel(report: dict[str, Any]) -> tuple[bytes, str]:
     add_sheet('Cisterna', element_headers, rows_of(flow_groups.get('cisterna')))
 
     output = BytesIO()
+    style_excel_workbook(wb)
+    ws.freeze_panes = 'A7'
+    ws.print_title_rows = '6:6'
+    ws.column_dimensions['A'].width = 34
     wb.save(output)
     return output.getvalue(), _excel_filename(report)
 
@@ -1539,7 +1515,7 @@ def build_daily_water_report_html(report: dict[str, Any]) -> tuple[bytes, str]:
 
     summary = report.get('summary') or {}
     html = f"""<!doctype html><html lang="es"><head><meta charset="utf-8"/><title>{escape(_file_base(report))}</title><style>
-    body{{font-family:Arial,sans-serif;color:#111827;background:#fff;margin:0;padding:24px}}.brand{{text-align:center;color:#d71920;font-weight:800}}h1{{text-align:center}}.rule{{height:3px;background:#d71920;margin:14px 0 20px}}.kpis{{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}}.kpi{{border:1px solid #d9e1ea;background:#f8fafc;padding:10px}}.kpi span{{display:block;color:#64748b;font-size:11px;font-weight:700}}.kpi strong{{display:block;margin-top:5px;font-size:18px}}section{{break-inside:avoid;margin:22px 0}}h2{{font-size:18px}}table{{width:100%;border-collapse:collapse;font-size:12px}}th{{background:#eaf2f8}}th,td{{border:1px solid #d9e1ea;padding:6px;vertical-align:middle}}
+    {REPORT_HTML_CSS}
     </style></head><body><div class="brand">DASHBOARD ARCA · PLANTA LAS FUENTES</div><h1>Reporte Diario de Control Hídrico</h1><p>Periodo: {escape(_pdf_text(report.get('period_label')))} · Generado: {escape(_pdf_text(report.get('generated_at')))}</p><div class="rule"></div><section class="kpis">
     <div class="kpi"><span>Pozos</span><strong>{fmt(summary.get('volumen_pozos_m3'), ' m³')}</strong></div><div class="kpi"><span>TAM</span><strong>{fmt(summary.get('volumen_tam_m3'), ' m³')}</strong></div><div class="kpi"><span>Embotellado</span><strong>{fmt(summary.get('volumen_embotellado_m3'), ' m³')}</strong></div><div class="kpi"><span>Cisterna</span><strong>{fmt(summary.get('volumen_cisterna_m3'), ' m³')}</strong></div></section>
     """

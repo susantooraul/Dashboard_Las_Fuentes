@@ -1,3 +1,4 @@
+import DashboardButton from '../../../components/DashboardButton';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ChartEmptyState from '../components/ChartEmptyState';
@@ -144,14 +145,14 @@ function DashboardBaseSection() {
       <section className="las-fuentes-summary-history-shell">
         <div className="las-fuentes-summary-history-switch" role="group" aria-label="Proceso del histórico del resumen">
           {processes.map((process) => (
-            <button
+            <DashboardButton variant="secondary"
               key={process.key}
               type="button"
               className={historyScope === process.key ? 'active' : ''}
               onClick={() => setHistoryScope(process.key)}
             >
               {process.title}
-            </button>
+            </DashboardButton>
           ))}
         </div>
         <OperationalModuleHistoryPanel

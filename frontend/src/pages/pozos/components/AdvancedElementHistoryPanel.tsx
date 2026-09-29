@@ -1,3 +1,5 @@
+import { REPORT_VISUAL_CSS } from '../../../services/reportVisualTheme';
+import DashboardButton from '../../../components/DashboardButton';
 import { useEffect, useMemo, useState } from 'react';
 import { FileSpreadsheet, FileText, LoaderCircle } from 'lucide-react';
 import ChartEmptyState from './ChartEmptyState';
@@ -130,7 +132,7 @@ function downloadDetailHistoryExcel({
       <tr>${headers.map((header) => `<th>${escapeExcelHtml(header)}</th>`).join('')}</tr>
       ${rows.map((row) => `<tr>${row.map((value) => `<td>${escapeExcelHtml(value)}</td>`).join('')}</tr>`).join('')}
     </table>`;
-  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${REPORT_VISUAL_CSS}</style></head><body>
     <h2>ARCA Las Fuentes — Histórico de detalle</h2>
     <p><strong>Elemento:</strong> ${escapeExcelHtml(title)}</p>
     <p><strong>Módulo:</strong> ${escapeExcelHtml(exportModuleLabel(module))}</p>
@@ -260,7 +262,7 @@ export default function AdvancedElementHistoryPanel({
           showStatus={false}
           extraAction={(
             <div className="insurgentes-history-export-actions detail-history-export-actions">
-              <button
+              <DashboardButton variant="pdf"
                 type="button"
                 className="module-history-pdf-button"
                 onClick={() => void exportCurrentPdf()}
@@ -269,8 +271,8 @@ export default function AdvancedElementHistoryPanel({
               >
                 {pdfLoading ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : <FileText size={17} aria-hidden="true" />}
                 <span>{pdfLoading ? 'Generando...' : 'PDF'}</span>
-              </button>
-              <button
+              </DashboardButton>
+              <DashboardButton variant="excel"
                 type="button"
                 className="five-minute-excel-button"
                 onClick={exportCurrentExcel}
@@ -279,7 +281,7 @@ export default function AdvancedElementHistoryPanel({
               >
                 <FileSpreadsheet size={17} aria-hidden="true" />
                 <span>Excel</span>
-              </button>
+              </DashboardButton>
               <FiveMinuteExcelExportButton
                 module={module}
                 sensorId={sensorId}
@@ -292,22 +294,22 @@ export default function AdvancedElementHistoryPanel({
         <div className="insurgentes-history-totalizer-control" aria-label="Modo de visualización del volumen">
           <span>Volumen</span>
           <div className="insurgentes-history-control-group" role="group">
-            <button
+            <DashboardButton variant="secondary"
               type="button"
               className={volumeDisplay === 'interval' ? 'active' : ''}
               onClick={() => setVolumeDisplay('interval')}
               title="Muestra el volumen conciliado de cada intervalo de agrupación."
             >
               Por intervalo
-            </button>
-            <button
+            </DashboardButton>
+            <DashboardButton variant="secondary"
               type="button"
               className={volumeDisplay === 'cumulative' ? 'active' : ''}
               onClick={() => setVolumeDisplay('cumulative')}
               title="Acumula progresivamente los volúmenes válidos dentro del periodo seleccionado."
             >
               Acumulado progresivo
-            </button>
+            </DashboardButton>
           </div>
         </div>
         {hasData ? (
