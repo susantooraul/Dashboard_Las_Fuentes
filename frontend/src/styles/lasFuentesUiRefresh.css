@@ -1,0 +1,718 @@
+/*
+ * Las Fuentes UI refresh.
+ * Presentation-only overrides: no data contracts, endpoints, auth, sensors, units, or calculations.
+ */
+
+.pozos-shell {
+  --lf-ui-radius: 14px;
+  --lf-ui-radius-sm: 10px;
+  --lf-ui-gap: 10px;
+}
+
+.pozos-shell .main-shell {
+  min-width: 0;
+}
+
+.pozos-shell .page-content {
+  padding: 10px 16px 18px;
+}
+
+.pozos-shell .plant-context-bar {
+  min-height: 34px;
+  padding: 8px 16px 0;
+  font-size: 10px;
+  letter-spacing: .14em;
+}
+
+.pozos-shell .plant-context-bar > .plant-context-name {
+  padding: 6px 10px;
+}
+
+.pozos-shell .insurgentes-page {
+  gap: var(--lf-ui-gap);
+}
+
+.pozos-shell .insurgentes-page .panel {
+  border-radius: var(--lf-ui-radius);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .18);
+}
+
+.pozos-shell .insurgentes-page .insurgentes-hero,
+.pozos-shell .insurgentes-page .insurgentes-summary-hero {
+  padding: 14px 16px;
+  gap: 12px;
+}
+
+.pozos-shell .insurgentes-page .section-eyebrow {
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+
+.pozos-shell .insurgentes-page .insurgentes-hero h2,
+.pozos-shell .insurgentes-page .insurgentes-summary-copy h2 {
+  margin: 2px 0 0;
+  font-size: clamp(1.45rem, 1.9vw, 2rem);
+  line-height: 1.08;
+}
+
+.pozos-shell .insurgentes-page .insurgentes-hero-state {
+  min-height: 70px;
+  padding: 10px 12px;
+  border-radius: var(--lf-ui-radius);
+}
+
+.pozos-shell .insurgentes-page .insurgentes-hero-state > span,
+.pozos-shell .insurgentes-page .insurgentes-hero-state > small {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.pozos-shell .insurgentes-page .insurgentes-hero-state > strong {
+  font-size: .94rem;
+}
+
+.pozos-shell .insurgentes-page .insurgentes-hero-kpis {
+  gap: 8px;
+}
+
+.pozos-shell .insurgentes-page .insurgentes-hero-kpis article,
+.pozos-shell .insurgentes-page :is(.lf-pozos-kpi, .lf-tam-kpi, .lf-embotellado-kpi, .lf-cisterna-kpi) {
+  min-height: 76px;
+  padding: 10px 11px;
+  border-radius: var(--lf-ui-radius);
+}
+
+.pozos-shell .insurgentes-page .insurgentes-hero-kpis article span {
+  min-height: 0;
+  font-size: 9px;
+  letter-spacing: .08em;
+}
+
+.pozos-shell .insurgentes-page .insurgentes-hero-kpis article strong {
+  margin-top: 5px;
+  font-size: clamp(1rem, 1.3vw, 1.24rem);
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-card {
+  min-height: 166px;
+  padding: 13px;
+  gap: 9px;
+  border-radius: var(--lf-ui-radius);
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-head,
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-secondary,
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-foot {
+  gap: 8px;
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-head > span {
+  font-size: .9rem;
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-head > em,
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-foot {
+  font-size: .66rem;
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-primary {
+  gap: 4px;
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-primary strong {
+  font-size: clamp(1.35rem, 1.9vw, 1.72rem);
+  line-height: 1;
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-primary span {
+  font-size: .74rem;
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-secondary {
+  padding-top: 8px;
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-secondary small,
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-primary > small {
+  font-size: .62rem;
+}
+
+.pozos-shell .insurgentes-page[data-section='dashboard'] .las-fuentes-summary-process-secondary strong {
+  font-size: .84rem;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-page,
+  .lf-tam-page,
+  .lf-embotellado-page,
+  .lf-cisterna-page
+) {
+  gap: 10px;
+}
+
+.pozos-shell .insurgentes-page .insurgentes-equipment-grid,
+.pozos-shell .insurgentes-page .insurgentes-equipment-grid.two-columns {
+  grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
+  gap: 10px;
+}
+
+.pozos-shell .insurgentes-page .lf-cisterna-grid {
+  grid-template-columns: repeat(auto-fit, minmax(258px, 390px));
+  justify-content: start;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card,
+  .lf-tam-card,
+  .lf-embotellado-card,
+  .lf-cisterna-card
+) {
+  min-height: 0;
+  padding: 12px;
+  gap: 8px;
+  border-radius: var(--lf-ui-radius);
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__head,
+  .lf-tam-card__head,
+  .lf-embotellado-card__head,
+  .lf-cisterna-card__head
+) {
+  min-height: 34px;
+  margin-bottom: 0;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__head,
+  .lf-tam-card__head,
+  .lf-embotellado-card__head,
+  .lf-cisterna-card__head
+) h3 {
+  font-size: .98rem;
+  line-height: 1.12;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__head,
+  .lf-tam-card__head,
+  .lf-embotellado-card__head,
+  .lf-cisterna-card__head
+) .resumen-status-pill {
+  max-width: 138px;
+  padding: 4px 8px;
+  font-size: .62rem;
+  line-height: 1.1;
+  letter-spacing: .06em;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__primary,
+  .lf-tam-card__primary,
+  .lf-embotellado-card__primary,
+  .lf-cisterna-card__primary
+) {
+  gap: 6px;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__primary,
+  .lf-tam-card__primary,
+  .lf-embotellado-card__primary,
+  .lf-cisterna-card__primary
+) > div {
+  min-height: 58px;
+  padding: 8px 9px;
+  border-radius: var(--lf-ui-radius-sm);
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__primary,
+  .lf-tam-card__primary,
+  .lf-embotellado-card__primary,
+  .lf-cisterna-card__primary,
+  .lf-pozos-card__secondary,
+  .lf-tam-card__secondary,
+  .lf-embotellado-card__secondary,
+  .lf-cisterna-card__secondary
+) span {
+  font-size: .62rem;
+  letter-spacing: .045em;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__primary,
+  .lf-tam-card__primary,
+  .lf-embotellado-card__primary,
+  .lf-cisterna-card__primary
+) strong {
+  margin-top: 4px;
+  font-size: clamp(1rem, 1.35vw, 1.18rem);
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__secondary,
+  .lf-tam-card__secondary,
+  .lf-embotellado-card__secondary,
+  .lf-cisterna-card__secondary
+) {
+  gap: 6px;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__secondary,
+  .lf-tam-card__secondary,
+  .lf-embotellado-card__secondary,
+  .lf-cisterna-card__secondary
+) > div {
+  min-height: 50px;
+  padding: 7px 8px;
+  border-radius: var(--lf-ui-radius-sm);
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__secondary,
+  .lf-tam-card__secondary,
+  .lf-embotellado-card__secondary,
+  .lf-cisterna-card__secondary
+) strong {
+  margin-top: 3px;
+  font-size: .82rem;
+  line-height: 1.15;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__footer,
+  .lf-tam-card__footer,
+  .lf-embotellado-card__footer,
+  .lf-cisterna-card__footer
+) {
+  min-height: 26px;
+  margin-top: auto;
+  padding-top: 7px;
+  gap: 8px;
+  font-size: .68rem;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .lf-pozos-card__footer,
+  .lf-tam-card__footer,
+  .lf-embotellado-card__footer,
+  .lf-cisterna-card__footer
+) strong {
+  font-size: .7rem;
+}
+
+.pozos-shell .insurgentes-page .operational-detail-hero {
+  grid-template-columns: minmax(260px, .68fr) minmax(0, 1.32fr);
+  gap: 12px;
+  padding: 46px 16px 16px;
+  border-radius: var(--lf-ui-radius);
+}
+
+.pozos-shell .insurgentes-page .operational-detail-back-row {
+  top: 10px;
+  left: 10px;
+}
+
+.pozos-shell .insurgentes-page .detail-back-link {
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: .76rem;
+}
+
+.pozos-shell .insurgentes-page .operational-detail-main {
+  gap: 8px;
+}
+
+.pozos-shell .insurgentes-page .detail-element-navigator {
+  gap: 6px;
+}
+
+.pozos-shell .insurgentes-page .detail-element-nav-link,
+.pozos-shell .insurgentes-page .detail-element-nav-current {
+  min-height: 34px;
+  padding: 6px 9px;
+  border-radius: var(--lf-ui-radius-sm);
+  font-size: .72rem;
+}
+
+.pozos-shell .insurgentes-page .operational-detail-title-block {
+  gap: 5px;
+  margin-top: 0;
+}
+
+.pozos-shell .insurgentes-page .operational-detail-title-row {
+  gap: 8px;
+}
+
+.pozos-shell .insurgentes-page .operational-detail-title-row h2 {
+  font-size: clamp(1.3rem, 1.7vw, 1.78rem);
+}
+
+.pozos-shell .insurgentes-page .operational-detail-kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  align-content: stretch;
+}
+
+.pozos-shell .insurgentes-page .operational-detail-kpi {
+  min-height: 60px;
+  padding: 9px;
+  gap: 4px;
+  border-radius: var(--lf-ui-radius-sm);
+}
+
+.pozos-shell .insurgentes-page .operational-detail-kpi span {
+  font-size: .58rem;
+  letter-spacing: .07em;
+}
+
+.pozos-shell .insurgentes-page .operational-detail-kpi strong {
+  font-size: clamp(.82rem, 1vw, 1rem);
+  line-height: 1.12;
+}
+
+.pozos-shell .insurgentes-page .chart-panel > .panel-header,
+.pozos-shell .insurgentes-page .detail-history-panel > .panel-header,
+.pozos-shell .insurgentes-page .insurgentes-history-module-panel > .panel-header {
+  padding: 14px 16px 6px;
+}
+
+.pozos-shell .insurgentes-page .panel-title {
+  font-size: .98rem;
+}
+
+.pozos-shell .insurgentes-page .panel-subtitle {
+  font-size: .78rem;
+}
+
+.pozos-shell .insurgentes-page .chart-date-range-panel {
+  margin: 0 16px 8px;
+  gap: 8px;
+}
+
+.pozos-shell .insurgentes-page .chart-date-range-panel .date-range-fields {
+  gap: 6px;
+}
+
+.pozos-shell .insurgentes-page .chart-date-range-panel .date-range-fields label > span {
+  font-size: .64rem;
+}
+
+.pozos-shell .insurgentes-page :is(
+  .date-range-fields input,
+  .history-aggregation-native,
+  .date-range-apply,
+  .date-range-reset,
+  .date-range-status,
+  .module-history-pdf-button,
+  .five-minute-excel-button
+) {
+  min-height: 32px;
+  border-radius: var(--lf-ui-radius-sm);
+  font-size: .74rem;
+}
+
+.pozos-shell .insurgentes-page .detail-history-export-actions,
+.pozos-shell .insurgentes-page .insurgentes-history-export-actions {
+  gap: 6px;
+  align-items: end;
+}
+
+.pozos-shell .insurgentes-page .detail-history-export-actions :is(.module-history-pdf-button, .five-minute-excel-button) {
+  padding: 7px 10px;
+}
+
+.pozos-shell .insurgentes-page .insurgentes-history-totalizer-control {
+  margin: 0 16px 8px;
+  gap: 8px;
+}
+
+.pozos-shell .insurgentes-page .insurgentes-history-control-group button {
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: .72rem;
+}
+
+.pozos-shell .insurgentes-page .chart-panel > .recharts-responsive-container,
+.pozos-shell .insurgentes-page .detail-history-panel > .recharts-responsive-container,
+.pozos-shell .insurgentes-page .insurgentes-history-module-panel > .recharts-responsive-container {
+  width: calc(100% - 32px) !important;
+  margin: 0 16px 12px;
+}
+
+.pozos-shell .insurgentes-page .advanced-history-table-panel {
+  padding: 12px;
+}
+
+.pozos-shell .insurgentes-page .advanced-history-table-panel > .panel-header {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.pozos-shell .insurgentes-page .advanced-history-table th,
+.pozos-shell .insurgentes-page .advanced-history-table td {
+  padding: 8px 9px;
+  font-size: .76rem;
+}
+
+.pozos-shell .sidebar {
+  flex-basis: 252px;
+  min-width: 252px;
+  max-width: 252px;
+}
+
+.pozos-shell .sidebar.collapsed {
+  width: 76px;
+  min-width: 76px;
+  max-width: 76px;
+  flex-basis: 76px;
+}
+
+.pozos-shell .brand-row {
+  min-height: 72px;
+  padding: 12px;
+  gap: 10px;
+}
+
+.pozos-shell .brand-mark.logo-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.pozos-shell .sidebar-logo {
+  width: 82px;
+  max-width: 82px;
+}
+
+.pozos-shell .brand-title {
+  font-size: .78rem;
+  line-height: 1.12;
+}
+
+.pozos-shell .brand-subtitle {
+  font-size: .66rem;
+}
+
+.pozos-shell .menu-button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--lf-ui-radius-sm);
+}
+
+.pozos-shell .sidebar-theme-control {
+  padding: 10px 8px 2px;
+}
+
+.pozos-shell .sidebar-nav {
+  padding: 10px 8px 12px;
+}
+
+.pozos-shell .nav-group {
+  margin-bottom: 12px;
+}
+
+.pozos-shell .nav-group-title {
+  margin: 0 8px 6px;
+  font-size: .58rem;
+  letter-spacing: .14em;
+}
+
+.pozos-shell .nav-item {
+  min-height: 40px;
+  margin-bottom: 4px;
+  padding: 9px 10px;
+  gap: 10px;
+  border-radius: 12px;
+  font-size: .82rem;
+}
+
+.pozos-shell .nav-item svg {
+  width: 15px;
+  height: 15px;
+}
+
+.pozos-shell .nav-item:hover {
+  transform: translateX(1px);
+}
+
+.pozos-shell .nav-item.active {
+  box-shadow: inset 3px 0 0 rgba(191, 232, 247, .9), 0 8px 18px rgba(14, 116, 144, .20);
+}
+
+.pozos-shell .sidebar-footer {
+  gap: 8px;
+  padding: 10px 8px 12px;
+}
+
+.pozos-shell .sidebar-session-control {
+  padding: 10px;
+  gap: 9px;
+  border-radius: var(--lf-ui-radius);
+}
+
+.pozos-shell .session-avatar {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+  border-radius: 12px;
+}
+
+.pozos-shell .session-identity strong {
+  font-size: .82rem;
+}
+
+.pozos-shell .session-identity small {
+  font-size: .66rem;
+}
+
+.pozos-shell .session-logout-button,
+.pozos-shell .session-password-button {
+  min-height: 36px;
+  border-radius: 12px;
+  font-size: .72rem;
+}
+
+.pozos-shell .sidebar.collapsed .brand-row {
+  min-height: 64px;
+  padding: 10px 8px;
+}
+
+.pozos-shell .sidebar.collapsed .menu-button {
+  flex-basis: 36px;
+}
+
+.pozos-shell .sidebar.collapsed .nav-item,
+.pozos-shell .sidebar.collapsed .switch-domain-link {
+  width: 42px;
+  max-width: 42px;
+  height: 42px;
+  min-height: 42px;
+  border-radius: 12px;
+}
+
+.pozos-shell .sidebar.collapsed .sidebar-footer {
+  padding: 10px 6px 12px;
+}
+
+.pozos-shell .sidebar.collapsed .sidebar-session-control {
+  width: 58px;
+  padding: 8px 6px;
+  border-radius: var(--lf-ui-radius);
+}
+
+.pozos-shell .sidebar.collapsed .sidebar-session-control .session-avatar,
+.pozos-shell .sidebar.collapsed .sidebar-session-control .session-logout-button,
+.pozos-shell .sidebar.collapsed .sidebar-session-control .session-password-button {
+  width: 36px;
+  min-height: 36px;
+}
+
+@media (min-width: 1500px) {
+  .pozos-shell .insurgentes-page .insurgentes-equipment-grid,
+  .pozos-shell .insurgentes-page .insurgentes-equipment-grid.two-columns {
+    grid-template-columns: repeat(auto-fit, minmax(246px, 1fr));
+  }
+}
+
+@media (max-width: 1280px) {
+  .pozos-shell .insurgentes-page .operational-detail-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .pozos-shell .insurgentes-page .operational-detail-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .pozos-shell .insurgentes-page .operational-detail-kpis,
+  .pozos-shell .insurgentes-page .insurgentes-hero-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .pozos-shell .page-content,
+  .page-content {
+    padding: 10px;
+  }
+
+  .pozos-shell .mobile-topbar {
+    min-height: 50px;
+    padding: 8px 10px;
+  }
+
+  .pozos-shell .mobile-menu-button {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .pozos-shell .insurgentes-page .insurgentes-hero,
+  .pozos-shell .insurgentes-page .insurgentes-summary-hero,
+  .pozos-shell .insurgentes-page .operational-detail-hero {
+    padding: 14px;
+  }
+
+  .pozos-shell .insurgentes-page .operational-detail-hero {
+    padding-top: 48px;
+  }
+
+  .pozos-shell .insurgentes-page .insurgentes-equipment-grid,
+  .pozos-shell .insurgentes-page .insurgentes-equipment-grid.two-columns,
+  .pozos-shell .insurgentes-page .lf-cisterna-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pozos-shell .insurgentes-page :is(
+    .lf-pozos-card__primary,
+    .lf-tam-card__primary,
+    .lf-embotellado-card__primary,
+    .lf-cisterna-card__primary
+  ) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .pozos-shell .insurgentes-page .operational-detail-kpis,
+  .pozos-shell .insurgentes-page .insurgentes-hero-kpis,
+  .pozos-shell .insurgentes-page :is(
+    .lf-pozos-card__primary,
+    .lf-tam-card__primary,
+    .lf-embotellado-card__primary,
+    .lf-cisterna-card__primary,
+    .lf-pozos-card__secondary,
+    .lf-tam-card__secondary,
+    .lf-embotellado-card__secondary,
+    .lf-cisterna-card__secondary
+  ) {
+    grid-template-columns: 1fr;
+  }
+
+  .pozos-shell .insurgentes-page :is(
+    .lf-pozos-card__secondary,
+    .lf-tam-card__secondary,
+    .lf-embotellado-card__secondary,
+    .lf-cisterna-card__secondary
+  ) > div:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+
+  .pozos-shell .insurgentes-page .chart-date-range-panel,
+  .pozos-shell .insurgentes-page .insurgentes-history-totalizer-control {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+}
