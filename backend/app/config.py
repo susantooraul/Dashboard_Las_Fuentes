@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     # y no requieren modificar .env para operar.
     report_email_scheduler_interval_seconds: int = Field(default=60, alias="REPORT_EMAIL_SCHEDULER_INTERVAL_SECONDS")
     report_email_retry_minutes: int = Field(default=10, alias="REPORT_EMAIL_RETRY_MINUTES")
-    report_email_max_attempts: int = Field(default=3, alias="REPORT_EMAIL_MAX_ATTEMPTS")
+    report_email_max_attempts: int = Field(default=1, alias="REPORT_EMAIL_MAX_ATTEMPTS")
     report_email_recovery_grace_hours: int = Field(default=6, alias="REPORT_EMAIL_RECOVERY_GRACE_HOURS")
 
     # SQL Server settings
