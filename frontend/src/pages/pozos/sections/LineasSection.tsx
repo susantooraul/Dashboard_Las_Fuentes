@@ -14,7 +14,7 @@ import ShiftCutsPanel from '../components/ShiftCutsPanel';
 import useSqlChartDashboard from '../hooks/useSqlChartDashboard';
 import useWaterModuleHistory from '../hooks/useWaterModuleHistory';
 import { asRecord, asRows, formatNumber, pivotCommonHistorySeries } from '../insurgentesUtils';
-import { activeMinutesValue, countActive, currentTotalizerValue, flowText, flowValue, itemUpdateText, periodVolumeText, periodVolumeValue, previousTotalizerValue, startCountText, sumValues, totalizerCurrentText, totalizerStartText, formatMinutes } from '../operationalPresentation';
+import { activeMinutesValue, countActive, currentTotalizerValue, flowText, flowValue, itemUpdateText, periodVolumeText, periodVolumeValue, sumValues, totalizerCurrentText, totalizerStartText, formatMinutes } from '../operationalPresentation';
 import type { FlexibleRecord } from '../types';
 
 const colors = ['#38bdf8', '#22d3ee', '#34d399', '#fbbf24', '#fb7185', '#c084fc', '#60a5fa'];
@@ -96,7 +96,6 @@ function LineasSection({ itemId }: LineasSectionProps) {
             { label: 'Totalizador actual', value: totalizerCurrentText(selectedLine) },
             { label: 'Flujo actual', value: flowText(selectedLine) },
             { label: 'Tiempo activo', value: formatMinutes(activeMinutesValue(selectedLine)) },
-            { label: 'Encendidos periodo', value: startCountText(selectedLine) },
             { label: 'Comunicación', value: String(selectedLine.estado_comunicacion || 'Sin estado') },
             { label: 'Última lectura', value: itemUpdateText(selectedLine), context: true },
           ]}
@@ -141,7 +140,6 @@ function LineasSection({ itemId }: LineasSectionProps) {
             { label: 'Validación', value: validationText(selectedLine) },
             { label: 'Volumen del periodo', value: periodVolumeText(selectedLine) },
             { label: 'Tiempo activo', value: formatMinutes(activeMinutesValue(selectedLine)) },
-            { label: 'Encendidos periodo', value: startCountText(selectedLine) },
             { label: 'Última actualización', value: itemUpdateText(selectedLine) },
           ]}
         />
@@ -151,58 +149,61 @@ function LineasSection({ itemId }: LineasSectionProps) {
     );
   }
 
-  const totalPrevious = sumValues(allLines, previousTotalizerValue);
   const totalCurrent = sumValues(allLines, currentTotalizerValue);
   const totalPeriod = sumValues(allLines, periodVolumeValue);
   const totalFlow = sumValues(allLines, flowValue);
-  const totalActiveMinutes = sumValues(allLines, activeMinutesValue);
   const activeCount = countActive(allLines);
 
   return (
-    <>
-      <section className="insurgentes-hero panel fade-up insurgentes-hero--with-kpis">
-        <div>
+    <div className="lf-lineas-page">
+      <section className="insurgentes-hero panel fade-up insurgentes-hero--with-kpis lf-lineas-hero">
+        <div className="lf-lineas-hero__intro">
           <span className="section-eyebrow">Operación de agua</span>
           <h2>Líneas</h2>
           <p>Este módulo permanecerá oculto hasta confirmar líneas operativas de Planta Las Fuentes.</p>
         </div>
-        <div className="insurgentes-hero-kpis" aria-label="Resumen operativo de líneas">
-          <article><span>Operando</span><strong>{activeCount}/{allLines.length || 7}</strong></article>
-          <article><span>Flujo total</span><strong>{totalFlow === null ? '—' : `${formatNumber(totalFlow)} L/s`}</strong></article>
-          <article><span>Total día anterior</span><strong>{totalPrevious === null ? '—' : `${formatNumber(totalPrevious)} m³`}</strong></article>
-          <article><span>Total bombeado hoy</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
-          <article><span>Totalizador actual</span><strong>{totalCurrent === null ? '—' : `${formatNumber(totalCurrent)} m³`}</strong></article>
-          <article><span>Tiempo activo</span><strong>{formatMinutes(totalActiveMinutes)}</strong></article>
+        <div className="insurgentes-hero-kpis lf-lineas-hero__kpis" aria-label="Resumen operativo de líneas">
+          <article className="lf-lineas-kpi"><span>Operando</span><strong>{activeCount}/{allLines.length || 7}</strong></article>
+          <article className="lf-lineas-kpi lf-lineas-kpi--primary"><span>Total bombeado hoy</span><strong>{totalPeriod === null ? '—' : `${formatNumber(totalPeriod)} m³`}</strong></article>
+          <article className="lf-lineas-kpi"><span>Flujo total</span><strong>{totalFlow === null ? '—' : `${formatNumber(totalFlow)} L/s`}</strong></article>
+          <article className="lf-lineas-kpi"><span>Totalizador actual</span><strong>{totalCurrent === null ? '—' : `${formatNumber(totalCurrent)} m³`}</strong></article>
         </div>
       </section>
 
-      <section className="insurgentes-equipment-grid">
+      <section className="insurgentes-equipment-grid lf-lineas-grid" aria-label="Líneas operativas">
         {lines.length ? lines.map((line) => (
           <Link
-            className="panel insurgentes-equipment-card insurgentes-clickable-card fade-up"
+            className="panel insurgentes-equipment-card insurgentes-clickable-card fade-up lf-lineas-card"
             key={idOf(line)}
             to={`/pozos/lineas/${encodeURIComponent(idOf(line))}${suffix}`}
             aria-label={`Abrir detalle de ${nameOf(line)}`}
           >
-            <div className="insurgentes-equipment-head">
-              <div>
-                <span>Línea operativa</span>
-                <h3>{nameOf(line)}</h3>
-              </div>
+            <div className="insurgentes-equipment-head lf-lineas-card__head">
+              <h3>{nameOf(line)}</h3>
               <StatusBadge type={String(line.statusType || 'normal')}>{String(line.status || 'Sin datos')}</StatusBadge>
             </div>
-            <div className="insurgentes-metric-list">
+
+            <div className="lf-lineas-card__primary">
+              <div>
+                <span>Total bombeado hoy</span>
+                <strong>{periodVolumeText(line)}</strong>
+              </div>
+              <div>
+                <span>Flujo actual</span>
+                <strong>{flowText(line)}</strong>
+              </div>
+            </div>
+
+            <div className="lf-lineas-card__secondary">
               <div><span>Total día anterior</span><strong>{totalizerStartText(line)}</strong></div>
-              <div><span>Total bombeado hoy</span><strong>{periodVolumeText(line)}</strong></div>
               <div><span>Totalizador actual</span><strong>{totalizerCurrentText(line)}</strong></div>
-              <div><span>Flujo actual</span><strong>{flowText(line)}</strong></div>
               <div><span>Actividad</span><strong>{activityText(line)}</strong></div>
               <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(line))}</strong></div>
-              <div><span>Encendidos periodo</span><strong>{startCountText(line)}</strong></div>
               <div><span>Comunicación</span><strong>{String(line.estado_comunicacion || 'Sin estado')}</strong></div>
               <div><span>Validación</span><strong>{validationText(line)}</strong></div>
             </div>
-            <div className="insurgentes-equipment-footer">
+
+            <div className="insurgentes-equipment-footer lf-lineas-card__footer">
               <span>{itemUpdateText(line)}</span>
               <strong>Abrir detalle →</strong>
             </div>
@@ -213,7 +214,7 @@ function LineasSection({ itemId }: LineasSectionProps) {
       <OperationalModuleHistoryPanel initialModule="lineas" lockedModule="lineas" />
 
       <ShiftCutsPanel module="lineas" />
-    </>
+    </div>
   );
 }
 

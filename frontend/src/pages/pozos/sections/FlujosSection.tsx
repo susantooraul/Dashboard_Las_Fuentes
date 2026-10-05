@@ -17,7 +17,7 @@ import ShiftCutsPanel from '../components/ShiftCutsPanel';
 import useSqlChartDashboard from '../hooks/useSqlChartDashboard';
 import useWaterModuleHistory from '../hooks/useWaterModuleHistory';
 import { asRecord, asRows, formatNumber, pivotCommonHistorySeries } from '../insurgentesUtils';
-import { activeMinutesValue, countActive, currentTotalizerValue, flowText, flowValue, itemUpdateText, periodVolumeText, periodVolumeValue, startCountText, sumValues, totalizerCurrentText, totalizerStartText, formatMinutes } from '../operationalPresentation';
+import { activeMinutesValue, countActive, currentTotalizerValue, flowText, flowValue, itemUpdateText, periodVolumeText, periodVolumeValue, sumValues, totalizerCurrentText, totalizerStartText, formatMinutes } from '../operationalPresentation';
 import type { FlexibleRecord } from '../types';
 
 const colors = ['#38bdf8', '#34d399'];
@@ -99,7 +99,6 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
             { label: 'Totalizador actual', value: totalizerCurrentText(selectedFlow) },
             { label: 'Flujo actual', value: flowText(selectedFlow) },
             { label: 'Tiempo activo', value: formatMinutes(activeMinutesValue(selectedFlow)) },
-            { label: 'Encendidos', value: startCountText(selectedFlow) },
             ...(sensorIdOf(selectedFlow) ? [{
               label: 'Periodo seleccionado',
               context: true,
@@ -200,7 +199,6 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
               <div className="lf-tam-card__secondary">
                 <div><span>Totalizador actual</span><strong>{totalizerCurrentText(flow)}</strong></div>
                 <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(flow))}</strong></div>
-                <div><span>Encendidos</span><strong>{startCountText(flow)}</strong></div>
               </div>
 
               <div className="insurgentes-equipment-footer lf-tam-card__footer">
@@ -270,7 +268,6 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
               <div className="lf-embotellado-card__secondary">
                 <div><span>Totalizador actual</span><strong>{totalizerCurrentText(flow)}</strong></div>
                 <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(flow))}</strong></div>
-                <div><span>Encendidos</span><strong>{startCountText(flow)}</strong></div>
               </div>
 
               <div className="insurgentes-equipment-footer lf-embotellado-card__footer">
@@ -339,7 +336,6 @@ function FlujosSection({ itemId, group, title, eyebrow, basePath }: FlujosSectio
               <div className="lf-cisterna-card__secondary">
                 <div><span>Totalizador actual</span><strong>{totalizerCurrentText(flow)}</strong></div>
                 <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(flow))}</strong></div>
-                <div><span>Encendidos</span><strong>{startCountText(flow)}</strong></div>
               </div>
 
               <div className="insurgentes-equipment-footer lf-cisterna-card__footer">

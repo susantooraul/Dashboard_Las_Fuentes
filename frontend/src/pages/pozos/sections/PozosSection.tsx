@@ -16,7 +16,7 @@ import ShiftCutsPanel from '../components/ShiftCutsPanel';
 import useSqlChartDashboard from '../hooks/useSqlChartDashboard';
 import useWaterModuleHistory from '../hooks/useWaterModuleHistory';
 import { asRecord, asRows, formatNumber, pivotCommonHistorySeries } from '../insurgentesUtils';
-import { activeMinutesValue, countActive, currentTotalizerValue, flowText, flowValue, itemUpdateText, periodVolumeText, periodVolumeValue, startCountText, sumValues, totalizerCurrentText, totalizerStartText, formatMinutes } from '../operationalPresentation';
+import { activeMinutesValue, countActive, currentTotalizerValue, flowText, flowValue, itemUpdateText, periodVolumeText, periodVolumeValue, sumValues, totalizerCurrentText, totalizerStartText, formatMinutes } from '../operationalPresentation';
 import type { FlexibleRecord } from '../types';
 
 const colors = ['#38bdf8', '#22d3ee', '#34d399', '#fbbf24', '#a78bfa', '#fb7185'];
@@ -83,7 +83,6 @@ function PozosSection({ itemId }: PozosSectionProps) {
             { label: 'Totalizador actual', value: totalizerCurrentText(selectedWell) },
             { label: 'Flujo actual', value: flowText(selectedWell) },
             { label: 'Tiempo activo', value: formatMinutes(activeMinutesValue(selectedWell)) },
-            { label: 'Encendidos', value: startCountText(selectedWell) },
             ...(sensorIdOf(selectedWell) ? [{
               label: 'Periodo seleccionado',
               context: true,
@@ -182,7 +181,6 @@ function PozosSection({ itemId }: PozosSectionProps) {
             <div className="lf-pozos-card__secondary">
               <div><span>Totalizador actual</span><strong>{totalizerCurrentText(well)}</strong></div>
               <div><span>Tiempo activo</span><strong>{formatMinutes(activeMinutesValue(well))}</strong></div>
-              <div><span>Encendidos</span><strong>{startCountText(well)}</strong></div>
             </div>
 
             <div className="insurgentes-equipment-footer lf-pozos-card__footer">

@@ -32,11 +32,24 @@ export function currentTotalizerValue(item: FlexibleRecord): number | null {
 
 export function periodVolumeValue(item: FlexibleRecord): number | null {
   const status = String(item.period_status || item.bombeado_hoy_status || item.water_status || '').toLowerCase();
-  if (status === 'sin_datos' || status === 'missing') return null;
+  if (status === 'sin_datos' || status === 'missing' || status === 'dato_en_revision') return null;
   return firstNumber(item.period_m3, item.period_delta_m3, item.bombeado_hoy_m3, item.entry_m3, item.volumen_periodo_m3);
 }
 
+function hasInvalidFlowStatus(item: FlexibleRecord): boolean {
+  return [
+    item.flow_status,
+    item.flujo_status,
+    item.flow_lps_status,
+    item.flujo_salida_status,
+    item.flujo_entrada_status,
+    item.flow_out_status,
+    item.flow_in_status,
+  ].some((status) => ['invalid_flow', 'invalid', 'dato_en_revision'].includes(String(status || '').toLowerCase()));
+}
+
 export function flowValue(item: FlexibleRecord): number | null {
+  if (hasInvalidFlowStatus(item)) return null;
   return firstNumber(item.flow_lps, item.flow, item.flujo_salida, item.flujo_entrada, item.instant_value);
 }
 
@@ -73,6 +86,7 @@ export function periodVolumeText(item: FlexibleRecord): string {
 }
 
 export function flowText(item: FlexibleRecord, fallbackUnit = 'L/s'): string {
+  if (hasInvalidFlowStatus(item)) return 'Dato en revisión';
   const value = flowValue(item);
   const unit = String(item.flow_unit || fallbackUnit);
   return value === null ? '—' : `${formatNumber(value)} ${unit}`;

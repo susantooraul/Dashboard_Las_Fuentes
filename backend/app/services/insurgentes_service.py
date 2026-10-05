@@ -54,6 +54,30 @@ def _num(value: Any, default: float | None = 0.0) -> float | None:
         return default
 
 
+def _max_valid_flow(config: dict[str, Any] | None) -> float | None:
+    if not config:
+        return None
+    limit = _num(config.get("max_valid_flow_lps"), None)
+    return limit if limit is not None and limit > 0 else None
+
+
+def _flow_exceeds_limit(value: Any, config: dict[str, Any] | None) -> bool:
+    flow = _num(value, None)
+    limit = _max_valid_flow(config)
+    return flow is not None and limit is not None and flow > limit
+
+
+def _rows_have_flow_spike(rows: Iterable[dict[str, Any]], config: dict[str, Any] | None) -> bool:
+    return any(_flow_exceeds_limit(row.get("instant_value"), config) for row in rows or [])
+
+
+def _flow_limit_note(config: dict[str, Any] | None) -> str:
+    limit = _max_valid_flow(config)
+    if limit is None:
+        return "Dato en revisión por flujo fuera de rango."
+    return f"Dato en revisión: flujo mayor al límite operativo configurado ({limit:g} L/s)."
+
+
 def _row_dict(row: Any) -> dict[str, Any] | None:
     if row is None:
         return None
@@ -636,6 +660,12 @@ def _activity_metrics_from_rows(rows: Iterable[dict[str, Any]], start: datetime,
 
 def _apply_activity_metrics(items: Iterable[dict[str, Any]], metrics: dict[int, dict[str, Any]]) -> None:
     for item in items:
+        if str(item.get("flow_status") or "").lower() == "invalid_flow":
+            item.setdefault("active_minutes", None)
+            item.setdefault("tiempo_activo_min", None)
+            item.setdefault("start_count", None)
+            item.setdefault("encendidos_periodo", None)
+            continue
         raw_sensor = item.get("sensor_id")
         try:
             sensor_id = int(raw_sensor) if raw_sensor not in (None, "") else None
@@ -740,7 +770,13 @@ def _operational_status(flow: float | None, has_reading: bool, configured_idle: 
     return "Sin flujo", "idle", False
 
 
-def _history_rows(sensor_rows: list[dict[str, Any]], period: str, item_id: str, name: str) -> list[dict[str, Any]]:
+def _history_rows(
+    sensor_rows: list[dict[str, Any]],
+    period: str,
+    item_id: str,
+    name: str,
+    config: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     grouped: dict[datetime, list[dict[str, Any]]] = defaultdict(list)
     for row in sensor_rows:
         timestamp = row.get("timestamp")
@@ -749,16 +785,26 @@ def _history_rows(sensor_rows: list[dict[str, Any]], period: str, item_id: str, 
     output: list[dict[str, Any]] = []
     for bucket, rows in sorted(grouped.items()):
         instants = [_num(row.get("instant_value"), None) for row in rows]
-        valid_instants = [value for value in instants if value is not None and value >= 0]
+        valid_instants = [
+            value
+            for value in instants
+            if value is not None and value >= 0 and not _flow_exceeds_limit(value, config)
+        ]
+        has_spike = _rows_have_flow_spike(rows, config)
         delta = _period_delta(rows)
+        if has_spike:
+            delta = {"value": None, "status": "dato_en_revision", "note": _flow_limit_note(config)}
         output.append({
             "id": item_id,
             "name": name,
             "bucket": bucket.isoformat(timespec="seconds"),
             "timestamp": bucket.isoformat(timespec="seconds"),
             "flow_lps": round(sum(valid_instants) / len(valid_instants), 4) if valid_instants else None,
+            "flow_status": "invalid_flow" if has_spike else "valid",
+            "flow_note": _flow_limit_note(config) if has_spike else "",
             "period_m3": delta.get("value"),
             "period_status": delta.get("status"),
+            "period_note": delta.get("note"),
             "totalizador_m3": _num(rows[-1].get("total_value"), None),
             "source_status": "readings_minute",
         })
@@ -773,6 +819,7 @@ def _bos_history_rows(
     period: str,
     item_id: str,
     name: str,
+    config: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     grouped: dict[datetime, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
@@ -790,16 +837,28 @@ def _bos_history_rows(
         })
     output: list[dict[str, Any]] = []
     for bucket, bucket_rows in sorted(grouped.items()):
-        instants = [item["instant_value"] for item in bucket_rows if item.get("instant_value") is not None and item.get("instant_value") >= 0]
+        instants = [
+            item["instant_value"]
+            for item in bucket_rows
+            if item.get("instant_value") is not None
+            and item.get("instant_value") >= 0
+            and not _flow_exceeds_limit(item.get("instant_value"), config)
+        ]
+        has_spike = _rows_have_flow_spike(bucket_rows, config)
         delta = _period_delta(bucket_rows)
+        if has_spike:
+            delta = {"value": None, "status": "dato_en_revision", "note": _flow_limit_note(config)}
         output.append({
             "id": item_id,
             "name": name,
             "bucket": bucket.isoformat(timespec="seconds"),
             "timestamp": bucket.isoformat(timespec="seconds"),
             "flow_lps": round(sum(instants) / len(instants), 4) if instants else None,
+            "flow_status": "invalid_flow" if has_spike else "valid",
+            "flow_note": _flow_limit_note(config) if has_spike else "",
             "period_m3": delta.get("value"),
             "period_status": delta.get("status"),
+            "period_note": delta.get("note"),
             "totalizador_m3": bucket_rows[-1].get("total_value"),
             "source_status": "bos_fallback",
         })
@@ -975,14 +1034,22 @@ def _build_wells(
         sensor_id = int(config["sensor_id"])
         prefix = str(config.get("bos_prefix") or "POZO_FLOW_OUT")
         previous_totalizer_m3 = (previous_totalizers or {}).get(sensor_id)
-        flow = _num(_bos_value(pozo_row, prefix, index, "instant_value", None), None)
+        raw_flow = _num(_bos_value(pozo_row, prefix, index, "instant_value", None), None)
+        invalid_flow = _flow_exceeds_limit(raw_flow, config)
+        flow = None if invalid_flow else raw_flow
         total = _num(_bos_value(pozo_row, prefix, index, "total_value", None), None)
         period_info = _period_delta(readings.get(sensor_id, []), previous_totalizer_m3)
+        if invalid_flow or _rows_have_flow_spike(readings.get(sensor_id, []), config):
+            period_info = {"value": None, "status": "dato_en_revision", "note": _flow_limit_note(config)}
         source_status = "readings_minute"
         if period_info["status"] == "sin_datos":
             period_info = _bos_period_delta(pozo_first, pozo_row, prefix, index, previous_totalizer_m3)
+            if invalid_flow:
+                period_info = {"value": None, "status": "dato_en_revision", "note": _flow_limit_note(config)}
             source_status = "bos_fallback" if period_info["status"] != "sin_datos" else "sin_datos"
         status, status_type, active = _operational_status(flow, flow is not None or total is not None)
+        if invalid_flow:
+            status, status_type, active = "Dato en revisión", "warning", False
         items.append({
             **config,
             "numero": int(config.get("operational_number") or index),
@@ -992,6 +1059,13 @@ def _build_wells(
             "flow": flow,
             "flujo_entrada": flow,
             "flujo_salida": flow,
+            "flow_status": "invalid_flow" if invalid_flow else "valid",
+            "flujo_status": "invalid_flow" if invalid_flow else "valid",
+            "flow_note": _flow_limit_note(config) if invalid_flow else "",
+            "flujo_salida_status": "invalid_flow" if invalid_flow else "valid",
+            "flujo_salida_note": _flow_limit_note(config) if invalid_flow else "",
+            "flujo_entrada_status": "invalid_flow" if invalid_flow else "valid",
+            "flujo_entrada_note": _flow_limit_note(config) if invalid_flow else "",
             "totalizador_m3": total,
             "total_m3": total,
             "totalizador_inicio_dia_m3": previous_totalizer_m3,
@@ -1014,9 +1088,9 @@ def _build_wells(
             "ultima_lectura": updated.isoformat(timespec="seconds") if updated else None,
             "exclude_from_balance": False,
         })
-        sensor_history = _history_rows(readings.get(sensor_id, []), period, config["id"], config["name"])
+        sensor_history = _history_rows(readings.get(sensor_id, []), period, config["id"], config["name"], config)
         if not sensor_history and bos_rows:
-            sensor_history = _bos_history_rows(bos_rows, POZO_BOS_TABLE, prefix, index, period, config["id"], config["name"])
+            sensor_history = _bos_history_rows(bos_rows, POZO_BOS_TABLE, prefix, index, period, config["id"], config["name"], config)
             if sensor_history and source_status == "sin_datos":
                 source_status = "bos_fallback"
                 items[-1]["source_status"] = source_status
@@ -1107,15 +1181,23 @@ def _build_flows(
         index = int(config["bos_index"])
         sensor_id = int(config["sensor_id"])
         previous_totalizer_m3 = (previous_totalizers or {}).get(sensor_id)
-        flow = _num(_bos_value(flow_row, "TANQUE_FLOW_IN", index, "instant_value", None), None)
+        raw_flow = _num(_bos_value(flow_row, "TANQUE_FLOW_IN", index, "instant_value", None), None)
+        invalid_flow = _flow_exceeds_limit(raw_flow, config)
+        flow = None if invalid_flow else raw_flow
         total = _num(_bos_value(flow_row, "TANQUE_FLOW_IN", index, "total_value", None), None)
         period_info = _period_delta(readings.get(sensor_id, []), previous_totalizer_m3)
+        if invalid_flow or _rows_have_flow_spike(readings.get(sensor_id, []), config):
+            period_info = {"value": None, "status": "dato_en_revision", "note": _flow_limit_note(config)}
         source_status = "readings_minute"
         if period_info["status"] == "sin_datos":
             period_info = _bos_period_delta(flow_first, flow_row, "TANQUE_FLOW_IN", index, previous_totalizer_m3)
+            if invalid_flow:
+                period_info = {"value": None, "status": "dato_en_revision", "note": _flow_limit_note(config)}
             source_status = "bos_fallback" if period_info["status"] != "sin_datos" else "sin_datos"
         configured_idle = config.get("expected_activity") == "configured_without_recent_activity"
         status, status_type, active = _operational_status(flow, flow is not None or total is not None, configured_idle=configured_idle)
+        if invalid_flow:
+            status, status_type, active = "Dato en revisión", "warning", False
         items.append({
             **config,
             "numero": index + 1,
@@ -1123,6 +1205,9 @@ def _build_flows(
             "ubicacion": group_locations.get(str(config.get("module_group") or ""), "Medidores de agua"),
             "flow_lps": flow,
             "flow": flow,
+            "flow_status": "invalid_flow" if invalid_flow else "valid",
+            "flujo_status": "invalid_flow" if invalid_flow else "valid",
+            "flow_note": _flow_limit_note(config) if invalid_flow else "",
             "totalizador_m3": total,
             "total_m3": total,
             "totalizador_inicio_dia_m3": previous_totalizer_m3,
@@ -1143,9 +1228,9 @@ def _build_flows(
             "updated": updated.isoformat(timespec="seconds") if updated else None,
             "ultima_lectura": updated.isoformat(timespec="seconds") if updated else None,
         })
-        sensor_history = _history_rows(readings.get(sensor_id, []), period, config["id"], config["name"])
+        sensor_history = _history_rows(readings.get(sensor_id, []), period, config["id"], config["name"], config)
         if not sensor_history and bos_rows:
-            sensor_history = _bos_history_rows(bos_rows, TANQUE_BOS_TABLE, "TANQUE_FLOW_IN", index, period, config["id"], config["name"])
+            sensor_history = _bos_history_rows(bos_rows, TANQUE_BOS_TABLE, "TANQUE_FLOW_IN", index, period, config["id"], config["name"], config)
             if sensor_history and source_status == "sin_datos":
                 source_status = "bos_fallback"
                 items[-1]["source_status"] = source_status

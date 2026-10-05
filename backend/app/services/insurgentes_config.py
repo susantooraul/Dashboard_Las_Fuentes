@@ -242,6 +242,7 @@ WELLS = [
         "bos_prefix": "POZO_FLOW_OUT",
         "bos_index": 4,
         "operational_number": 5,
+        "max_valid_flow_lps": 60.0,
         "hydraulic_contract": _hydraulic_contract(snapshot_source="pozos_bos", history_source="readings_minute"),
     },
 ]
@@ -314,6 +315,10 @@ FLOWS = [
         "hydraulic_contract": _hydraulic_contract(snapshot_source="tanque_bos", history_source="readings_minute"),
     },
 ]
+
+for _flow in FLOWS:
+    if _flow.get("id") == "llegada-pozo-5":
+        _flow["max_valid_flow_lps"] = 60.0
 
 LEVELS: list[dict[str, Any]] = []
 
