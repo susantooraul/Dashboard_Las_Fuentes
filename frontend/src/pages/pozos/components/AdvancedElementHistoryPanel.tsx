@@ -13,7 +13,9 @@ import { formatNumber } from '../insurgentesUtils';
 import { formatExplicitDateTimeRange, periodTitle } from '../dateUtils';
 import { summarizeDetailHistory } from '../detailHistorySummary';
 import { buildProgressiveVolume } from '../detailHistoryVolume';
-import { downloadWaterModuleHistoryPdf } from '../../../services/waterModuleHistoryExportService';
+import { downloadWaterDetailThresholdExport, downloadWaterModuleHistoryPdf } from '../../../services/waterModuleHistoryExportService';
+import { evaluateThreshold, normalizeThreshold, summarizeThreshold, thresholdIsIncident } from '../flowThreshold';
+import type { FlowThresholdBasis, FlowThresholdDirection } from '../flowThreshold';
 import type { WaterHistoryPoint } from '../types';
 
 interface AdvancedElementHistoryPanelProps {
@@ -164,6 +166,12 @@ export default function AdvancedElementHistoryPanel({
   const controller = useWaterHistory({ module, sensorId });
   const [volumeDisplay, setVolumeDisplay] = useState<DetailVolumeDisplay>('interval');
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
+  const [thresholdEnabled, setThresholdEnabled] = useState(false);
+  const [thresholdDirection, setThresholdDirection] = useState<FlowThresholdDirection>('below');
+  const [thresholdBasis, setThresholdBasis] = useState<FlowThresholdBasis>('extreme');
+  const [thresholdMinValue, setThresholdMinValue] = useState('');
+  const [thresholdMaxValue, setThresholdMaxValue] = useState('');
   const [exportMessage, setExportMessage] = useState('');
   const [exportError, setExportError] = useState(false);
   const points = controller.data?.points || [];
@@ -171,6 +179,15 @@ export default function AdvancedElementHistoryPanel({
   const historicalRows = points.filter((point) => Number(point.samples || 0) > 0).slice(-8).reverse();
   const hasData = points.some((point) => Number(point.samples || 0) > 0);
   const periodSummary = useMemo(() => summarizeDetailHistory(points), [points]);
+  const thresholdOptions = useMemo(() => ({
+    enabled: thresholdEnabled, direction: thresholdDirection, basis: thresholdBasis,
+    minValue: thresholdMinValue, maxValue: thresholdMaxValue,
+  }), [thresholdEnabled, thresholdDirection, thresholdBasis, thresholdMinValue, thresholdMaxValue]);
+  const { config: thresholdConfig, error: thresholdError } = useMemo(() => normalizeThreshold(thresholdOptions), [thresholdOptions]);
+  const thresholdSummary = useMemo(() => thresholdEnabled && !thresholdError && !controller.loading && !controller.error
+    ? summarizeThreshold(points, thresholdConfig) : null, [points, thresholdEnabled, thresholdError, thresholdConfig, controller.loading, controller.error]);
+  const thresholdIncidents = useMemo(() => thresholdSummary?.results.filter((item) => thresholdIsIncident(item.status)) || [], [thresholdSummary]);
+  const exportInvalid = controller.loading || Boolean(controller.error) || (thresholdEnabled && Boolean(thresholdError));
   const lastSample = useMemo(() => {
     const timestamps = points
       .map((point) => String(point.last_sample_ts || '').trim())
@@ -184,43 +201,58 @@ export default function AdvancedElementHistoryPanel({
   });
 
 
-  const exportCurrentExcel = () => {
+  const thresholdExportParams = () => ({
+    module, sensorId, startDate: controller.range.startDate,
+    endDate: controller.range.endDate, aggregation: controller.aggregation,
+    detailVolumeDisplay: volumeDisplay, direction: thresholdDirection,
+    basis: thresholdBasis, minValue: thresholdConfig.minValue, maxValue: thresholdConfig.maxValue,
+  });
+
+  const exportCurrentExcel = async () => {
     const startDate = String(controller.range.startDate || '');
     const endDate = String(controller.range.endDate || '');
-    if (!startDate || !endDate || !points.length) return;
+    if (!startDate || !endDate || !points.length || exportInvalid) return;
     setExportError(false);
     setExportMessage('');
-    downloadDetailHistoryExcel({
-      module,
-      title: elementName,
-      sensorId,
-      startDate,
-      endDate,
-      aggregation: controller.aggregation,
-      points,
-      volumeDisplay,
-    });
-    setExportMessage('Excel de la agrupación actual generado.');
+    setExcelLoading(true);
+    try {
+      if (thresholdEnabled) {
+        await downloadWaterDetailThresholdExport('excel', thresholdExportParams());
+        setExportMessage('Excel con diagnóstico de umbrales generado.');
+      } else {
+        downloadDetailHistoryExcel({
+          module, title: elementName, sensorId, startDate, endDate,
+          aggregation: controller.aggregation, points, volumeDisplay,
+        });
+        setExportMessage('Excel de la agrupación actual generado.');
+      }
+    } catch (error) {
+      setExportError(true);
+      setExportMessage(error instanceof Error ? error.message : 'No fue posible generar el Excel.');
+    } finally {
+      setExcelLoading(false);
+    }
   };
 
   const exportCurrentPdf = async () => {
     const startDate = String(controller.range.startDate || '');
     const endDate = String(controller.range.endDate || '');
-    if (!startDate || !endDate || !points.length) return;
+    if (!startDate || !endDate || !points.length || exportInvalid) return;
     setPdfLoading(true);
     setExportError(false);
     setExportMessage('');
     try {
-      await downloadWaterModuleHistoryPdf({
-        module,
-        startDate,
-        endDate,
-        aggregation: controller.aggregation,
-        metric: 'detail',
-        detailVolumeDisplay: volumeDisplay,
-        selectedIds: [String(sensorId)],
-      });
-      setExportMessage('PDF de la agrupación actual generado.');
+      if (thresholdEnabled) {
+        await downloadWaterDetailThresholdExport('pdf', thresholdExportParams());
+        setExportMessage('PDF con diagnóstico de umbrales generado.');
+      } else {
+        await downloadWaterModuleHistoryPdf({
+          module, startDate, endDate, aggregation: controller.aggregation,
+          metric: 'detail', detailVolumeDisplay: volumeDisplay,
+          selectedIds: [String(sensorId)],
+        });
+        setExportMessage('PDF de la agrupación actual generado.');
+      }
     } catch (error) {
       setExportError(true);
       setExportMessage(error instanceof Error ? error.message : 'No fue posible generar el PDF del detalle.');
@@ -266,7 +298,7 @@ export default function AdvancedElementHistoryPanel({
                 type="button"
                 className="module-history-pdf-button"
                 onClick={() => void exportCurrentPdf()}
-                disabled={pdfLoading || !points.length}
+                disabled={pdfLoading || !hasData || exportInvalid}
                 title="Exportar este elemento respetando el rango, agrupación y modo de volumen actuales"
               >
                 {pdfLoading ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : <FileText size={17} aria-hidden="true" />}
@@ -275,12 +307,12 @@ export default function AdvancedElementHistoryPanel({
               <DashboardButton variant="excel"
                 type="button"
                 className="five-minute-excel-button"
-                onClick={exportCurrentExcel}
-                disabled={!points.length}
+                onClick={() => void exportCurrentExcel()}
+                disabled={excelLoading || !hasData || exportInvalid}
                 title="Exportar este elemento con la agrupación visible actualmente"
               >
                 <FileSpreadsheet size={17} aria-hidden="true" />
-                <span>Excel</span>
+                <span>{excelLoading ? 'Generando...' : 'Excel'}</span>
               </DashboardButton>
               <FiveMinuteExcelExportButton
                 module={module}
@@ -312,6 +344,57 @@ export default function AdvancedElementHistoryPanel({
             </DashboardButton>
           </div>
         </div>
+        <div className="lf-threshold-review">
+          <label className="lf-threshold-switch">
+            <input type="checkbox" checked={thresholdEnabled} onChange={(event) => setThresholdEnabled(event.target.checked)} />
+            <span>Revisar umbrales de flujo</span>
+            <small>Consulta histórica opcional · no genera alarmas</small>
+          </label>
+          {thresholdEnabled ? (
+            <div className="lf-threshold-fields">
+              <div className="lf-threshold-field">
+                <span>Sentido de revisión</span>
+                <div className="lf-threshold-buttons" role="group" aria-label="Sentido de revisión">
+                  {([['below', 'Por debajo de'], ['above', 'Por encima de'], ['both', 'Ambos']] as const).map(([value, label]) => (
+                    <button key={value} type="button" className={thresholdDirection === value ? 'selected' : ''}
+                      aria-pressed={thresholdDirection === value} onClick={() => setThresholdDirection(value)}>{label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="lf-threshold-field">
+                <span>Evaluar con</span>
+                <div className="lf-threshold-buttons" role="group" aria-label="Criterio de revisión">
+                  {([['extreme', 'Mín/Máx'], ['average', 'Promedio']] as const).map(([value, label]) => (
+                    <button key={value} type="button" className={thresholdBasis === value ? 'selected' : ''}
+                      aria-pressed={thresholdBasis === value} onClick={() => setThresholdBasis(value)}>{label}</button>
+                  ))}
+                </div>
+              </div>
+              {thresholdDirection !== 'above' ? (
+                <label className="lf-threshold-value">Mínimo (L/s)
+                  <input type="number" min="0" step="0.01" value={thresholdMinValue}
+                    onChange={(event) => setThresholdMinValue(event.target.value)} placeholder="Ej. 1.00" />
+                </label>
+              ) : null}
+              {thresholdDirection !== 'below' ? (
+                <label className="lf-threshold-value">Máximo (L/s)
+                  <input type="number" min="0" step="0.01" value={thresholdMaxValue}
+                    onChange={(event) => setThresholdMaxValue(event.target.value)} placeholder="Ej. 15.00" />
+                </label>
+              ) : null}
+            </div>
+          ) : null}
+          {thresholdEnabled && thresholdError ? <p className="lf-threshold-error" role="alert">{thresholdError} Los valores de ejemplo no son límites oficiales.</p> : null}
+          {thresholdSummary ? (
+            <div className="lf-threshold-summary" aria-label="Diagnóstico de umbrales">
+              <span><strong>{thresholdSummary.breached}</strong> intervalos con incidencia</span>
+              <span><strong>{thresholdSummary.below}</strong> bajo mínimo</span>
+              <span><strong>{thresholdSummary.above}</strong> sobre máximo</span>
+              <span><strong>{thresholdSummary.within}</strong> dentro de rango</span>
+              <span><strong>{thresholdSummary.noReading}</strong> sin lectura</span>
+            </div>
+          ) : null}
+        </div>
         {hasData ? (
           <WaterHistoryChart
             points={points}
@@ -319,10 +402,36 @@ export default function AdvancedElementHistoryPanel({
             flowUnit={controller.data?.flow_unit || 'L/s'}
             height={430}
             detailVolumeDisplay={volumeDisplay}
+            thresholdConfig={thresholdSummary ? thresholdConfig : undefined}
           />
         ) : (
           <ChartEmptyState message={controller.loading ? 'Cargando histórico...' : controller.error || 'Sin histórico válido para el periodo seleccionado.'} />
         )}
+        {thresholdSummary ? (
+          <div className="lf-threshold-incidents">
+            <h3>Intervalos con incidencias <span>({thresholdIncidents.length})</span></h3>
+            <p>La fecha y hora identifican el intervalo agrupado, no el instante exacto de la incidencia.
+              {thresholdIncidents.length > 200 ? ' Se muestran los primeros 200; PDF y Excel incluyen el detalle completo.' : ''}
+            </p>
+            <div className="lf-threshold-table-scroll">
+              <table>
+                <thead><tr><th>Inicio</th><th>Fin</th><th>Prom. L/s</th><th>Mín. L/s</th><th>Máx. L/s</th><th>Estado</th></tr></thead>
+                <tbody>
+                  {thresholdIncidents.length ? thresholdIncidents.slice(0, 200).map(({ point, status }) => (
+                    <tr key={`${point.sensor_id}-${point.bucket_start}`}>
+                      <td>{dateTimeLabel(point.bucket_start)}</td>
+                      <td>{dateTimeLabel(point.bucket_end)}</td>
+                      <td>{formatNumber(point.flow_avg_lps)}</td>
+                      <td>{formatNumber(point.flow_min_lps)}</td>
+                      <td>{formatNumber(point.flow_max_lps)}</td>
+                      <td>{status}</td>
+                    </tr>
+                  )) : <tr><td colSpan={6}>No se detectaron intervalos fuera del criterio seleccionado.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="panel table-wrapper fade-up well-history-panel advanced-history-table-panel">
@@ -336,6 +445,7 @@ export default function AdvancedElementHistoryPanel({
                 <th>Volumen validado</th>
                 <th>Totalizador cierre</th>
                 <th>Calidad</th>
+                {thresholdSummary ? <th>Umbral</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -348,11 +458,12 @@ export default function AdvancedElementHistoryPanel({
                     <td>{point.volume_m3 === null ? '—' : `${formatNumber(point.volume_m3)} m³`}</td>
                     <td>{close === null ? '—' : `${formatNumber(close)} m³`}</td>
                     <td>{historyQuality(point)}</td>
+                    {thresholdSummary ? <td>{evaluateThreshold(point, thresholdConfig)}</td> : null}
                   </tr>
                 );
               }) : (
                 <tr>
-                  <td colSpan={5}>{controller.loading ? 'Cargando histórico...' : controller.error || 'Sin registros para este periodo.'}</td>
+                  <td colSpan={thresholdSummary ? 6 : 5}>{controller.loading ? 'Cargando histórico...' : controller.error || 'Sin registros para este periodo.'}</td>
                 </tr>
               )}
             </tbody>

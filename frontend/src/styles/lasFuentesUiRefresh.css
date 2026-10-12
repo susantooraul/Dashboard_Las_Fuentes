@@ -333,3 +333,29 @@
   .pozos-shell .sidebar { overflow-y: auto; }
   .pozos-shell .sidebar .sidebar-nav { flex: 1 0 auto; overflow: visible; }
 }
+
+/* LF16 - Controles de umbrales solo en historicos individuales. */
+.pozos-shell .insurgentes-page .lf-threshold-review { border-top: 1px solid var(--lf-border); margin: 0 0 18px; padding-top: 14px; color: var(--lf-text); }
+.pozos-shell .insurgentes-page .lf-threshold-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; width: fit-content; cursor: pointer; color: var(--lf-text); font-size: 13px; font-weight: 650; }
+.pozos-shell .insurgentes-page .lf-threshold-switch input { width: 17px; height: 17px; accent-color: #0ea5e9; cursor: pointer; }
+.pozos-shell .insurgentes-page .lf-threshold-switch small { font-weight: 400; font-size: 11px; color: var(--lf-muted); }
+.pozos-shell .insurgentes-page .lf-threshold-fields { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.pozos-shell .insurgentes-page .lf-threshold-field { display: flex; flex-direction: column; gap: 7px; }
+.pozos-shell .insurgentes-page .lf-threshold-field > span, .pozos-shell .insurgentes-page .lf-threshold-value { font-size: 11px; color: var(--lf-muted); font-weight: 600; }
+.pozos-shell .insurgentes-page .lf-threshold-buttons { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; border: 1px solid var(--lf-border); background: var(--lf-raised); border-radius: 7px; }
+.pozos-shell .insurgentes-page .lf-threshold-buttons button { border: 1px solid transparent; border-radius: 5px; padding: 7px 10px; background: transparent; color: var(--lf-text); cursor: pointer; font: inherit; font-size: 12px; }
+.pozos-shell .insurgentes-page .lf-threshold-buttons button.selected { background: var(--lf-active); border-color: var(--lf-border); color: var(--lf-text); }
+.pozos-shell .insurgentes-page .lf-threshold-buttons button:focus-visible, .pozos-shell .insurgentes-page .lf-threshold-value input:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+.pozos-shell .insurgentes-page .lf-threshold-value { display: flex; flex-direction: column; gap: 7px; }
+.pozos-shell .insurgentes-page .lf-threshold-value input { width: 138px; min-height: 35px; border: 1px solid var(--lf-border); border-radius: 6px; background: var(--lf-raised); color: var(--lf-text); padding: 7px 10px; }
+.pozos-shell .insurgentes-page .lf-threshold-error { margin: 9px 0 0; color: #fb7185; font-size: 12px; }
+.pozos-shell .insurgentes-page .lf-threshold-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+.pozos-shell .insurgentes-page .lf-threshold-summary > span { background: var(--lf-raised); color: var(--lf-muted); border: 1px solid var(--lf-border); border-radius: 7px; padding: 8px 11px; font-size: 12px; }
+.pozos-shell .insurgentes-page .lf-threshold-summary strong { font-size: 16px; margin-right: 4px; color: var(--lf-text); }
+.pozos-shell .insurgentes-page .lf-threshold-incidents { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--lf-border); }
+.pozos-shell .insurgentes-page .lf-threshold-incidents h3 { font-size: 14px; color: var(--lf-text); margin: 0 0 4px; }
+.pozos-shell .insurgentes-page .lf-threshold-incidents h3 span, .pozos-shell .insurgentes-page .lf-threshold-incidents p { color: var(--lf-muted); font-size: 11px; }
+.pozos-shell .insurgentes-page .lf-threshold-table-scroll { max-height: 350px; overflow: auto; border: 1px solid var(--lf-border); border-radius: 7px; margin-top: 9px; }
+.pozos-shell .insurgentes-page .lf-threshold-table-scroll table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 11px; }
+.pozos-shell .insurgentes-page .lf-threshold-table-scroll th { position: sticky; top: 0; background: var(--lf-raised); text-align: left; color: var(--lf-text); z-index: 1; }
+.pozos-shell .insurgentes-page .lf-threshold-table-scroll :is(th, td) { padding: 9px; border-bottom: 1px solid var(--lf-border); color: var(--lf-text); }

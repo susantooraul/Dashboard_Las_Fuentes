@@ -4,6 +4,7 @@ import {
   ComposedChart,
   Legend,
   Line,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -12,6 +13,8 @@ import {
 import type { HistoryAggregation, WaterHistoryPoint, WaterModuleHistorySeries } from '../types';
 import { buildProgressiveVolume } from '../detailHistoryVolume';
 import WaterHistoryTooltip from './WaterHistoryTooltip';
+import { evaluateThreshold } from '../flowThreshold';
+import type { FlowThresholdConfig } from '../flowThreshold';
 
 const axisColor = '#b9e7ff';
 const gridColor = 'rgba(56,189,248,0.14)';
@@ -32,6 +35,7 @@ interface WaterHistoryChartProps {
   detailVolumeDisplay?: DetailVolumeDisplay;
   moduleMetric?: ModuleHistoryMetric;
   moduleTotalizerDisplay?: ModuleTotalizerDisplay;
+  thresholdConfig?: FlowThresholdConfig;
 }
 
 interface ChartPoint {
@@ -49,6 +53,7 @@ interface ChartPoint {
   effectiveTotalizerClose: number | null;
   totalizerRetained: boolean;
   tooltipAnchor: number;
+  thresholdStatus?: string;
 }
 
 interface ModuleChartPoint {
@@ -231,6 +236,7 @@ export default function WaterHistoryChart({
   detailVolumeDisplay = 'interval',
   moduleMetric = 'flow',
   moduleTotalizerDisplay = 'delta',
+  thresholdConfig,
 }: WaterHistoryChartProps) {
   if (series) {
     const data = buildModuleRows(series);
@@ -348,6 +354,7 @@ export default function WaterHistoryChart({
     effectiveTotalizerClose: valueOrNull(point.effective_totalizer_close_m3 ?? point.totalizer_close_m3),
     totalizerRetained: point.totalizer_retained === true,
     tooltipAnchor: 0,
+    thresholdStatus: thresholdConfig?.enabled ? evaluateThreshold(point, thresholdConfig) : undefined,
   }));
   const validTimestamps = data.map((point) => point.timestamp).filter(Number.isFinite);
   const spansMultipleDays = validTimestamps.length > 1
@@ -356,6 +363,12 @@ export default function WaterHistoryChart({
   const showDots = data.length <= 24;
   const domainStart = data.length ? new Date(data[0].bucketStart).getTime() : 0;
   const domainEnd = data.length ? new Date(data[data.length - 1].bucketEnd).getTime() : 1;
+  const thresholds = thresholdConfig?.enabled ? [
+    ...(thresholdConfig.direction !== 'above' && thresholdConfig.minValue !== null ? [{ key: 'min', value: thresholdConfig.minValue!, color: '#f59e0b', label: 'Mínimo' }] : []),
+    ...(thresholdConfig.direction !== 'below' && thresholdConfig.maxValue !== null ? [{ key: 'max', value: thresholdConfig.maxValue!, color: '#fb7185', label: 'Máximo' }] : []),
+  ] : [];
+  const flowPeak = data.reduce((peak, point) => Math.max(peak, point.flowMax ?? point.flow ?? 0),
+    thresholds.reduce((peak, limit) => Math.max(peak, limit.value), 0));
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -371,7 +384,7 @@ export default function WaterHistoryChart({
           minTickGap={28}
           padding={{ left: 18, right: 18 }}
         />
-        <YAxis yAxisId="flow" stroke={axisColor} width={58} />
+        <YAxis yAxisId="flow" stroke={axisColor} width={58} domain={thresholds.length ? [0, Math.max(1, flowPeak * 1.12)] : undefined} />
         {showVolume ? <YAxis yAxisId="volume" orientation="right" stroke="#a855f7" width={58} /> : null}
         <Tooltip
           content={<WaterHistoryTooltip aggregation={aggregation} flowUnit={flowUnit} volumeDisplay={detailVolumeDisplay} />}
@@ -383,6 +396,11 @@ export default function WaterHistoryChart({
           isAnimationActive={false}
         />
         <Legend />
+        {thresholds.map((limit) => (
+          <ReferenceLine key={`flow-limit-${limit.key}`} yAxisId="flow" y={limit.value}
+            stroke={limit.color} strokeWidth={1.5} strokeDasharray="6 4"
+            label={{ value: `${limit.label} ${limit.value.toFixed(2)} L/s`, position: 'insideTopRight', fill: limit.color, fontSize: 11 }} />
+        ))}
         <Line
           yAxisId="flow"
           type="linear"

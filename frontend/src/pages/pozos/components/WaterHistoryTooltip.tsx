@@ -105,6 +105,12 @@ export default function WaterHistoryTooltip({ active, payload, aggregation, flow
           <span className="chart-tooltip-name">Muestras</span>
           <span className="chart-tooltip-value">{samples.toLocaleString('es-MX')}</span>
         </div>
+        {row.thresholdStatus ? (
+          <div className="chart-tooltip-row">
+            <span className="chart-tooltip-name">Evaluación de umbral</span>
+            <span className="chart-tooltip-value">{String(row.thresholdStatus)}</span>
+          </div>
+        ) : null}
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-name">Estado</span>
           <span className="chart-tooltip-value">{STATUS_LABELS[dataStatus] || 'Sin datos'}</span>

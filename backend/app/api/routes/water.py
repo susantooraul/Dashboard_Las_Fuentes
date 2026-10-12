@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 
 from app.auth.dependencies import require_roles
 from app.database import DatabaseUnavailableError, ensure_database_available
@@ -51,6 +51,7 @@ from app.services.insurgentes_full_history_export_service import (
     export_insurgentes_full_history_pdf,
 )
 from app.services.insurgentes_module_history_export_service import export_insurgentes_module_history_pdf
+from app.services.las_fuentes_flow_threshold import FlowThreshold, export_detail_pdf, export_detail_excel
 from app.services.report_email_scheduler_service import (
     ReportEmailScheduleError,
     ReportEmailScheduleForbidden,
@@ -187,6 +188,65 @@ def download_water_history_module_pdf(
         content=content,
         media_type='application/pdf',
         headers={'Content-Disposition': f'attachment; filename="{filename}"'},
+    )
+
+
+def _detail_threshold_export(
+    *, format: str, module: str, sensor_id: int, start_date: str, end_date: str,
+    aggregation: str, detail_volume_display: str, threshold_enabled: bool,
+    threshold_direction: str, threshold_basis: str,
+    threshold_min_value: Optional[float], threshold_max_value: Optional[float],
+    force_refresh: bool,
+):
+    try:
+        config = FlowThreshold(
+            enabled=threshold_enabled, direction=threshold_direction, basis=threshold_basis,
+            min_value=threshold_min_value, max_value=threshold_max_value,
+        )
+        config.validate()
+        exporter = export_detail_pdf if format == 'pdf' else export_detail_excel
+        content, filename = exporter(
+            module=module, sensor_id=sensor_id, start_date=start_date,
+            end_date=end_date, aggregation=aggregation,
+            detail_volume_display=detail_volume_display, threshold=config,
+            force_refresh=force_refresh,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except InsurgentesHistoryError as exc:
+        raise HTTPException(status_code=504 if exc.status == 'timeout' else 503, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception('No fue posible exportar el historico individual con umbrales de Las Fuentes: %s', exc)
+        raise HTTPException(status_code=500, detail='Error al exportar el historico individual.') from exc
+    media = 'application/pdf' if format == 'pdf' else 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    return Response(content=content, media_type=media, headers={'Content-Disposition': f'attachment; filename="{filename}"'})
+
+
+@router.get('/history/detail/pdf')
+@router.get('/history/detail/excel')
+def download_water_detail_threshold_history(
+    request: Request,
+    module: str = Query(..., pattern='^(well|line|flow)$'),
+    sensor_id: int = Query(..., gt=0),
+    start_date: str = Query(...),
+    end_date: str = Query(...),
+    aggregation: str = Query(..., pattern='^(minute|quarter_hour|hourly|daily)$'),
+    detail_volume_display: str = Query('interval', pattern='^(interval|cumulative)$'),
+    threshold_enabled: bool = Query(False),
+    threshold_direction: str = Query('below', pattern='^(below|above|both)$'),
+    threshold_basis: str = Query('extreme', pattern='^(extreme|average)$'),
+    threshold_min_value: Optional[float] = Query(None, ge=0),
+    threshold_max_value: Optional[float] = Query(None, ge=0),
+    force_refresh: bool = Query(False),
+):
+    format = 'excel' if request.url.path.endswith('/excel') else 'pdf'
+    return _detail_threshold_export(
+        format=format, module=module, sensor_id=sensor_id,
+        start_date=start_date, end_date=end_date, aggregation=aggregation,
+        detail_volume_display=detail_volume_display, threshold_enabled=threshold_enabled,
+        threshold_direction=threshold_direction, threshold_basis=threshold_basis,
+        threshold_min_value=threshold_min_value, threshold_max_value=threshold_max_value,
+        force_refresh=force_refresh,
     )
 
 
