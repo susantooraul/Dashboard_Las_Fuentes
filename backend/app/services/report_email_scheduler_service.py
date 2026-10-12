@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS report_email_schedules (
     recipients_json TEXT NOT NULL,
     timezone TEXT NOT NULL,
     send_delay_minutes INTEGER NOT NULL DEFAULT 10,
+    send_time_local TEXT NULL,
+    send_time_local_2 TEXT NULL,
     created_by_user_id INTEGER NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -115,22 +117,48 @@ def _database_path() -> Path:
     return settings.auth_database_file
 
 
+def _legacy_times_from_delay(mode: str, delay_minutes: int) -> tuple[str, str | None]:
+    delay = max(1, min(int(delay_minutes or 10), 60))
+    if mode == MODE_12H:
+        # Compatibilidad con el contrato previo: 00-12 se enviaba a 12:00 + delay
+        # y 12-24 a 00:00 + delay del dia siguiente.
+        first_minutes = 12 * 60 + delay
+        second_minutes = delay
+        return _minutes_to_hhmm(first_minutes), _minutes_to_hhmm(second_minutes)
+    return _minutes_to_hhmm(delay), None
+
+
+def _minutes_to_hhmm(total_minutes: int) -> str:
+    total = int(total_minutes) % (24 * 60)
+    return f'{total // 60:02d}:{total % 60:02d}'
+
+
 def _ensure_scheduler_schema(connection: sqlite3.Connection) -> None:
-    required_tables = {'report_email_schedules', 'report_email_runs'}
-    existing_tables = {
-        str(row['name'])
-        for row in connection.execute(
-            "SELECT name FROM sqlite_master WHERE type = 'table'"
-        ).fetchall()
-    }
-    if required_tables.issubset(existing_tables):
-        return
-    missing = sorted(required_tables - existing_tables)
-    logger.warning(
-        'report scheduler sqlite schema missing; recreating tables missing=%s',
-        ','.join(missing) or 'unknown',
-    )
     connection.executescript(_SCHEMA)
+    columns = {str(row['name']) for row in connection.execute('PRAGMA table_info(report_email_schedules)').fetchall()}
+    if 'send_time_local' not in columns:
+        connection.execute('ALTER TABLE report_email_schedules ADD COLUMN send_time_local TEXT NULL')
+    if 'send_time_local_2' not in columns:
+        connection.execute('ALTER TABLE report_email_schedules ADD COLUMN send_time_local_2 TEXT NULL')
+
+    rows = connection.execute(
+        'SELECT id, period_mode, send_delay_minutes, send_time_local, send_time_local_2 FROM report_email_schedules'
+    ).fetchall()
+    for row in rows:
+        current_one = str(row['send_time_local'] or '').strip()
+        current_two = str(row['send_time_local_2'] or '').strip()
+        mode = str(row['period_mode'] or MODE_24H)
+        needs_first = not current_one
+        needs_second = mode == MODE_12H and not current_two
+        if not needs_first and not needs_second:
+            continue
+        default_one, default_two = _legacy_times_from_delay(mode, int(row['send_delay_minutes'] or 10))
+        time_one = current_one or default_one
+        time_two = current_two or default_two
+        connection.execute(
+            'UPDATE report_email_schedules SET send_time_local = ?, send_time_local_2 = ? WHERE id = ?',
+            (time_one, time_two, row['id']),
+        )
     connection.commit()
 
 
@@ -198,6 +226,31 @@ def _normalize_delay(value: Any) -> int:
     return delay
 
 
+def _normalize_send_time(value: Any, *, label: str = 'Hora de envio') -> str:
+    raw = str(value or '').strip()
+    try:
+        parsed = datetime.strptime(raw, '%H:%M').time()
+    except (TypeError, ValueError) as exc:
+        raise ReportEmailScheduleError(f'{label} no valida. Usa formato HH:MM.') from exc
+    return f'{parsed.hour:02d}:{parsed.minute:02d}'
+
+
+def _time_value(value: str) -> time:
+    parsed = datetime.strptime(value, '%H:%M').time()
+    return time(parsed.hour, parsed.minute)
+
+
+def _normalize_delivery_times(mode: str, first: Any, second: Any = None) -> tuple[str, str | None]:
+    time_one = _normalize_send_time(first)
+    if mode == MODE_24H:
+        return time_one, None
+    time_two = _normalize_send_time(second, label='Segunda hora de envio')
+    # El bloque 00:00-12:00 no puede entregarse antes de que cierre a mediodia.
+    if _time_value(time_one) < time(12, 0):
+        raise ReportEmailScheduleError('La entrega del bloque 00:00-12:00 debe programarse entre 12:00 y 23:59.')
+    return time_one, time_two
+
+
 def _serialize_schedule(row: sqlite3.Row | dict[str, Any], now: datetime | None = None) -> dict[str, Any]:
     data = dict(row)
     formats = json.loads(data.get('formats_json') or '[]')
@@ -211,6 +264,8 @@ def _serialize_schedule(row: sqlite3.Row | dict[str, Any], now: datetime | None 
         'recipients': recipients,
         'timezone': str(data.get('timezone') or LOCAL_TIMEZONE),
         'send_delay_minutes': int(data.get('send_delay_minutes') or 10),
+        'send_time_local': str(data.get('send_time_local') or ''),
+        'send_time_local_2': str(data.get('send_time_local_2') or '') or None,
         'created_by_user_id': int(data['created_by_user_id']),
         'created_at': data.get('created_at'),
         'updated_at': data.get('updated_at'),
@@ -258,17 +313,24 @@ def create_report_email_schedule(payload: dict[str, Any], actor: dict[str, Any])
     formats = _normalize_formats(payload.get('formats'))
     recipients = _normalize_recipients(payload.get('recipients'))
     delay = _normalize_delay(payload.get('send_delay_minutes', 10))
+    default_time, default_time_2 = _legacy_times_from_delay(mode, delay)
+    send_time, send_time_2 = _normalize_delivery_times(
+        mode,
+        payload.get('send_time_local') or default_time,
+        payload.get('send_time_local_2') or default_time_2,
+    )
     with _connect() as connection:
         connection.execute(
             """
             INSERT INTO report_email_schedules (
                 id, name, enabled, period_mode, formats_json, recipients_json,
-                timezone, send_delay_minutes, created_by_user_id, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                timezone, send_delay_minutes, send_time_local, send_time_local_2,
+                created_by_user_id, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 schedule_id, name, int(bool(payload.get('enabled', True))), mode,
-                json.dumps(formats), json.dumps(recipients), LOCAL_TIMEZONE, delay,
+                json.dumps(formats), json.dumps(recipients), LOCAL_TIMEZONE, delay, send_time, send_time_2,
                 int(actor.get('id') or 0), _iso(now), _iso(now),
             ),
         )
@@ -287,8 +349,9 @@ def update_report_email_schedule(schedule_id: str, payload: dict[str, Any], acto
         if not name:
             raise ReportEmailScheduleError('El nombre no puede quedar vacío.')
         fields.append('name = ?'); values.append(name)
+    effective_mode = _normalize_mode(str(payload.get('period_mode') or current['period_mode']))
     if payload.get('period_mode') is not None:
-        fields.append('period_mode = ?'); values.append(_normalize_mode(str(payload['period_mode'])))
+        fields.append('period_mode = ?'); values.append(effective_mode)
     if payload.get('formats') is not None:
         fields.append('formats_json = ?'); values.append(json.dumps(_normalize_formats(payload['formats'])))
     if payload.get('recipients') is not None:
@@ -297,6 +360,23 @@ def update_report_email_schedule(schedule_id: str, payload: dict[str, Any], acto
         fields.append('enabled = ?'); values.append(int(bool(payload['enabled'])))
     if payload.get('send_delay_minutes') is not None:
         fields.append('send_delay_minutes = ?'); values.append(_normalize_delay(payload['send_delay_minutes']))
+
+    if payload.get('send_time_local') is not None or payload.get('send_time_local_2') is not None or payload.get('period_mode') is not None:
+        delay = _normalize_delay(payload.get('send_delay_minutes', current['send_delay_minutes'] or 10))
+        legacy_one, legacy_two = _legacy_times_from_delay(effective_mode, delay)
+        if effective_mode == MODE_24H:
+            first = payload.get('send_time_local') or current['send_time_local'] or legacy_one
+            second = None
+        else:
+            current_mode = str(current['period_mode'])
+            current_one = current['send_time_local'] if current_mode == MODE_12H else None
+            current_two = current['send_time_local_2'] if current_mode == MODE_12H else None
+            first = payload.get('send_time_local') or current_one or legacy_one
+            second = payload.get('send_time_local_2') or current_two or legacy_two
+        send_time, send_time_2 = _normalize_delivery_times(effective_mode, first, second)
+        fields.append('send_time_local = ?'); values.append(send_time)
+        fields.append('send_time_local_2 = ?'); values.append(send_time_2)
+
     if not fields:
         return _serialize_schedule(current)
     fields.append('updated_at = ?'); values.append(_iso(_now_local()))
@@ -306,7 +386,6 @@ def update_report_email_schedule(schedule_id: str, payload: dict[str, Any], acto
         row = connection.execute('SELECT * FROM report_email_schedules WHERE id = ?', (schedule_id,)).fetchone()
         connection.commit()
     return _serialize_schedule(row)
-
 
 def delete_report_email_schedule(schedule_id: str, actor: dict[str, Any]) -> None:
     current = _get_schedule_raw(schedule_id)
@@ -327,76 +406,74 @@ def list_report_email_runs(schedule_id: str, actor: dict[str, Any], limit: int =
     return [dict(row) for row in rows]
 
 
-def _period_for_due(mode: str, due_at: datetime, delay_minutes: int) -> PeriodWindow:
-    boundary = due_at - timedelta(minutes=delay_minutes)
+def _period_for_due(mode: str, due_at: datetime, slot: str | None = None) -> PeriodWindow:
+    day_start = datetime.combine(due_at.date(), time.min)
     if mode == MODE_24H:
-        end = datetime.combine(boundary.date(), time.min)
+        end = day_start
         start = end - timedelta(days=1)
+    elif slot == 'block_00_12':
+        start = day_start
+        end = day_start + timedelta(hours=12)
     else:
-        end = boundary.replace(minute=0, second=0, microsecond=0)
+        end = day_start
         start = end - timedelta(hours=12)
     return PeriodWindow(start=start, end=end, due_at=due_at)
 
 
-def _recent_due_windows(schedule: dict[str, Any], now: datetime, grace_hours: int | None = None) -> list[PeriodWindow]:
-    delay = int(schedule.get('send_delay_minutes') or 10)
+def _configured_due_slots(schedule: dict[str, Any], day) -> list[tuple[datetime, str]]:
     mode = str(schedule.get('period_mode'))
-    candidates: list[datetime] = []
     if mode == MODE_24H:
-        for day_offset in (0, -1):
-            day = now.date() + timedelta(days=day_offset)
-            candidates.append(datetime.combine(day, time.min) + timedelta(minutes=delay))
-    else:
-        for day_offset in (0, -1):
-            day = now.date() + timedelta(days=day_offset)
-            base = datetime.combine(day, time.min)
-            candidates.extend([base + timedelta(minutes=delay), base + timedelta(hours=12, minutes=delay)])
+        return [(datetime.combine(day, _time_value(str(schedule['send_time_local']))), 'day_24h')]
+    return [
+        (datetime.combine(day, _time_value(str(schedule['send_time_local']))), 'block_00_12'),
+        (datetime.combine(day, _time_value(str(schedule['send_time_local_2']))), 'block_12_24'),
+    ]
+
+
+def _recent_due_windows(schedule: dict[str, Any], now: datetime, grace_hours: int | None = None) -> list[PeriodWindow]:
+    mode = str(schedule.get('period_mode'))
     created_at = _parse_dt(schedule.get('created_at')) or datetime.min
     grace_value = settings.report_email_recovery_grace_hours if grace_hours is None else grace_hours
     grace = timedelta(hours=max(1, int(grace_value)))
     windows: list[PeriodWindow] = []
-    for due in sorted(set(candidates)):
-        if due > now or now - due > grace or due < created_at:
-            continue
-        windows.append(_period_for_due(mode, due, delay))
-    return windows
+    for day_offset in (0, -1, -2):
+        day = now.date() + timedelta(days=day_offset)
+        for due, slot in _configured_due_slots(schedule, day):
+            if due > now or now - due > grace or due < created_at:
+                continue
+            window = _period_for_due(mode, due, slot)
+            if window.end > due:
+                continue
+            windows.append(window)
+    return sorted(windows, key=lambda item: item.due_at)
 
 
 def _next_due_for_schedule(schedule: dict[str, Any], now: datetime) -> datetime:
-    delay = int(schedule.get('send_delay_minutes') or 10)
-    mode = str(schedule.get('period_mode'))
-    base = datetime.combine(now.date(), time.min)
-    if mode == MODE_24H:
-        today_due = base + timedelta(minutes=delay)
-        return today_due if now < today_due else today_due + timedelta(days=1)
-    first = base + timedelta(minutes=delay)
-    second = base + timedelta(hours=12, minutes=delay)
-    if now < first:
-        return first
-    if now < second:
-        return second
-    return first + timedelta(days=1)
+    candidates: list[datetime] = []
+    for day_offset in (0, 1, 2):
+        day = now.date() + timedelta(days=day_offset)
+        for due, slot in _configured_due_slots(schedule, day):
+            window = _period_for_due(str(schedule.get('period_mode')), due, slot)
+            if due > now and window.end <= due:
+                candidates.append(due)
+    if not candidates:
+        raise ReportEmailScheduleError('No fue posible calcular el siguiente horario de envio.')
+    return min(candidates)
 
 
 def _latest_closed_window(schedule: dict[str, Any], now: datetime) -> PeriodWindow:
-    delay = int(schedule.get('send_delay_minutes') or 10)
     mode = str(schedule.get('period_mode'))
     base = datetime.combine(now.date(), time.min)
     if mode == MODE_24H:
-        due = base + timedelta(minutes=delay)
-        if now < due:
-            due -= timedelta(days=1)
+        end = base
+        start = end - timedelta(days=1)
+    elif now >= base + timedelta(hours=12):
+        start = base
+        end = base + timedelta(hours=12)
     else:
-        due_midnight = base + timedelta(minutes=delay)
-        due_noon = base + timedelta(hours=12, minutes=delay)
-        if now >= due_noon:
-            due = due_noon
-        elif now >= due_midnight:
-            due = due_midnight
-        else:
-            due = due_noon - timedelta(days=1)
-    return _period_for_due(mode, due, delay)
-
+        end = base
+        start = end - timedelta(hours=12)
+    return PeriodWindow(start=start, end=end, due_at=now)
 
 def _claim_run(schedule: dict[str, Any], window: PeriodWindow, *, trigger_kind: str) -> dict[str, Any] | None:
     now = _now_local()

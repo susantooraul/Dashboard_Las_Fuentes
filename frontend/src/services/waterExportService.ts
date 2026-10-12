@@ -1,3 +1,4 @@
+import { REPORT_VISUAL_CSS } from './reportVisualTheme';
 type ExportRow = Record<string, string>;
 
 interface ExportTable {
@@ -246,7 +247,7 @@ function buildPdfHtml(report: DomReport): string {
       thead { display: table-header-group; }
       tfoot { display: table-footer-group; }
     }
-  </style>
+  ${REPORT_VISUAL_CSS}</style>
 </head>
 <body>
   <main class="pdf-report">
@@ -360,7 +361,7 @@ function buildHtml(report: DomReport): string {
     .export-chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px;margin-top:12px}.export-chart{background:#071b2d;border:1px solid rgba(125,211,252,.18);border-radius:16px;padding:14px;overflow:auto}.export-chart svg{max-width:100%;height:auto;display:block;background:#071b2d;border-radius:12px}
     .export-table{background:#071b2d;border:1px solid rgba(125,211,252,.18);border-radius:16px;padding:14px;margin:14px 0;overflow:auto}.export-table table{width:100%;border-collapse:collapse}.export-table th,.export-table td{padding:10px;border-bottom:1px solid rgba(125,211,252,.18);text-align:left}.export-table th{color:#7dd3fc;text-transform:uppercase;font-size:11px;letter-spacing:.08em}.export-table td{color:#eef8ff;font-size:12px}.empty{color:#b9e7ff}
     @media print{body{background:white;color:#111}.export-shell{padding:0}.export-hero,.export-chart,.export-table{break-inside:avoid;box-shadow:none}.sidebar,.main-header,.date-range-panel button{display:none!important}}
-  </style>
+  ${REPORT_VISUAL_CSS}</style>
 </head>
 <body>
   <main class="export-shell">
@@ -382,7 +383,7 @@ function exportHtml(report: DomReport): void {
 function exportExcel(report: DomReport): void {
   const chartsHtml = report.charts.map((chart) => `<h2>${escapeHtml(chart.title)}</h2>${chart.svg}`).join('');
   const tablesHtml = report.tables.map((table) => `<h2>${escapeHtml(table.title)}</h2>${tableToHtml(table)}`).join('');
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>table{border-collapse:collapse}th,td{border:1px solid #8db5c8;padding:6px}th{background:#dff3ff}svg{max-width:900px;height:auto}</style></head><body><h1>${escapeHtml(report.title)}</h1><p>Generado: ${escapeHtml(report.generated)} · Rango: ${escapeHtml(report.range)}</p><h2>Gráficas</h2>${chartsHtml || 'Sin gráficas visibles'}<h2>Tablas</h2>${tablesHtml || 'Sin tablas visibles'}</body></html>`;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>table{border-collapse:collapse}th,td{border:1px solid #8db5c8;padding:6px}th{background:#dff3ff}svg{max-width:900px;height:auto}${REPORT_VISUAL_CSS}</style></head><body><h1>${escapeHtml(report.title)}</h1><p>Generado: ${escapeHtml(report.generated)} · Rango: ${escapeHtml(report.range)}</p><h2>Gráficas</h2>${chartsHtml || 'Sin gráficas visibles'}<h2>Tablas</h2>${tablesHtml || 'Sin tablas visibles'}</body></html>`;
   downloadBlob(html, `${slugify(report.title)}.xls`, 'application/vnd.ms-excel;charset=utf-8');
 }
 
@@ -462,7 +463,7 @@ async function exportImage(report: DomReport): Promise<void> {
         body{margin:0}.export-shell-image{box-sizing:border-box;width:${width}px;min-height:${height}px;padding:24px;background:#06111f;color:#eef8ff;font-family:Inter,Arial,sans-serif;}
         .export-hero{border:1px solid rgba(125,211,252,.20);border-radius:20px;background:#071b2d;padding:18px 22px;margin-bottom:18px}.export-hero h1{margin:0 0 6px;font-size:28px}.export-hero p{margin:0;color:#b9e7ff}
         .export-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:12px}.export-chart,.export-table{background:#071b2d;border:1px solid rgba(125,211,252,.18);border-radius:16px;padding:14px;margin:14px 0;overflow:hidden}.export-chart svg{max-width:100%;height:auto;display:block}.export-table table{width:100%;border-collapse:collapse}.export-table th,.export-table td{padding:8px;border-bottom:1px solid rgba(125,211,252,.18);text-align:left;font-size:12px}.export-table th{color:#7dd3fc}.export-section-title{margin:24px 0 12px;color:#eafaff;font-size:20px}
-      ]]></style>
+      ]]>${REPORT_VISUAL_CSS}</style>
       <section class="export-hero"><h1>${escapeHtml(report.title)}</h1><p>Generado: ${escapeHtml(report.generated)} · Rango: ${escapeHtml(report.range)}</p></section>
       <section>${safeCloneHtml}</section>
       <h2 class="export-section-title">Gráficas visibles</h2><section class="export-chart-grid">${chartsMarkup}</section>

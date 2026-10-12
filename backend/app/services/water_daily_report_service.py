@@ -10,6 +10,7 @@ from time import monotonic
 from typing import Any, Iterable
 from zoneinfo import ZoneInfo
 
+from app.services.report_visual_theme import NAVY, BLUE, PALE, MUTED, REPORT_HTML_CSS, pdf_table, pdf_footer, style_excel_table, style_excel_workbook
 from app.services.insurgentes_config import PLANT_NAME, SHIFT_WINDOWS
 from app.services.insurgentes_daily_review_service import get_insurgentes_review_period
 from app.services.insurgentes_service import get_insurgentes_interval_cut
@@ -247,6 +248,7 @@ def _row_common(item: dict[str, Any]) -> dict[str, Any]:
     )
     return {
         'id': str(item.get('id') or item.get('sensor_id') or item.get('name') or ''),
+        'module_group': item.get('module_group'),
         'equipo': item.get('name') or item.get('nombre') or item.get('id') or 'Elemento',
         'flujo_lps': _num(item.get('flow_lps'), None),
         'totalizador_m3': _num(item.get('totalizador_m3'), None),
@@ -349,6 +351,11 @@ def _extract_module_items(payload: dict[str, Any], module: str) -> list[dict[str
         return [dict(item) for item in (payload.get('production_lines') or [])]
     if module == 'flujos':
         return [dict(item) for item in (payload.get('distribution_flows') or payload.get('flows') or [])]
+    if module in {'tam', 'embotellado', 'cisterna'}:
+        return [
+            dict(item) for item in (payload.get('distribution_flows') or payload.get('flows') or [])
+            if str(item.get('module_group') or '') == module
+        ]
     if module == 'niveles':
         return [dict(item) for item in (payload.get('tank_inputs') or [])]
     if module == 'uv':
@@ -357,7 +364,7 @@ def _extract_module_items(payload: dict[str, Any], module: str) -> list[dict[str
 
 
 def _comparison_value(item: dict[str, Any], module: str) -> Any:
-    if module in {'entrada', 'pozos', 'lineas', 'flujos'}:
+    if module in {'entrada', 'pozos', 'lineas', 'flujos', 'tam', 'embotellado', 'cisterna'}:
         return _period_display(item)
     if module == 'niveles':
         return _num(item.get('level_m') if item.get('level_m') is not None else item.get('height_m'), None)
@@ -374,6 +381,46 @@ def _name_of_item(item: dict[str, Any]) -> str:
     return str(item.get('name') or item.get('nombre') or item.get('id') or 'Elemento')
 
 
+def _explicit_date_label(value: date) -> str:
+    return value.strftime('%d/%m/%Y')
+
+
+def _explicit_range_label(start: date, end: date) -> str:
+    if start == end:
+        return _explicit_date_label(start)
+    return f'{_explicit_date_label(start)} → {_explicit_date_label(end)}'
+
+
+def _comparison_period_contract(period_start: date, period_end: date) -> dict[str, Any]:
+    week_start = period_end - timedelta(days=period_end.weekday())
+    ranges = {
+        'seleccionado': (period_start, period_end),
+        'ayer': (period_start - timedelta(days=1), period_end - timedelta(days=1)),
+        'semana_anterior': (period_start - timedelta(days=7), period_end - timedelta(days=7)),
+        'esta_semana': (week_start, period_end),
+    }
+    titles = {'seleccionado': 'Seleccionado', 'ayer': 'Anterior', 'semana_anterior': 'Semana anterior', 'esta_semana': 'Esta semana'}
+    return {
+        'headers': {key: f"{titles[key]} · {_explicit_range_label(start, end)}" for key, (start, end) in ranges.items()},
+        'periods': {key: {'start_date': start.isoformat(), 'end_date': end.isoformat(), 'label': _explicit_range_label(start, end)} for key, (start, end) in ranges.items()},
+    }
+
+
+def _historical_period_contract(period_start: date, period_end: date) -> dict[str, Any]:
+    ranges = {
+        'semana_pasada': (period_start - timedelta(days=7), period_end - timedelta(days=7)),
+        'hace_dos_semanas': (period_start - timedelta(days=14), period_end - timedelta(days=14)),
+        'un_mes_antes': (period_start - timedelta(days=30), period_end - timedelta(days=30)),
+        'dos_meses_antes': (period_start - timedelta(days=60), period_end - timedelta(days=60)),
+        'tres_meses_antes': (period_start - timedelta(days=90), period_end - timedelta(days=90)),
+    }
+    titles = {'semana_pasada': 'Semana pasada', 'hace_dos_semanas': 'Hace dos semanas', 'un_mes_antes': 'Un mes antes', 'dos_meses_antes': 'Dos meses antes', 'tres_meses_antes': 'Tres meses antes'}
+    return {
+        'headers': {key: f"{titles[key]} · {_explicit_range_label(start, end)}" for key, (start, end) in ranges.items()},
+        'periods': {key: {'start_date': start.isoformat(), 'end_date': end.isoformat(), 'label': _explicit_range_label(start, end)} for key, (start, end) in ranges.items()},
+    }
+
+
 def _build_comparison_rows(review: dict[str, Any], period_end: date) -> list[dict[str, Any]]:
     current = review.get('dashboard') or {}
     comparisons = review.get('comparisons') or {}
@@ -386,7 +433,7 @@ def _build_comparison_rows(review: dict[str, Any], period_end: date) -> list[dic
         'esta_semana': (week_review or {}).get('dashboard') or {},
     }
     rows: list[dict[str, Any]] = []
-    for module, label in [('entrada', 'Pozos Corporativos'), ('pozos', 'Pozos'), ('lineas', 'Líneas'), ('flujos', 'Flujos')]:
+    for module, label in [('pozos', 'Pozos'), ('tam', 'TAM'), ('embotellado', 'Embotellado'), ('cisterna', 'Cisterna')]:
         base_items = _extract_module_items(current, module)
         for item in base_items:
             item_id = _id_of_item(item)
@@ -426,7 +473,7 @@ def _build_historical_rows(period_start: date, period_end: date, current_dashboa
         payloads[key] = (historical_review or {}).get('dashboard') or {}
 
     rows: list[dict[str, Any]] = []
-    for module, label in [('entrada', 'Pozos Corporativos'), ('pozos', 'Pozos'), ('lineas', 'Líneas'), ('flujos', 'Flujos')]:
+    for module, label in [('pozos', 'Pozos'), ('tam', 'TAM'), ('embotellado', 'Embotellado'), ('cisterna', 'Cisterna')]:
         for item in _extract_module_items(current_dashboard, module):
             item_id = _id_of_item(item)
             row = {'module': label, 'elemento': _name_of_item(item)}
@@ -457,6 +504,15 @@ def _shift_summary_for_report(review: dict[str, Any]) -> dict[str, Any]:
             row[module] = summary.get('volume_m3') if summary.get('type') == 'volume' else None
             row[f'{module}_actividad'] = summary.get('active_count')
             row[f'{module}_total'] = summary.get('total_count')
+            if module == 'flujos':
+                flow_items = [dict(item) for item in (module_payload.get('items') or []) if isinstance(item, dict)]
+                for group_key in ('tam', 'embotellado', 'cisterna'):
+                    values = [
+                        _num(item.get('volume_m3'), None) for item in flow_items
+                        if str(item.get('module_group') or '') == group_key
+                    ]
+                    valid = [value for value in values if value is not None]
+                    row[group_key] = round(sum(valid), 4) if valid else None
         rows.append(row)
     return {**shifts, 'rows': rows}
 
@@ -559,6 +615,9 @@ def build_report_dataset(report_date: Any = None, start_date: Any = None, end_da
     well_rows = [_row_common(item) for item in wells]
     line_rows = [_row_common(item) for item in lines]
     flow_rows = [_row_common(item) for item in flows]
+    tam_rows = [row for row in flow_rows if str(row.get('module_group') or '') == 'tam']
+    bottling_rows = [row for row in flow_rows if str(row.get('module_group') or '') == 'embotellado']
+    cistern_rows = [row for row in flow_rows if str(row.get('module_group') or '') == 'cisterna']
     level_rows = [_level_row(item) for item in levels]
     lamp_rows = [_uv_row(item) for item in uv_lamps]
 
@@ -606,6 +665,12 @@ def build_report_dataset(report_date: Any = None, start_date: Any = None, end_da
             'pozos_total': len(wells),
             'volumen_lineas_m3': round(sum(float(row['volumen_periodo_m3']) for row in line_rows if row.get('volumen_periodo_m3') is not None), 4),
             'volumen_flujos_m3': round(sum(float(row['volumen_periodo_m3']) for row in flow_rows if row.get('volumen_periodo_m3') is not None), 4),
+            'volumen_tam_m3': round(sum(float(row['volumen_periodo_m3']) for row in tam_rows if row.get('volumen_periodo_m3') is not None), 4),
+            'volumen_embotellado_m3': round(sum(float(row['volumen_periodo_m3']) for row in bottling_rows if row.get('volumen_periodo_m3') is not None), 4),
+            'volumen_cisterna_m3': round(sum(float(row['volumen_periodo_m3']) for row in cistern_rows if row.get('volumen_periodo_m3') is not None), 4),
+            'tam_total': len(tam_rows),
+            'embotellado_total': len(bottling_rows),
+            'cisterna_total': len(cistern_rows),
             'lineas_activas': active_lines,
             'lineas_total': len(lines),
             'flujos_activos': active_flows,
@@ -624,7 +689,12 @@ def build_report_dataset(report_date: Any = None, start_date: Any = None, end_da
         'water_entry': {'title': 'Pozos Corporativos', 'rows': [entry_row]},
         'wells': {'title': 'Pozos', 'rows': well_rows},
         'lines': {'title': 'Líneas', 'rows': line_rows},
-        'flows': {'title': 'Flujos', 'rows': flow_rows},
+        'flows': {'title': 'Medidores de agua', 'rows': flow_rows},
+        'flow_groups': {
+            'tam': {'title': 'Medidores de TAM', 'rows': tam_rows},
+            'embotellado': {'title': 'Medidores de embotellado', 'rows': bottling_rows},
+            'cisterna': {'title': 'Medidor de cisterna', 'rows': cistern_rows},
+        },
         'levels': {'title': 'Niveles', 'rows': level_rows},
         'uv': {
             'title': 'Lámparas UV',
@@ -645,8 +715,8 @@ def build_report_dataset(report_date: Any = None, start_date: Any = None, end_da
             ],
         },
         'shifts': _shift_summary_for_report(review),
-        'comparative': {'rows': _build_comparison_rows(review, period_end) if include_comparatives else []},
-        'historical_comparative': {'rows': _build_historical_rows(period_start, period_end, payload, review) if include_comparatives else []},
+        'comparative': {'rows': _build_comparison_rows(review, period_end) if include_comparatives else [], **_comparison_period_contract(period_start, period_end)},
+        'historical_comparative': {'rows': _build_historical_rows(period_start, period_end, payload, review) if include_comparatives else [], **_historical_period_contract(period_start, period_end)},
         'charts': {
             'entry': _history_points(payload.get('entry_flow_history') or [], ['flow_lps', 'totalizador_m3']) if include_history else [],
             'wells': _history_points(payload.get('well_flow_history') or [], ['flow_lps', 'totalizador_m3']) if include_history else [],
@@ -656,9 +726,6 @@ def build_report_dataset(report_date: Any = None, start_date: Any = None, end_da
             'uv': _history_points(payload.get('uv_history') or [], ['lamp_1_state', 'lamp_2_state', 'uvt', 'power', 'flow', 'dose']) if include_history else [],
         },
         'notes': [
-            'Los volúmenes mostrados provienen del contrato común de Revisión diaria y no representan un balance hidráulico.',
-            'Cero es lectura válida sin actividad; sin datos representa ausencia real de registros suficientes.',
-            'La medición de Pozos Corporativos se conserva como medición conjunta separada y no se suma con los pozos individuales.',
         ],
     }
     return _dataset_cache_set(cache_key, dataset, _report_cache_ttl(period_end))
@@ -810,6 +877,12 @@ def build_interval_water_report_dataset(start_datetime: Any, end_datetime: Any) 
             'pozos_total': len(well_rows),
             'volumen_lineas_m3': total(line_rows),
             'volumen_flujos_m3': total(flow_rows),
+            'volumen_tam_m3': total(tam_rows),
+            'volumen_embotellado_m3': total(bottling_rows),
+            'volumen_cisterna_m3': total(cistern_rows),
+            'tam_total': len(tam_rows),
+            'embotellado_total': len(bottling_rows),
+            'cisterna_total': len(cistern_rows),
             'lineas_activas': active_count(line_rows),
             'lineas_total': len(line_rows),
             'flujos_activos': active_count(flow_rows),
@@ -828,7 +901,12 @@ def build_interval_water_report_dataset(start_datetime: Any, end_datetime: Any) 
         'water_entry': {'title': 'Pozos Corporativos', 'rows': entry_rows},
         'wells': {'title': 'Pozos', 'rows': well_rows},
         'lines': {'title': 'Líneas', 'rows': line_rows},
-        'flows': {'title': 'Flujos', 'rows': flow_rows},
+        'flows': {'title': 'Medidores de agua', 'rows': flow_rows},
+        'flow_groups': {
+            'tam': {'title': 'Medidores de TAM', 'rows': tam_rows},
+            'embotellado': {'title': 'Medidores de embotellado', 'rows': bottling_rows},
+            'cisterna': {'title': 'Medidor de cisterna', 'rows': cistern_rows},
+        },
         'levels': {'title': 'Niveles', 'rows': level_rows},
         'uv': {
             'title': 'Lámparas UV',
@@ -994,27 +1072,9 @@ def _logo_path() -> str | None:
 
 
 def _pdf_table(rows: list[list[Any]], widths: list[float] | None = None):
-    from reportlab.lib import colors
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.platypus import Paragraph, Table, TableStyle
+    from reportlab.lib.units import mm
+    return pdf_table(rows, widths, font_size=7.3, max_width=190 * mm)
 
-    header_style = ParagraphStyle('ReportTableHeader', fontName='Helvetica-Bold', fontSize=6.4, leading=7.6, textColor=colors.HexColor('#334155'))
-    body_style = ParagraphStyle('ReportTableBody', fontName='Helvetica', fontSize=6.25, leading=7.3, textColor=colors.HexColor('#111827'))
-    formatted_rows = []
-    for row_index, row in enumerate(rows):
-        style = header_style if row_index == 0 else body_style
-        formatted_rows.append([Paragraph(escape(_pdf_text(cell)), style) for cell in row])
-    table = Table(formatted_rows, colWidths=widths, repeatRows=1)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#eaf2f8')),
-        ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#d9e1ea')),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 3.5),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 3.5),
-        ('TOPPADDING', (0, 0), (-1, -1), 3.8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3.8),
-    ]))
-    return table
 
 
 def _bar_chart_table(title: str, items: list[tuple[str, Any, str]], width: float):
@@ -1135,13 +1195,14 @@ def _volume_bar_chart_image(title: str, items: list[tuple[str, Any, str]], width
     fig_height = max(1.8, 0.34 * row_count + 0.85)
     fig, ax = plt.subplots(figsize=(7.4, fig_height), dpi=_REPORT_CHART_DPI)
     y_positions = list(range(row_count))
-    colors = ['#f59e0b' if index == 0 else '#0ea5e9' for index in range(row_count)]
+    colors = ['#0ea5e9'] * row_count
     for index, (_, value, _) in enumerate(cleaned):
         if value is None:
             colors[index] = '#e5edf4'
     ax.barh(y_positions, values, color=colors, height=0.34)
     ax.set_yticks(y_positions)
-    ax.set_yticklabels(names, fontsize=7.2, color='#334155')
+    from textwrap import fill
+    ax.set_yticklabels([fill(name, width=28) for name in names], fontsize=7.2, color='#334155')
     ax.invert_yaxis()
     ax.set_title(title, loc='left', fontsize=9.2, fontweight='bold', color='#1f2937', pad=8)
     ax.set_xlim(0, max(max_value * 1.18, 1.0))
@@ -1153,7 +1214,7 @@ def _volume_bar_chart_image(title: str, items: list[tuple[str, Any, str]], width
         label = 'Sin datos' if value is None else _fmt_num(value, 2, suffix)
         x = (values[index] if value is not None else 0.0) + max(max_value * 0.02, 0.25)
         ax.text(x, index, label, va='center', ha='left', fontsize=7.1, color='#334155', fontweight='bold' if value is not None else 'normal')
-    fig.subplots_adjust(left=0.20, right=0.98, top=0.84, bottom=0.08)
+    fig.subplots_adjust(left=0.30 if any(len(name) > 28 for name in names) else 0.20, right=0.98, top=0.84, bottom=0.08)
     image = _chart_flowable_from_matplotlib(fig, width, height)
     plt.close(fig)
     return image
@@ -1163,7 +1224,7 @@ def _shift_volume_chart_image(title: str, shift_rows: list[dict[str, Any]], widt
     rows = shift_rows or []
     if not rows:
         return None
-    modules = [('entrada', 'Pozos Corporativos'), ('pozos', 'Pozos'), ('lineas', 'Líneas'), ('flujos', 'Flujos')]
+    modules = [('pozos', 'Pozos'), ('tam', 'TAM'), ('embotellado', 'Embotellado'), ('cisterna', 'Cisterna')]
     if not any(_num(row.get(module), None) is not None for row in rows for module, _ in modules):
         return None
 
@@ -1202,22 +1263,30 @@ def build_daily_water_report_pdf(report: dict[str, Any]) -> tuple[bytes, str]:
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import mm
-    from reportlab.platypus import Image, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.platypus import Image, CondPageBreak, KeepTogether, Paragraph, SimpleDocTemplate, Spacer
 
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=10 * mm, rightMargin=10 * mm, topMargin=10 * mm, bottomMargin=10 * mm, title=_pdf_filename(report).replace('.pdf', ''))
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=10 * mm,
+        rightMargin=10 * mm,
+        topMargin=10 * mm,
+        bottomMargin=16 * mm,
+        title=_pdf_filename(report).replace('.pdf', ''),
+    )
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name='ReportTitle', parent=styles['Heading1'], fontSize=17, leading=20, textColor=colors.HexColor('#111827'), alignment=1, spaceAfter=2))
-    styles.add(ParagraphStyle(name='Brand', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.2, leading=10, textColor=colors.HexColor('#d71920'), alignment=1))
+    styles.add(ParagraphStyle(name='ReportTitle', parent=styles['Heading1'], fontSize=17, leading=20, textColor=colors.HexColor('#' + NAVY), alignment=0, spaceAfter=8))
+    styles.add(ParagraphStyle(name='Brand', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.2, leading=10, textColor=colors.HexColor('#' + BLUE), alignment=0))
     styles.add(ParagraphStyle(name='SmallNote', parent=styles['Normal'], fontSize=7.3, leading=9, textColor=colors.HexColor('#64748b')))
-    styles.add(ParagraphStyle(name='Section', parent=styles['Heading2'], fontSize=12.2, leading=15, spaceBefore=6, spaceAfter=5, textColor=colors.HexColor('#111827')))
+    styles.add(ParagraphStyle(name='Section', parent=styles['Heading2'], fontSize=12.2, leading=15, spaceBefore=6, spaceAfter=5, textColor=colors.HexColor('#' + NAVY)))
 
     story: list[Any] = []
     logo = _logo_path()
     if logo:
         try:
             logo_image = Image(logo, width=34 * mm, height=14 * mm, kind='proportional')
-            logo_image.hAlign = 'CENTER'
+            logo_image.hAlign = 'LEFT'
             story.append(logo_image)
         except Exception:
             pass
@@ -1229,34 +1298,37 @@ def build_daily_water_report_pdf(report: dict[str, Any]) -> tuple[bytes, str]:
     story.append(Spacer(1, 6))
 
     summary = report.get('summary') or {}
-    kpi_headers = ['POZOS CORPORATIVOS', 'VOLUMEN DE POZOS', 'LÍNEAS', 'FLUJOS', 'POZOS CON ACTIVIDAD', 'LÍNEAS CON ACTIVIDAD', 'NIVELES', 'CALIDAD DEL PERIODO']
+    kpi_headers = ['POZOS', 'TAM', 'EMBOTELLADO', 'CISTERNA', 'POZOS CON ACTIVIDAD', 'MEDIDORES CON ACTIVIDAD', 'COMUNICACIÓN', 'CALIDAD DEL PERIODO']
     kpi_values = [
-        _fmt_num(summary.get('volumen_recibido_m3'), 2, ' m³'),
         _fmt_num(summary.get('volumen_pozos_m3'), 2, ' m³'),
-        _fmt_num(summary.get('volumen_lineas_m3'), 2, ' m³'),
-        _fmt_num(summary.get('volumen_flujos_m3'), 2, ' m³'),
+        _fmt_num(summary.get('volumen_tam_m3'), 2, ' m³'),
+        _fmt_num(summary.get('volumen_embotellado_m3'), 2, ' m³'),
+        _fmt_num(summary.get('volumen_cisterna_m3'), 2, ' m³'),
         f"{summary.get('pozos_activos', 0)}/{summary.get('pozos_total', 0)}",
-        f"{summary.get('lineas_activas', 0)}/{summary.get('lineas_total', 0)}",
-        f"{summary.get('niveles_actualizados', 0)}/{summary.get('niveles_total', 0)}",
+        f"{summary.get('flujos_activos', 0)}/{summary.get('flujos_total', 0)}",
+        f"{summary.get('comunicacion_actualizada', 0)}/{summary.get('comunicacion_total', 0)}",
         str(summary.get('calidad_periodo') or 'Sin datos'),
     ]
     story.append(Paragraph('Resumen ejecutivo', styles['Section']))
     story.append(_kpi_table(kpi_headers, kpi_values, doc.width))
-    story.append(Spacer(1, 6))
-    story.append(Paragraph('<br/>'.join(escape(note) for note in (report.get('notes') or [])), styles['SmallNote']))
 
-    # Cortes por turno antes de módulos.
+    notes = [str(note) for note in (report.get('notes') or []) if str(note).strip()]
+    if notes:
+        story.append(Spacer(1, 6))
+        story.append(Paragraph('<br/>'.join(escape(note) for note in notes), styles['SmallNote']))
+
     shifts = report.get('shifts') or {}
-    shift_rows = [['Turno', 'Horario', 'Pozos Corporativos', 'Pozos', 'Líneas', 'Flujos', 'Estado']]
+    shift_rows = [['Turno', 'Horario', 'Pozos', 'TAM', 'Embotellado', 'Cisterna', 'Estado']]
     for row in shifts.get('rows') or []:
         shift_rows.append([
-            row.get('turno'), row.get('horario'), _fmt_any(row.get('entrada'), ' m³'),
-            _fmt_any(row.get('pozos'), ' m³'), _fmt_any(row.get('lineas'), ' m³'), _fmt_any(row.get('flujos'), ' m³'), row.get('estado'),
+            row.get('turno'), row.get('horario'), _fmt_any(row.get('pozos'), ' m³'),
+            _fmt_any(row.get('tam'), ' m³'), _fmt_any(row.get('embotellado'), ' m³'),
+            _fmt_any(row.get('cisterna'), ' m³'), row.get('estado'),
         ])
     if len(shift_rows) > 1:
         story.append(Spacer(1, 8))
         story.append(Paragraph('Cortes por turno', styles['Section']))
-        story.append(_pdf_table(shift_rows, [20 * mm, 23 * mm, 34 * mm, 23 * mm, 23 * mm, 23 * mm, 34 * mm]))
+        story.append(_pdf_table(shift_rows, [20 * mm, 26 * mm, 24 * mm, 24 * mm, 29 * mm, 24 * mm, 35 * mm]))
         shift_chart = _shift_volume_chart_image('Volumen por turno', shifts.get('rows') or [], doc.width, 55 * mm)
         if shift_chart:
             story.append(Spacer(1, 7))
@@ -1264,158 +1336,46 @@ def build_daily_water_report_pdf(report: dict[str, Any]) -> tuple[bytes, str]:
 
     comparative_rows = (report.get('comparative') or {}).get('rows') or []
     if comparative_rows:
-        story.append(PageBreak())
+        story.append(CondPageBreak(55 * mm))
         story.append(Paragraph('Comparativo del periodo', styles['Section']))
-        rows = [['Módulo', 'Elemento', 'Seleccionado', 'Anterior', 'Semana anterior', 'Esta semana']]
+        comparison_headers = (report.get('comparative') or {}).get('headers') or {}
+        rows = [['Módulo', 'Elemento', comparison_headers.get('seleccionado') or 'Seleccionado', comparison_headers.get('ayer') or 'Anterior', comparison_headers.get('semana_anterior') or 'Semana anterior', comparison_headers.get('esta_semana') or 'Esta semana']]
         for row in comparative_rows:
             rows.append([row.get('module'), row.get('elemento'), _fmt_any(row.get('hoy'), ' m³'), _fmt_any(row.get('ayer'), ' m³'), _fmt_any(row.get('semana_anterior'), ' m³'), _fmt_any(row.get('esta_semana'), ' m³')])
         story.append(_pdf_table(rows, [23 * mm, 38 * mm, 28 * mm, 28 * mm, 35 * mm, 30 * mm]))
 
-    historical_rows = (report.get('historical_comparative') or {}).get('rows') or []
-    if historical_rows:
-        story.append(Spacer(1, 7))
-        story.append(Paragraph('Comparativo histórico', styles['Section']))
-        rows = [['Módulo', 'Elemento', 'Semana pasada', 'Hace dos semanas', 'Un mes antes', 'Dos meses antes', 'Tres meses antes']]
-        for row in historical_rows:
-            rows.append([row.get('module'), row.get('elemento'), _fmt_any(row.get('semana_pasada'), ' m³'), _fmt_any(row.get('hace_dos_semanas'), ' m³'), _fmt_any(row.get('un_mes_antes'), ' m³'), _fmt_any(row.get('dos_meses_antes'), ' m³'), _fmt_any(row.get('tres_meses_antes'), ' m³')])
-        story.append(_pdf_table(rows, [20 * mm, 34 * mm, 25 * mm, 25 * mm, 25 * mm, 25 * mm, 25 * mm]))
+    def section_table(title: str, data_rows: list[dict[str, Any]], element_label: str = 'Elemento') -> None:
+        if not data_rows:
+            return
+        rows = [[element_label, 'Flujo actual', f"Volumen · {_pdf_text(report.get('period_label'))}", 'Totalizador al cierre', 'Actividad', 'Tiempo activo / enc.', 'Comunicación', 'Validación']]
+        for row in data_rows:
+            rows.append([
+                row.get('equipo'), _fmt_num(row.get('flujo_lps'), 2, ' L/s'), _fmt_any(row.get('volumen_display'), ' m³'),
+                _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_activity_metrics(row),
+                row.get('comunicacion'), row.get('validacion'),
+            ])
+        section_story = [Spacer(1, 10), Paragraph(title, styles['Section']),
+                         _pdf_table(rows, [25 * mm, 22 * mm, 31 * mm, 28 * mm, 20 * mm, 27 * mm, 24 * mm, 25 * mm])]
+        bars = [(row.get('equipo'), row.get('volumen_periodo_m3'), ' m³') for row in data_rows]
+        chart = _volume_bar_chart_image(f'Volumen validado · {title}', bars, doc.width, max(42 * mm, (len(bars) * 7 + 24) * mm)) if bars else None
+        if chart:
+            section_story.extend([Spacer(1, 8), chart])
+        story.append(KeepTogether(section_story))
 
-    def section_table(
-        title: str,
-        table_rows: list[list[Any]],
-        widths: list[float],
-        *,
-        history_points: list[dict[str, Any]] | None = None,
-        history_key: str = 'flow_lps',
-        history_unit: str = 'L/s',
-        history_title: str = '',
-        bars: list[tuple[str, Any, str]] | None = None,
-        bars_title: str = '',
-    ) -> None:
-        story.append(PageBreak())
-        story.append(Paragraph(title, styles['Section']))
-        story.append(_pdf_table(table_rows, widths))
-        history_chart = _line_chart_image(history_title, history_points or [], history_key, history_unit, doc.width, 63 * mm) if history_points else None
-        if history_chart:
-            story.append(Spacer(1, 8))
-            story.append(history_chart)
-        bar_chart = _volume_bar_chart_image(bars_title or f'Volumen validado por elemento · {title}', bars or [], doc.width, max(42 * mm, (len(bars or []) * 7 + 24) * mm)) if bars else None
-        if bar_chart:
-            story.append(Spacer(1, 8))
-            story.append(bar_chart)
-
-    entry_rows = [['Elemento', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo / enc.', 'Comunicación', 'Validación', 'Última actualización']]
-    for row in (report.get('water_entry') or {}).get('rows') or []:
-        entry_rows.append([row.get('equipo'), _fmt_num(row.get('flujo_lps'), 2, ' L/s'), _fmt_any(row.get('volumen_display'), ' m³'), _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_activity_metrics(row), row.get('comunicacion'), row.get('validacion'), row.get('ultima_actualizacion')])
-    section_table(
-        'Pozos Corporativos',
-        entry_rows,
-        [24 * mm, 20 * mm, 22 * mm, 22 * mm, 19 * mm, 24 * mm, 21 * mm, 19 * mm, 19 * mm],
-        history_points=(report.get('charts') or {}).get('entry') or [],
-        history_key='flow_lps',
-        history_unit='L/s',
-        history_title='Comportamiento de flujo · Pozos Corporativos',
-        bars=[(row.get('equipo'), row.get('volumen_periodo_m3'), ' m³') for row in (report.get('water_entry') or {}).get('rows') or []],
-        bars_title='Volumen validado por elemento',
-    )
-
-    well_rows_data = (report.get('wells') or {}).get('rows') or []
-    if well_rows_data:
-        well_rows = [['Pozo', 'Flujo actual', 'Volumen periodo', 'Totalizador cierre', 'Actividad', 'Tiempo activo / enc.', 'Comunicación', 'Validación', 'Última actualización']]
-        for row in well_rows_data:
-            well_rows.append([row.get('equipo'), _fmt_num(row.get('flujo_lps'), 2, ' L/s'), _fmt_any(row.get('volumen_display'), ' m³'), _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_activity_metrics(row), row.get('comunicacion'), row.get('validacion'), row.get('ultima_actualizacion')])
-        section_table(
-            'Pozos',
-            well_rows,
-            [18 * mm, 19 * mm, 22 * mm, 22 * mm, 18 * mm, 24 * mm, 20 * mm, 20 * mm, 27 * mm],
-            history_points=(report.get('charts') or {}).get('wells') or [],
-            history_key='flow_lps',
-            history_unit='L/s',
-            history_title='Comportamiento de flujo · Pozos',
-            bars=[(row.get('equipo'), row.get('volumen_periodo_m3'), ' m³') for row in well_rows_data],
-            bars_title='Volumen validado por pozo',
-        )
-
-    line_rows = [['Línea', 'Flujo actual', 'Volumen periodo', 'Totalizador cierre', 'Actividad', 'Tiempo activo / enc.', 'Comunicación', 'Validación', 'Última actualización']]
-    for row in (report.get('lines') or {}).get('rows') or []:
-        line_rows.append([row.get('equipo'), _fmt_num(row.get('flujo_lps'), 2, ' L/s'), _fmt_any(row.get('volumen_display'), ' m³'), _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_activity_metrics(row), row.get('comunicacion'), row.get('validacion'), row.get('ultima_actualizacion')])
-    section_table(
-        'Líneas',
-        line_rows,
-        [18 * mm, 19 * mm, 22 * mm, 22 * mm, 18 * mm, 24 * mm, 20 * mm, 20 * mm, 27 * mm],
-        history_points=(report.get('charts') or {}).get('lines') or [],
-        history_key='flow_lps',
-        history_unit='L/s',
-        history_title='Comportamiento de flujo · Líneas',
-        bars=[(row.get('equipo'), row.get('volumen_periodo_m3'), ' m³') for row in (report.get('lines') or {}).get('rows') or []],
-        bars_title='Volumen validado por elemento',
-    )
-
-    flow_rows_data = (report.get('flows') or {}).get('rows') or []
-    if flow_rows_data:
-        flow_rows = [['Flujo', 'Flujo actual', 'Volumen periodo', 'Totalizador cierre', 'Actividad', 'Tiempo activo / enc.', 'Comunicación', 'Validación', 'Última actualización']]
-        for row in flow_rows_data:
-            flow_rows.append([row.get('equipo'), _fmt_num(row.get('flujo_lps'), 2, ' L/s'), _fmt_any(row.get('volumen_display'), ' m³'), _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_activity_metrics(row), row.get('comunicacion'), row.get('validacion'), row.get('ultima_actualizacion')])
-        section_table(
-            'Flujos',
-            flow_rows,
-            [18 * mm, 19 * mm, 22 * mm, 22 * mm, 18 * mm, 24 * mm, 20 * mm, 20 * mm, 27 * mm],
-            history_points=(report.get('charts') or {}).get('flows') or [],
-            history_key='flow_lps',
-            history_unit='L/s',
-            history_title='Comportamiento de flujo · Flujos',
-            bars=[(row.get('equipo'), row.get('volumen_periodo_m3'), ' m³') for row in flow_rows_data],
-            bars_title='Volumen validado por elemento',
-        )
-
-    level_rows = [['Elemento', 'Nivel actual', 'Porcentaje', 'Mínimo', 'Máximo', 'Estado', 'Comunicación', 'Última actualización']]
-    for row in (report.get('levels') or {}).get('rows') or []:
-        level_rows.append([row.get('elemento'), _fmt_num(row.get('nivel_m'), 2, ' m'), _fmt_num(row.get('porcentaje'), 2, '%'), _fmt_num(row.get('nivel_minimo_m'), 2, ' m'), _fmt_num(row.get('nivel_maximo_m'), 2, ' m'), row.get('estado'), row.get('comunicacion'), row.get('ultima_actualizacion')])
-    section_table(
-        'Niveles',
-        level_rows,
-        [34 * mm, 21 * mm, 21 * mm, 19 * mm, 19 * mm, 28 * mm, 28 * mm, 31 * mm],
-        history_points=(report.get('charts') or {}).get('levels') or [],
-        history_key='level_m',
-        history_unit='m',
-        history_title='Comportamiento de nivel · Niveles',
-    )
-
-    uv_rows = [['Lámpara', 'ID', 'Age', 'UVT', 'Power', 'Flow', 'Dosis', 'Ignition', 'State', 'Status']]
-    for row in (report.get('uv') or {}).get('rows') or []:
-        uv_rows.append([
-            row.get('equipo'), row.get('scada_id'), _fmt_num(row.get('agel'), 0),
-            _fmt_num(row.get('uvt'), 0, '%'), _fmt_num(row.get('power'), 0, '%'),
-            _fmt_num(row.get('flow'), 0, ' m³/h'), _fmt_num(row.get('dose'), 0, ' mJ/cm²'),
-            _fmt_num(row.get('ignition'), 0), row.get('estado_operativo'), _fmt_num(row.get('status'), 0, '%'),
-        ])
-    section_table(
-        'Lámparas UV',
-        uv_rows,
-        [23 * mm, 20 * mm, 14 * mm, 14 * mm, 15 * mm, 18 * mm, 22 * mm, 17 * mm, 24 * mm, 16 * mm],
-        history_points=(report.get('charts') or {}).get('uv') or [],
-        history_key='uvt',
-        history_unit='%',
-        history_title='Comportamiento UVT · Sistema UV',
-    )
-
-    uv_system_rows = [['Parámetro', 'Valor', 'Unidad', 'Comunicación', 'Última actualización']]
-    uv_section = report.get('uv') or {}
-    uv_summary = uv_section.get('summary') or {}
-    for row in uv_section.get('system_rows') or []:
-        uv_system_rows.append([row.get('parametro'), _fmt_num(row.get('valor'), 2), row.get('unidad'), uv_summary.get('comunicacion'), uv_summary.get('ultima_actualizacion')])
-    if len(uv_system_rows) > 1:
-        section_table('Sistema UV', uv_system_rows, [34 * mm, 30 * mm, 24 * mm, 45 * mm, 50 * mm])
+    section_table('Pozos', (report.get('wells') or {}).get('rows') or [], 'Pozo')
+    flow_groups = report.get('flow_groups') or {}
+    section_table('Medidores TAM', (flow_groups.get('tam') or {}).get('rows') or [])
+    section_table('Medidores de embotellado', (flow_groups.get('embotellado') or {}).get('rows') or [])
+    section_table('Medidor de cisterna', (flow_groups.get('cisterna') or {}).get('rows') or [])
 
     doc.build(story, onFirstPage=_page_footer, onLaterPages=_page_footer)
     return buffer.getvalue(), _pdf_filename(report)
-
 
 def _thin_red_rule(width: float):
     from reportlab.lib import colors
     from reportlab.platypus import Table, TableStyle
     table = Table([['']], colWidths=[width], rowHeights=[1.8])
-    table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#d71920'))]))
+    table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#' + BLUE))]))
     return table
 
 
@@ -1423,8 +1383,8 @@ def _kpi_table(headers: list[str], values: list[str], width: float):
     from reportlab.lib import colors
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.platypus import Paragraph, Table, TableStyle
-    header_style = ParagraphStyle('KpiHeader', fontName='Helvetica-Bold', fontSize=6.1, leading=7, textColor=colors.HexColor('#64748b'), alignment=1)
-    value_style = ParagraphStyle('KpiValue', fontName='Helvetica-Bold', fontSize=9.3, leading=11, textColor=colors.HexColor('#111827'), alignment=1)
+    header_style = ParagraphStyle('KpiHeader', fontName='Helvetica-Bold', fontSize=8, leading=10, textColor=colors.HexColor('#64748b'), alignment=1)
+    value_style = ParagraphStyle('KpiValue', fontName='Helvetica-Bold', fontSize=13, leading=16, textColor=colors.HexColor('#' + NAVY), alignment=1)
     rows = []
     for i in range(0, len(headers), 4):
         rows.append([Paragraph(escape(x), header_style) for x in headers[i:i+4]])
@@ -1443,12 +1403,8 @@ def _kpi_table(headers: list[str], values: list[str], width: float):
 
 
 def _page_footer(canvas, doc):
-    canvas.saveState()
-    canvas.setFont('Helvetica', 7)
-    canvas.setFillColorRGB(0.45, 0.52, 0.60)
-    canvas.drawString(doc.leftMargin, 8, 'Dashboard ARCA · Control hídrico · Planta Las Fuentes')
-    canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, 8, f'Página {doc.page}')
-    canvas.restoreState()
+    pdf_footer(canvas, doc)
+
 
 
 # ---------------------------------------------------------------------------
@@ -1464,24 +1420,17 @@ def build_daily_water_report_excel(report: dict[str, Any]) -> tuple[bytes, str]:
     ws = wb.active
     ws.title = 'Resumen'
 
-    header_fill = PatternFill('solid', fgColor='DDEBF7')
-    title_fill = PatternFill('solid', fgColor='C00000')
+    header_fill = PatternFill('solid', fgColor=NAVY)
+    title_fill = PatternFill('solid', fgColor=NAVY)
     white_font = Font(color='FFFFFF', bold=True)
     bold_font = Font(bold=True)
     thin = Side(style='thin', color='D9E1EA')
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
     def style_table(sheet, start_row: int, end_row: int, end_col: int) -> None:
-        for row in sheet.iter_rows(min_row=start_row, max_row=end_row, min_col=1, max_col=end_col):
-            for cell in row:
-                cell.border = border
-                cell.alignment = Alignment(vertical='center', wrap_text=True)
-        for cell in sheet[start_row]:
-            cell.fill = header_fill
-            cell.font = bold_font
-        sheet.freeze_panes = 'A2'
         for col in range(1, end_col + 1):
-            sheet.column_dimensions[get_column_letter(col)].width = max(14, min(28, sheet.column_dimensions[get_column_letter(col)].width or 14))
+            sheet.column_dimensions[get_column_letter(col)].width = 25 if col == 1 else 22
+        style_excel_table(sheet, start_row, end_row, end_col)
 
     ws['A1'] = 'DASHBOARD ARCA · PLANTA LAS FUENTES'
     ws['A1'].fill = title_fill
@@ -1494,15 +1443,12 @@ def build_daily_water_report_excel(report: dict[str, Any]) -> tuple[bytes, str]:
     ws.append(['KPI', 'Valor'])
     summary = report.get('summary') or {}
     for label, value in [
-        ('Pozos Corporativos', summary.get('volumen_recibido_m3')),
         ('Volumen pozos', summary.get('volumen_pozos_m3')),
+        ('Volumen TAM', summary.get('volumen_tam_m3')),
+        ('Volumen embotellado', summary.get('volumen_embotellado_m3')),
+        ('Volumen cisterna', summary.get('volumen_cisterna_m3')),
         ('Pozos con actividad', f"{summary.get('pozos_activos', 0)}/{summary.get('pozos_total', 0)}"),
-        ('Volumen líneas', summary.get('volumen_lineas_m3')),
-        ('Volumen flujos', summary.get('volumen_flujos_m3')),
-        ('Líneas con actividad', f"{summary.get('lineas_activas', 0)}/{summary.get('lineas_total', 0)}"),
-        ('Flujos con actividad', f"{summary.get('flujos_activos', 0)}/{summary.get('flujos_total', 0)}"),
-        ('Niveles actualizados', f"{summary.get('niveles_actualizados', 0)}/{summary.get('niveles_total', 0)}"),
-        ('UV encendidas', f"{summary.get('lamparas_uv_encendidas', 0)}/{summary.get('lamparas_uv_total', 0)}"),
+        ('Medidores con actividad', f"{summary.get('flujos_activos', 0)}/{summary.get('flujos_total', 0)}"),
         ('Comunicación', f"{summary.get('comunicacion_actualizada', 0)}/{summary.get('comunicacion_total', 0)}"),
         ('Calidad del periodo', summary.get('calidad_periodo')),
     ]:
@@ -1521,53 +1467,37 @@ def build_daily_water_report_excel(report: dict[str, Any]) -> tuple[bytes, str]:
                 if isinstance(cell.value, float):
                     cell.number_format = '#,##0.00'
 
-    add_sheet('Cortes por turno', ['Turno', 'Horario', 'Pozos Corporativos', 'Pozos', 'Líneas', 'Flujos', 'Estado'], [
-        [row.get('turno'), row.get('horario'), row.get('entrada'), row.get('pozos'), row.get('lineas'), row.get('flujos'), row.get('estado')]
+    add_sheet('Cortes por turno', ['Turno', 'Horario', 'Pozos', 'TAM', 'Embotellado', 'Cisterna', 'Estado'], [
+        [row.get('turno'), row.get('horario'), row.get('pozos'), row.get('tam'), row.get('embotellado'), row.get('cisterna'), row.get('estado')]
         for row in (report.get('shifts') or {}).get('rows') or []
     ])
-    add_sheet('Comparativo', ['Módulo', 'Elemento', 'Seleccionado', 'Anterior', 'Semana anterior', 'Esta semana'], [
+    comparison_headers = (report.get('comparative') or {}).get('headers') or {}
+    add_sheet('Comparativo', ['Módulo', 'Elemento', comparison_headers.get('seleccionado') or 'Seleccionado', comparison_headers.get('ayer') or 'Anterior', comparison_headers.get('semana_anterior') or 'Semana anterior', comparison_headers.get('esta_semana') or 'Esta semana'], [
         [row.get('module'), row.get('elemento'), row.get('hoy'), row.get('ayer'), row.get('semana_anterior'), row.get('esta_semana')]
         for row in (report.get('comparative') or {}).get('rows') or []
     ])
-    add_sheet('Histórico', ['Módulo', 'Elemento', 'Semana pasada', 'Hace dos semanas', 'Un mes antes', 'Dos meses antes', 'Tres meses antes'], [
-        [row.get('module'), row.get('elemento'), row.get('semana_pasada'), row.get('hace_dos_semanas'), row.get('un_mes_antes'), row.get('dos_meses_antes'), row.get('tres_meses_antes')]
-        for row in (report.get('historical_comparative') or {}).get('rows') or []
-    ])
-    add_sheet('Pozos Corporativos', ['Elemento', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo (min)', 'Encendidos periodo', 'Comunicación', 'Validación', 'Última actualización'], [
-        [row.get('equipo'), row.get('flujo_lps'), row.get('volumen_periodo_m3'), row.get('totalizador_m3'), row.get('actividad'), row.get('tiempo_activo_min'), row.get('encendidos_periodo'), row.get('comunicacion'), row.get('validacion'), row.get('ultima_actualizacion')]
-        for row in (report.get('water_entry') or {}).get('rows') or []
-    ])
-    add_sheet('Pozos', ['Pozo', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo (min)', 'Encendidos periodo', 'Comunicación', 'Validación', 'Última actualización'], [
-        [row.get('equipo'), row.get('flujo_lps'), row.get('volumen_periodo_m3'), row.get('totalizador_m3'), row.get('actividad'), row.get('tiempo_activo_min'), row.get('encendidos_periodo'), row.get('comunicacion'), row.get('validacion'), row.get('ultima_actualizacion')]
-        for row in (report.get('wells') or {}).get('rows') or []
-    ])
-    add_sheet('Líneas', ['Línea', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo (min)', 'Encendidos periodo', 'Comunicación', 'Validación', 'Última actualización'], [
-        [row.get('equipo'), row.get('flujo_lps'), row.get('volumen_periodo_m3'), row.get('totalizador_m3'), row.get('actividad'), row.get('tiempo_activo_min'), row.get('encendidos_periodo'), row.get('comunicacion'), row.get('validacion'), row.get('ultima_actualizacion')]
-        for row in (report.get('lines') or {}).get('rows') or []
-    ])
-    add_sheet('Flujos', ['Flujo', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo (min)', 'Encendidos periodo', 'Comunicación', 'Validación', 'Última actualización'], [
-        [row.get('equipo'), row.get('flujo_lps'), row.get('volumen_periodo_m3'), row.get('totalizador_m3'), row.get('actividad'), row.get('tiempo_activo_min'), row.get('encendidos_periodo'), row.get('comunicacion'), row.get('validacion'), row.get('ultima_actualizacion')]
-        for row in (report.get('flows') or {}).get('rows') or []
-    ])
-    add_sheet('Niveles', ['Elemento', 'Nivel', 'Porcentaje', 'Mínimo', 'Máximo', 'Estado', 'Comunicación', 'Validación', 'Última actualización'], [
-        [row.get('elemento'), row.get('nivel_m'), row.get('porcentaje'), row.get('nivel_minimo_m'), row.get('nivel_maximo_m'), row.get('estado'), row.get('comunicacion'), row.get('validacion'), row.get('ultima_actualizacion')]
-        for row in (report.get('levels') or {}).get('rows') or []
-    ])
-    add_sheet('UV', ['Lámpara', 'ID', 'Age', 'UVT %', 'Power %', 'Flow m³/h', 'Dosis mJ/cm²', 'Ignition', 'State', 'Status %', 'Comunicación', 'Última actualización'], [
-        [row.get('equipo'), row.get('scada_id'), row.get('agel'), row.get('uvt'), row.get('power'), row.get('flow'), row.get('dose'), row.get('ignition'), row.get('estado_operativo'), row.get('status'), row.get('comunicacion'), row.get('ultima_actualizacion')]
-        for row in (report.get('uv') or {}).get('rows') or []
-    ])
-    uv_section = report.get('uv') or {}
-    uv_summary = uv_section.get('summary') or {}
-    add_sheet('Sistema UV', ['Parámetro', 'Valor', 'Unidad', 'Comunicación', 'Última actualización'], [
-        [row.get('parametro'), row.get('valor'), row.get('unidad'), uv_summary.get('comunicacion'), uv_summary.get('ultima_actualizacion')]
-        for row in uv_section.get('system_rows') or []
-    ])
+
+    period_header = f"Volumen · {report.get('period_label') or ''}"
+    element_headers = ['Elemento', 'Flujo actual', period_header, 'Totalizador al cierre', 'Actividad', 'Tiempo activo (min)', 'Encendidos periodo', 'Comunicación', 'Validación', 'Última actualización']
+    def rows_of(section: dict[str, Any] | None) -> list[list[Any]]:
+        return [
+            [row.get('equipo'), row.get('flujo_lps'), row.get('volumen_periodo_m3'), row.get('totalizador_m3'), row.get('actividad'), row.get('tiempo_activo_min'), row.get('encendidos_periodo'), row.get('comunicacion'), row.get('validacion'), row.get('ultima_actualizacion')]
+            for row in (section or {}).get('rows') or []
+        ]
+
+    add_sheet('Pozos', ['Pozo', *element_headers[1:]], rows_of(report.get('wells')))
+    flow_groups = report.get('flow_groups') or {}
+    add_sheet('TAM', element_headers, rows_of(flow_groups.get('tam')))
+    add_sheet('Embotellado', element_headers, rows_of(flow_groups.get('embotellado')))
+    add_sheet('Cisterna', element_headers, rows_of(flow_groups.get('cisterna')))
 
     output = BytesIO()
+    style_excel_workbook(wb)
+    ws.freeze_panes = 'A7'
+    ws.print_title_rows = '6:6'
+    ws.column_dimensions['A'].width = 34
     wb.save(output)
     return output.getvalue(), _excel_filename(report)
-
 
 def build_daily_water_report_html(report: dict[str, Any]) -> tuple[bytes, str]:
     def fmt(value: Any, suffix: str = '') -> str:
@@ -1585,21 +1515,24 @@ def build_daily_water_report_html(report: dict[str, Any]) -> tuple[bytes, str]:
 
     summary = report.get('summary') or {}
     html = f"""<!doctype html><html lang="es"><head><meta charset="utf-8"/><title>{escape(_file_base(report))}</title><style>
-    body{{font-family:Arial,sans-serif;color:#111827;background:#fff;margin:0;padding:24px}}.brand{{text-align:center;color:#d71920;font-weight:800}}h1{{text-align:center}}.rule{{height:3px;background:#d71920;margin:14px 0 20px}}.kpis{{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}}.kpi{{border:1px solid #d9e1ea;background:#f8fafc;padding:10px}}.kpi span{{display:block;color:#64748b;font-size:11px;font-weight:700}}.kpi strong{{display:block;margin-top:5px;font-size:18px}}section{{break-inside:avoid;margin:22px 0}}h2{{font-size:18px}}table{{width:100%;border-collapse:collapse;font-size:12px}}th{{background:#eaf2f8}}th,td{{border:1px solid #d9e1ea;padding:6px;vertical-align:middle}}.note{{background:#f1f5f9;color:#475569;padding:10px;margin:12px 0}}
+    {REPORT_HTML_CSS}
     </style></head><body><div class="brand">DASHBOARD ARCA · PLANTA LAS FUENTES</div><h1>Reporte Diario de Control Hídrico</h1><p>Periodo: {escape(_pdf_text(report.get('period_label')))} · Generado: {escape(_pdf_text(report.get('generated_at')))}</p><div class="rule"></div><section class="kpis">
-    <div class="kpi"><span>Pozos Corporativos</span><strong>{fmt(summary.get('volumen_recibido_m3'), ' m³')}</strong></div><div class="kpi"><span>Pozos</span><strong>{fmt(summary.get('volumen_pozos_m3'), ' m³')}</strong></div><div class="kpi"><span>Líneas</span><strong>{fmt(summary.get('volumen_lineas_m3'), ' m³')}</strong></div><div class="kpi"><span>Calidad del periodo</span><strong>{escape(str(summary.get('calidad_periodo') or 'Sin datos'))}</strong></div></section>
-    <p class="note">{'<br/>'.join(escape(note) for note in (report.get('notes') or []))}</p>
+    <div class="kpi"><span>Pozos</span><strong>{fmt(summary.get('volumen_pozos_m3'), ' m³')}</strong></div><div class="kpi"><span>TAM</span><strong>{fmt(summary.get('volumen_tam_m3'), ' m³')}</strong></div><div class="kpi"><span>Embotellado</span><strong>{fmt(summary.get('volumen_embotellado_m3'), ' m³')}</strong></div><div class="kpi"><span>Cisterna</span><strong>{fmt(summary.get('volumen_cisterna_m3'), ' m³')}</strong></div></section>
     """
-    html += table('Cortes por turno', ['Turno', 'Horario', 'Pozos Corporativos', 'Pozos', 'Líneas', 'Flujos', 'Estado'], [[row.get('turno'), row.get('horario'), _fmt_any(row.get('entrada'), ' m³'), _fmt_any(row.get('pozos'), ' m³'), _fmt_any(row.get('lineas'), ' m³'), _fmt_any(row.get('flujos'), ' m³'), row.get('estado')] for row in (report.get('shifts') or {}).get('rows') or []])
-    html += table('Comparativo del periodo', ['Módulo', 'Elemento', 'Seleccionado', 'Anterior', 'Semana anterior', 'Esta semana'], [[row.get('module'), row.get('elemento'), _fmt_any(row.get('hoy'), ' m³'), _fmt_any(row.get('ayer'), ' m³'), _fmt_any(row.get('semana_anterior'), ' m³'), _fmt_any(row.get('esta_semana'), ' m³')] for row in (report.get('comparative') or {}).get('rows') or []])
-    html += table('Pozos Corporativos', ['Elemento', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación'], [[row.get('equipo'), _fmt_num(row.get('flujo_lps'), 2, ' L/s'), _fmt_any(row.get('volumen_display'), ' m³'), _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_minutes(row.get('tiempo_activo_min')), row.get('encendidos_periodo') if row.get('encendidos_periodo') is not None else '—', row.get('comunicacion'), row.get('validacion')] for row in (report.get('water_entry') or {}).get('rows') or []])
-    html += table('Pozos', ['Pozo', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación'], [[row.get('equipo'), _fmt_num(row.get('flujo_lps'), 2, ' L/s'), _fmt_any(row.get('volumen_display'), ' m³'), _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_minutes(row.get('tiempo_activo_min')), row.get('encendidos_periodo') if row.get('encendidos_periodo') is not None else '—', row.get('comunicacion'), row.get('validacion')] for row in (report.get('wells') or {}).get('rows') or []])
-    html += table('Líneas', ['Línea', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación'], [[row.get('equipo'), _fmt_num(row.get('flujo_lps'), 2, ' L/s'), _fmt_any(row.get('volumen_display'), ' m³'), _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_minutes(row.get('tiempo_activo_min')), row.get('encendidos_periodo') if row.get('encendidos_periodo') is not None else '—', row.get('comunicacion'), row.get('validacion')] for row in (report.get('lines') or {}).get('rows') or []])
-    html += table('Flujos', ['Flujo', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación'], [[row.get('equipo'), _fmt_num(row.get('flujo_lps'), 2, ' L/s'), _fmt_any(row.get('volumen_display'), ' m³'), _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_minutes(row.get('tiempo_activo_min')), row.get('encendidos_periodo') if row.get('encendidos_periodo') is not None else '—', row.get('comunicacion'), row.get('validacion')] for row in (report.get('flows') or {}).get('rows') or []])
-    html += table('Niveles', ['Elemento', 'Nivel', 'Porcentaje', 'Mínimo', 'Máximo', 'Comunicación'], [[row.get('elemento'), _fmt_num(row.get('nivel_m'), 2, ' m'), _fmt_num(row.get('porcentaje'), 2, '%'), _fmt_num(row.get('nivel_minimo_m'), 2, ' m'), _fmt_num(row.get('nivel_maximo_m'), 2, ' m'), row.get('comunicacion')] for row in (report.get('levels') or {}).get('rows') or []])
-    uv_section = report.get('uv') or {}
-    uv_summary = uv_section.get('summary') or {}
-    html += table('Lámparas UV', ['Lámpara', 'ID', 'Age', 'UVT', 'Power', 'Flow', 'Dosis', 'Ignition', 'State', 'Status'], [[row.get('equipo'), row.get('scada_id'), _fmt_num(row.get('agel'), 0), _fmt_num(row.get('uvt'), 0, '%'), _fmt_num(row.get('power'), 0, '%'), _fmt_num(row.get('flow'), 0, ' m³/h'), _fmt_num(row.get('dose'), 0, ' mJ/cm²'), _fmt_num(row.get('ignition'), 0), row.get('estado_operativo'), _fmt_num(row.get('status'), 0, '%')] for row in uv_section.get('rows') or []])
-    html += table('Sistema UV', ['Parámetro', 'Valor', 'Unidad', 'Comunicación'], [[row.get('parametro'), _fmt_num(row.get('valor'), 2), row.get('unidad'), uv_summary.get('comunicacion')] for row in uv_section.get('system_rows') or []])
+    html += table('Cortes por turno', ['Turno', 'Horario', 'Pozos', 'TAM', 'Embotellado', 'Cisterna', 'Estado'], [[row.get('turno'), row.get('horario'), _fmt_any(row.get('pozos'), ' m³'), _fmt_any(row.get('tam'), ' m³'), _fmt_any(row.get('embotellado'), ' m³'), _fmt_any(row.get('cisterna'), ' m³'), row.get('estado')] for row in (report.get('shifts') or {}).get('rows') or []])
+    comparison_headers = (report.get('comparative') or {}).get('headers') or {}
+    html += table('Comparativo del periodo', ['Módulo', 'Elemento', comparison_headers.get('seleccionado') or 'Seleccionado', comparison_headers.get('ayer') or 'Anterior', comparison_headers.get('semana_anterior') or 'Semana anterior', comparison_headers.get('esta_semana') or 'Esta semana'], [[row.get('module'), row.get('elemento'), _fmt_any(row.get('hoy'), ' m³'), _fmt_any(row.get('ayer'), ' m³'), _fmt_any(row.get('semana_anterior'), ' m³'), _fmt_any(row.get('esta_semana'), ' m³')] for row in (report.get('comparative') or {}).get('rows') or []])
+
+    period_header = f"Volumen · {_pdf_text(report.get('period_label'))}"
+    headers = ['Elemento', 'Flujo actual', period_header, 'Totalizador al cierre', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación']
+    def data_rows(section: dict[str, Any] | None) -> list[list[Any]]:
+        return [[row.get('equipo'), _fmt_num(row.get('flujo_lps'), 2, ' L/s'), _fmt_any(row.get('volumen_display'), ' m³'), _fmt_num(row.get('totalizador_m3'), 2, ' m³'), row.get('actividad'), _fmt_minutes(row.get('tiempo_activo_min')), row.get('encendidos_periodo') if row.get('encendidos_periodo') is not None else '—', row.get('comunicacion'), row.get('validacion')] for row in (section or {}).get('rows') or []]
+
+    html += table('Pozos', ['Pozo', *headers[1:]], data_rows(report.get('wells')))
+    flow_groups = report.get('flow_groups') or {}
+    html += table('Medidores TAM', headers, data_rows(flow_groups.get('tam')))
+    html += table('Medidores de embotellado', headers, data_rows(flow_groups.get('embotellado')))
+    html += table('Medidor de cisterna', headers, data_rows(flow_groups.get('cisterna')))
     html += '</body></html>'
     return html.encode('utf-8'), _html_filename(report)
+

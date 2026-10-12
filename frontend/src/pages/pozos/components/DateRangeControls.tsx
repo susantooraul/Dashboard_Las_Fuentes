@@ -1,3 +1,4 @@
+import DashboardButton from '../../../components/DashboardButton';
 import type { ReactNode } from 'react';
 import { CalendarDays } from 'lucide-react';
 import type { DateRange, HistoryAggregation, Period } from '../types';
@@ -24,12 +25,15 @@ export interface DateRangeControlsProps {
   aggregation?: HistoryAggregation;
   onAggregationChange?: (value: HistoryAggregation) => void;
   extraAction?: ReactNode;
+  leadingAction?: ReactNode;
   showHeader?: boolean;
+  showMeta?: boolean;
+  showStatus?: boolean;
 }
 
 export function rangeMeta(range: DateRange = {}, aggregation?: Period): RangeMeta {
   const period = aggregation || dateRangePeriod(range);
-  const rangeLabel = formatDateRangeStatus(range, 'Hoy');
+  const rangeLabel = formatDateRangeStatus(range, 'Hoy', period);
   return {
     period,
     periodLabel: periodLabel(period),
@@ -52,7 +56,10 @@ function DateRangeControls({
   aggregation,
   onAggregationChange,
   extraAction,
+  leadingAction,
   showHeader = true,
+  showMeta = true,
+  showStatus = true,
 }: DateRangeControlsProps) {
   const meta = rangeMeta(activeRange || draftRange, aggregation);
   const renderDateInput = (field: 'startDate' | 'endDate') => {
@@ -74,19 +81,22 @@ function DateRangeControls({
 
   return (
     <section className={`date-range-panel panel fade-up ${className}`.trim()}>
-      <div>
+      {showHeader || showMeta ? <div>
         {showHeader ? (
           <>
             <div className="panel-title">{title}</div>
             {subtitle ? <div className="panel-subtitle">{subtitle}</div> : null}
           </>
         ) : null}
-        <div className="date-range-meta">
-          <span>{meta.periodTitle}</span>
-          <span>{meta.rangeLabel}</span>
-        </div>
-      </div>
+        {showMeta ? (
+          <div className="date-range-meta">
+            <span>{meta.periodTitle}</span>
+            <span>{meta.rangeLabel}</span>
+          </div>
+        ) : null}
+      </div> : null}
       <div className="date-range-fields">
+        {leadingAction}
         <label>
           <span>Desde</span>
           {renderDateInput('startDate')}
@@ -111,10 +121,10 @@ function DateRangeControls({
             </select>
           </label>
         ) : null}
-        <button type="button" className="date-range-apply" onClick={onApply}>Actualizar</button>
-        {onReset ? <button type="button" className="date-range-reset" onClick={onReset}>Restablecer</button> : null}
+        <DashboardButton variant="primary" type="button" className="date-range-apply" onClick={onApply}>Actualizar</DashboardButton>
+        {onReset ? <DashboardButton variant="secondary" type="button" className="date-range-reset" onClick={onReset}>Restablecer</DashboardButton> : null}
         {extraAction}
-        <div className="date-range-status">{status || `${meta.periodTitle} · ${meta.rangeLabel}`}</div>
+        {showStatus ? <div className="date-range-status">{status || `${meta.periodTitle} · ${meta.rangeLabel}`}</div> : null}
       </div>
     </section>
   );

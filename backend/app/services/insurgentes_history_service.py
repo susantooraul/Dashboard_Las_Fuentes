@@ -655,13 +655,6 @@ def _query_buckets_legacy(sensor_ids: list[int], history_range: HistoryRange, ag
     except SQLAlchemyError as exc:
         raise InsurgentesHistoryError('No fue posible consultar el histórico de planta.', status='sql_error') from exc
 
-def _sosa_config() -> dict[str, Any] | None:
-    for item in WELLS:
-        if str(item.get('id') or '') == 'sosa-50' or str(item.get('source') or '').lower() == 'sosa_tanque':
-            return item
-    return None
-
-
 def _query_sosa_buckets(history_range: HistoryRange, aggregation: Aggregation) -> list[dict[str, Any]]:
     """Read SOSA in bounded windows so long ranges do not monopolize SQL Server.
 
@@ -991,37 +984,6 @@ def _build_series(module: Module, sensor_id: int, rows: list[dict[str, Any]], hi
 
 
 
-def _build_sosa_series(rows: list[dict[str, Any]], history_range: HistoryRange, aggregation: Aggregation) -> dict[str, Any] | None:
-    config = _sosa_config()
-    if not config:
-        return None
-    by_bucket: dict[datetime, dict[str, Any]] = {}
-    for row in rows:
-        point = _row_to_point(row, aggregation)
-        point['operational_key'] = str(config.get('id') or 'sosa-50')
-        by_bucket[datetime.fromisoformat(str(point['bucket_start']))] = point
-    points: list[dict[str, Any]] = []
-    cursor = _floor_datetime(history_range.local_start, aggregation)
-    while cursor < history_range.local_end:
-        point = by_bucket.get(cursor) or _empty_point(None, cursor, aggregation)
-        point['operational_key'] = str(config.get('id') or 'sosa-50')
-        points.append(point)
-        cursor += _step(aggregation)
-    status, has_data, partial_gaps = _series_status(points)
-    flow_unit = str((config.get('hydraulic_contract') or {}).get('flow_unit') or 'source_native_pending_confirmation')
-    return {
-        'sensor_id': None,
-        'operational_key': str(config.get('id') or 'sosa-50'),
-        'name': str(config.get('name') or 'SOSA 50%'),
-        'flow_unit': flow_unit,
-        'unit_status': 'pending_confirmation',
-        'source_status': 'sosa_bos_reconciled',
-        'status': status,
-        'has_data': has_data,
-        'partial_gaps': partial_gaps,
-        'points': points,
-    }
-
 def _validate_module(module: str) -> Module:
     normalized = str(module or '').strip().lower()
     if normalized not in {'well', 'line', 'flow'}:
@@ -1097,11 +1059,6 @@ def get_insurgentes_water_history_module(
             return cached
     rows = _query_buckets(sensor_ids, history_range, typed_aggregation) if sensor_ids else []
     series = [_build_series(typed_module, sensor_id, rows, history_range, typed_aggregation) for sensor_id in sensor_ids]
-    if typed_module == 'well' and _sosa_config():
-        sosa_rows = _query_sosa_buckets(history_range, typed_aggregation)
-        sosa_series = _build_sosa_series(sosa_rows, history_range, typed_aggregation)
-        if sosa_series is not None:
-            series.append(sosa_series)
     has_data = any(item['has_data'] for item in series)
     partial_gaps = any(item['partial_gaps'] for item in series if item['has_data'])
     payload = {
@@ -1109,7 +1066,7 @@ def get_insurgentes_water_history_module(
         'start_date': history_range.start_day.isoformat(),
         'end_date': history_range.end_day.isoformat(),
         'aggregation': typed_aggregation,
-        'source': f"{READINGS_MINUTE_TABLE} + {TANQUE_BOS_TABLE}" if typed_module == 'well' and _sosa_config() else READINGS_MINUTE_TABLE,
+        'source': READINGS_MINUTE_TABLE,
         'source_status': 'common_reconciled',
         'time_zone': LOCAL_TIMEZONE,
         'status': 'no_data' if not has_data else ('partial' if partial_gaps else 'operational'),

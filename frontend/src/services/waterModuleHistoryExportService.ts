@@ -1,7 +1,7 @@
 import api from './api';
 
-export type ModuleHistoryExportModule = 'well' | 'line' | 'flow';
-export type ModuleHistoryExportMetric = 'flow' | 'totalizer' | 'both';
+export type ModuleHistoryExportModule = 'well' | 'line' | 'flow' | 'level' | 'uv';
+export type ModuleHistoryExportMetric = 'flow' | 'totalizer' | 'both' | 'detail' | 'level' | 'uv_horometer' | 'uv_flow';
 export type ModuleHistoryTotalizerDisplay = 'delta' | 'absolute';
 
 interface ModuleHistoryPdfRequest {
@@ -11,6 +11,7 @@ interface ModuleHistoryPdfRequest {
   aggregation: string;
   metric: ModuleHistoryExportMetric;
   totalizerDisplay?: ModuleHistoryTotalizerDisplay;
+  detailVolumeDisplay?: 'interval' | 'cumulative';
   selectedIds?: string[];
 }
 
@@ -51,6 +52,7 @@ export async function downloadWaterModuleHistoryPdf(options: ModuleHistoryPdfReq
         aggregation: options.aggregation,
         metric: options.metric,
         totalizer_display: options.metric === 'both' ? 'delta' : (options.totalizerDisplay || 'delta'),
+        detail_volume_display: options.detailVolumeDisplay || 'interval',
         selected: (options.selectedIds || []).join(','),
       },
       responseType: 'blob',

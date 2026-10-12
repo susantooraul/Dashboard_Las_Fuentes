@@ -1,3 +1,4 @@
+import DashboardButton from '../../../components/DashboardButton';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
@@ -97,7 +98,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         <div className="notification-viewport" aria-live="polite" aria-relevant="additions text">
           {minimized ? (
             <div className={`notification-toast notification-${activeItem.type} notification-toast-minimized`} role="status">
-              <button
+              <DashboardButton variant="secondary"
                 type="button"
                 className="notification-minimized-main"
                 onClick={() => setMinimized(false)}
@@ -106,8 +107,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 <span className="notification-dot" aria-hidden="true" />
                 <strong>{activeItem.title}</strong>
                 {items.length > 1 ? <span className="notification-queue-count">+{items.length - 1}</span> : null}
-              </button>
-              <button type="button" className="notification-clear-all" onClick={clearAll}>Cerrar todas</button>
+              </DashboardButton>
+              <DashboardButton variant="secondary" type="button" className="notification-clear-all" onClick={clearAll}>Cerrar todas</DashboardButton>
             </div>
           ) : (
             <div
@@ -136,7 +137,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               </div>
               <div className="notification-toast-actions">
                 {items.length > 1 ? (
-                  <button
+                  <DashboardButton variant="secondary"
                     type="button"
                     className="notification-clear-all"
                     onClick={(event) => {
@@ -145,9 +146,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                     }}
                   >
                     Cerrar todas
-                  </button>
+                  </DashboardButton>
                 ) : null}
-                <button
+                <DashboardButton variant="icon"
                   type="button"
                   className="notification-icon-button"
                   aria-label="Minimizar notificación"
@@ -158,8 +159,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                   }}
                 >
                   −
-                </button>
-                <button
+                </DashboardButton>
+                <DashboardButton variant="icon"
                   type="button"
                   className="notification-icon-button"
                   aria-label="Cerrar notificación"
@@ -170,7 +171,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                   }}
                 >
                   ×
-                </button>
+                </DashboardButton>
               </div>
             </div>
           )}

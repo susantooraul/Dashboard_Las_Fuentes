@@ -9,6 +9,7 @@ import re
 from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
+from app.services.report_visual_theme import style_excel_workbook
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
@@ -417,6 +418,7 @@ def build_insurgentes_five_minute_excel(payload: dict[str, Any]) -> tuple[bytes,
     sheet.sheet_view.showGridLines = False
 
     buffer = BytesIO()
+    style_excel_workbook(workbook)
     workbook.save(buffer)
     filename = f'ARCA_Las_Fuentes_{_safe_filename_token(name)}_5min_{start_date}_{end_date}.xlsx'
     return buffer.getvalue(), filename
@@ -593,6 +595,7 @@ def build_insurgentes_five_minute_module_excel(
     summary.merge_cells(start_row=note_row, start_column=2, end_row=note_row, end_column=8)
 
     buffer = BytesIO()
+    style_excel_workbook(workbook)
     workbook.save(buffer)
     filename = f'ARCA_Las_Fuentes_{_safe_filename_token(module_label)}_5min_{start_date}_{end_date}.xlsx'
     return buffer.getvalue(), filename

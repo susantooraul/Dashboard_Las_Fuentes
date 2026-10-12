@@ -5,6 +5,7 @@ import { useOperationalAlerts } from './WaterOperationalAlertsProvider';
 interface OperationalAlertsPanelProps {
   title?: string;
   subtitle?: string;
+  hideWhenEmpty?: boolean;
 }
 
 function severityLabel(severity: string): string {
@@ -13,8 +14,14 @@ function severityLabel(severity: string): string {
   return 'Info';
 }
 
-function OperationalAlertsPanel({ title = 'Alertas y prioridades', subtitle = 'Condiciones operativas actuales evaluadas desde datos reales.' }: OperationalAlertsPanelProps) {
+function OperationalAlertsPanel({
+  title = 'Alertas y prioridades',
+  subtitle = 'Condiciones operativas actuales evaluadas desde datos reales.',
+  hideWhenEmpty = false,
+}: OperationalAlertsPanelProps) {
   const { alerts, loading, error } = useOperationalAlerts();
+
+  if (hideWhenEmpty && !alerts.length && !error) return null;
 
   return (
     <section className="panel fade-up operational-alerts-panel">

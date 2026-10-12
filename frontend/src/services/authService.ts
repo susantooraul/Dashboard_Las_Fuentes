@@ -29,6 +29,7 @@ export interface CreateUserPayload {
 }
 
 export interface UpdateUserPayload {
+  username?: string;
   display_name?: string;
   role?: string;
   is_active?: boolean;
@@ -49,6 +50,18 @@ export async function login(username: string, password: string): Promise<LoginRe
 export async function getCurrentSession(): Promise<CurrentSessionResponse> {
   const { data } = await api.get<CurrentSessionResponse>('/auth/me');
   setCsrfToken(data.csrf_token);
+  return data;
+}
+
+export interface ChangeOwnPasswordResponse {
+  message: string;
+}
+
+export async function changeOwnPassword(currentPassword: string, newPassword: string): Promise<ChangeOwnPasswordResponse> {
+  const { data } = await api.post<ChangeOwnPasswordResponse>('/auth/change-password', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });
   return data;
 }
 

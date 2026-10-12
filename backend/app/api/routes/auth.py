@@ -18,6 +18,7 @@ from app.auth.service import (
 from app.config import get_settings
 from app.schemas.auth import (
     AuthUser,
+    ChangePasswordRequest,
     LoginRequest,
     LoginResponse,
     MeResponse,
@@ -227,6 +228,27 @@ def me(request: Request):
     )
 
 
+@router.post('/change-password')
+def change_password(payload: ChangePasswordRequest, request: Request):
+    session = request.state.auth_session
+    user = request.state.auth_user
+    try:
+        request.app.state.auth_service.change_password(
+            int(user['id']),
+            payload.current_password,
+            payload.new_password,
+            current_session_id=int(session['id']),
+            ip_address=_client_ip(request),
+        )
+    except InvalidCredentialsError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except UserNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {'message': 'Contraseña actualizada. La sesión actual permanece activa y las demás sesiones fueron revocadas.'}
+
+
 @router.post('/logout')
 def logout(request: Request, response: Response):
     request.app.state.auth_service.revoke_session(int(request.state.auth_session['id']))
@@ -276,6 +298,8 @@ def update_user(user_id: int, payload: UserUpdateRequest, request: Request):
         )
     except UserNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except DuplicateUserError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except LastAdministratorError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:

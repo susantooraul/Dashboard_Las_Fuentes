@@ -1,3 +1,4 @@
+import DashboardButton from '../../../components/DashboardButton';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Mail } from 'lucide-react';
@@ -18,7 +19,7 @@ import {
   type ReportEmailSchedule,
   type ReportEmailSchedulePeriodMode,
 } from '../../../services/waterReportService';
-import { defaultTodayRange, formatDateRangeStatus } from '../dateUtils';
+import { defaultTodayRange, formatExplicitDateTimeRange } from '../dateUtils';
 import type { DateRange } from '../types';
 import DateRangeControls from '../components/DateRangeControls';
 import ReportPreviewTable from '../components/ReportPreviewTable';
@@ -36,6 +37,12 @@ interface SummaryData {
   pozos_total?: NumericValue;
   volumen_lineas_m3?: NumericValue;
   volumen_flujos_m3?: NumericValue;
+  volumen_tam_m3?: NumericValue;
+  volumen_embotellado_m3?: NumericValue;
+  volumen_cisterna_m3?: NumericValue;
+  tam_total?: NumericValue;
+  embotellado_total?: NumericValue;
+  cisterna_total?: NumericValue;
   lineas_activas?: NumericValue;
   lineas_total?: NumericValue;
   flujos_activos?: NumericValue;
@@ -53,6 +60,7 @@ interface SummaryData {
 }
 
 interface EntryRow {
+  module_group?: string;
   equipo?: string;
   elemento?: string;
   flujo_lps?: NumericValue;
@@ -118,7 +126,30 @@ interface ShiftRow {
   pozos?: NumericValue;
   lineas?: NumericValue;
   flujos?: NumericValue;
+  tam?: NumericValue;
+  embotellado?: NumericValue;
+  cisterna?: NumericValue;
   estado?: string;
+}
+
+interface ComparisonRow {
+  module?: string;
+  elemento?: string;
+  seleccionado?: NumericValue;
+  hoy?: NumericValue;
+  ayer?: NumericValue;
+  semana_anterior?: NumericValue;
+  esta_semana?: NumericValue;
+  semana_pasada?: NumericValue;
+  hace_dos_semanas?: NumericValue;
+  un_mes_antes?: NumericValue;
+  dos_meses_antes?: NumericValue;
+  tres_meses_antes?: NumericValue;
+}
+
+interface ComparisonSection {
+  rows?: ComparisonRow[];
+  headers?: Record<string, string>;
 }
 
 interface DailyWaterReport {
@@ -137,9 +168,12 @@ interface DailyWaterReport {
   wells?: ReportRows<EntryRow>;
   lines?: ReportRows<EntryRow>;
   flows?: ReportRows<EntryRow>;
+  flow_groups?: { tam?: ReportRows<EntryRow>; embotellado?: ReportRows<EntryRow>; cisterna?: ReportRows<EntryRow> };
   levels?: ReportRows<LevelRow>;
   uv?: ReportRows<UvRow> & { summary?: UvSummary };
   shifts?: { rows?: ShiftRow[] };
+  comparative?: ComparisonSection;
+  historical_comparative?: ComparisonSection;
 }
 
 function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = {}) {
@@ -169,6 +203,9 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
   const [scheduleRecipients, setScheduleRecipients] = useState('');
   const [scheduleFormats, setScheduleFormats] = useState<DailyWaterReportAttachmentFormat[]>(['pdf', 'excel']);
   const [scheduleEnabled, setScheduleEnabled] = useState(true);
+  const [scheduleTime1, setScheduleTime1] = useState('06:30');
+  const [scheduleTime2, setScheduleTime2] = useState('07:00');
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [scheduleError, setScheduleError] = useState('');
   const latestPreviewRequestRef = useRef(0);
   const previewIntervalRef = useRef<number | null>(null);
@@ -197,7 +234,7 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
     } catch (error) {
       if (latestPreviewRequestRef.current !== requestId) return null;
       console.error('No fue posible cargar el reporte diario de Las Fuentes', error);
-      setReportError(getRequestErrorMessage(error, 'No fue posible cargar el preview ligero del reporte.'));
+      setReportError(getRequestErrorMessage(error, 'No fue posible cargar la vista previa del reporte.'));
       return null;
     } finally {
       if (latestPreviewRequestRef.current === requestId) {
@@ -232,6 +269,20 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [emailModalOpen, emailSending]);
+
+  useEffect(() => {
+    if (!scheduleModalOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !scheduleSaving) setScheduleModalOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [scheduleModalOpen, scheduleSaving]);
 
   useEffect(() => {
     if (!includesToday || exportingFormat || emailSending) return undefined;
@@ -311,7 +362,7 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
     }
   };
 
-  const reportEmailDateLabel = reportRange.startDate === reportRange.endDate ? reportRange.startDate : `${reportRange.startDate} a ${reportRange.endDate}`;
+  const reportEmailDateLabel = formatExplicitDateTimeRange(reportRange, { aggregation: 'minute', useLastUpdateWhenCurrent: false });
   const buildDefaultEmailSubject = () => `Reporte Diario de Control Hídrico Las Fuentes - ${reportEmailDateLabel}`;
 
   const openEmailModal = () => {
@@ -392,7 +443,30 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
     setScheduleRecipients('');
     setScheduleFormats(['pdf', 'excel']);
     setScheduleEnabled(true);
+    setScheduleTime1('06:30');
+    setScheduleTime2('07:00');
     setScheduleError('');
+  };
+
+  const openNewSchedule = () => {
+    resetScheduleForm();
+    setScheduleModalOpen(true);
+  };
+
+  const closeScheduleModal = () => {
+    if (scheduleSaving) return;
+    setScheduleModalOpen(false);
+    setScheduleError('');
+  };
+
+  const changeSchedulePeriodMode = (mode: ReportEmailSchedulePeriodMode) => {
+    setSchedulePeriodMode(mode);
+    if (mode === 'fixed_12h_blocks') {
+      setScheduleTime1((current) => current >= '12:00' ? current : '19:00');
+      setScheduleTime2((current) => current || '07:00');
+    } else {
+      setScheduleTime1((current) => current < '12:00' ? current : '06:30');
+    }
   };
 
   const toggleScheduleFormat = (format: DailyWaterReportAttachmentFormat) => {
@@ -406,7 +480,10 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
     setScheduleRecipients(schedule.recipients.join(', '));
     setScheduleFormats(schedule.formats?.length ? schedule.formats : ['pdf']);
     setScheduleEnabled(schedule.enabled);
+    setScheduleTime1(schedule.send_time_local || (schedule.period_mode === 'fixed_12h_blocks' ? '19:00' : '06:30'));
+    setScheduleTime2(schedule.send_time_local_2 || '07:00');
     setScheduleError('');
+    setScheduleModalOpen(true);
   };
 
   const saveSchedule = async () => {
@@ -423,6 +500,20 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
       setScheduleError('Selecciona al menos PDF o Excel.');
       return;
     }
+    if (!/^\d{2}:\d{2}$/.test(scheduleTime1)) {
+      setScheduleError('Selecciona una hora de envío válida.');
+      return;
+    }
+    if (schedulePeriodMode === 'fixed_12h_blocks') {
+      if (scheduleTime1 < '12:00') {
+        setScheduleError('El bloque 00:00–12:00 debe enviarse después de su cierre.');
+        return;
+      }
+      if (!/^\d{2}:\d{2}$/.test(scheduleTime2)) {
+        setScheduleError('Selecciona la hora de envío del bloque 12:00–24:00.');
+        return;
+      }
+    }
     setScheduleSaving(true);
     setScheduleError('');
     try {
@@ -433,18 +524,29 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
         recipients,
         enabled: scheduleEnabled,
         send_delay_minutes: 10,
+        send_time_local: scheduleTime1,
+        send_time_local_2: schedulePeriodMode === 'fixed_12h_blocks' ? scheduleTime2 : null,
       };
+      const editing = Boolean(scheduleEditingId);
       if (scheduleEditingId) await updateReportEmailSchedule(scheduleEditingId, payload);
       else await createReportEmailSchedule(payload);
       await loadEmailSchedules();
       resetScheduleForm();
-      notify({ type: 'success', title: scheduleEditingId ? 'Programación actualizada' : 'Programación guardada', message: 'El backend conservará la programación aunque se reinicie.' });
+      setScheduleModalOpen(false);
+      notify({ type: 'success', title: editing ? 'Programación actualizada' : 'Programación guardada', message: 'La hora de entrega quedó guardada sin cambiar el periodo hidráulico del reporte.' });
     } catch (error) {
       console.error('No fue posible guardar la programación', error);
       setScheduleError(getRequestErrorMessage(error, 'No fue posible guardar la programación.'));
     } finally {
       setScheduleSaving(false);
     }
+  };
+
+  const scheduleTimeSummary = (schedule: ReportEmailSchedule) => {
+    if (schedule.period_mode === 'fixed_12h_blocks') {
+      return `00:00–12:00 → ${schedule.send_time_local || '—'} · 12:00–24:00 → ${schedule.send_time_local_2 || '—'}`;
+    }
+    return `Envío diario: ${schedule.send_time_local || '—'}`;
   };
 
   const toggleScheduleEnabled = async (schedule: ReportEmailSchedule) => {
@@ -480,34 +582,33 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
   };
 
   const summary = dailyReport?.summary || {};
-  const entryRows = dailyReport?.water_entry?.rows || [];
   const wellRows = dailyReport?.wells?.rows || [];
-  const lineRows = dailyReport?.lines?.rows || [];
   const flowRows = dailyReport?.flows?.rows || [];
-  const levelRows = dailyReport?.levels?.rows || [];
-  const uvRows = dailyReport?.uv?.rows || [];
-  const uvSummary = dailyReport?.uv?.summary || {};
+  const tamRows = dailyReport?.flow_groups?.tam?.rows || flowRows.filter((item) => item.module_group === 'tam');
+  const bottlingRows = dailyReport?.flow_groups?.embotellado?.rows || flowRows.filter((item) => item.module_group === 'embotellado');
+  const cisternRows = dailyReport?.flow_groups?.cisterna?.rows || flowRows.filter((item) => item.module_group === 'cisterna');
   const shiftRows = dailyReport?.shifts?.rows || [];
-  const reportStatus = `Reporte: ${formatDateRangeStatus(reportRange, 'Hoy')}`;
+  const comparativeRows = dailyReport?.comparative?.rows || [];
+  const comparativeHeaders = dailyReport?.comparative?.headers || {};
+  const historicalComparisonRows = dailyReport?.historical_comparative?.rows || [];
+  const historicalComparisonHeaders = dailyReport?.historical_comparative?.headers || {};
+  const reportIntervalLabel = formatExplicitDateTimeRange(reportRange, { aggregation: 'minute', lastUpdate: summary.ultima_actualizacion || dailyReport?.generated_at });
+  const reportStatus = `Periodo: ${reportIntervalLabel}`;
 
   const kpiCards = [
-    { label: 'Pozos Corporativos', value: formatMeasurement(summary.volumen_recibido_m3, 'm³'), caption: 'Medición conjunta de entrada' },
-    { label: 'Volumen de pozos', value: formatMeasurement(summary.volumen_pozos_m3, 'm³'), caption: `${formatCount(summary.pozos_activos, summary.pozos_total)} pozos con actividad` },
-    { label: 'Volumen de líneas', value: formatMeasurement(summary.volumen_lineas_m3, 'm³'), caption: `${formatCount(summary.lineas_activas, summary.lineas_total)} con actividad` },
-    { label: 'Volumen de flujos', value: formatMeasurement(summary.volumen_flujos_m3, 'm³'), caption: `${formatCount(summary.flujos_activos, summary.flujos_total)} con actividad` },
-    { label: 'Niveles actualizados', value: formatCount(summary.niveles_actualizados, summary.niveles_total), caption: 'Lecturas de nivel disponibles' },
-    { label: 'UV encendidas', value: formatCount(summary.lamparas_uv_encendidas, summary.lamparas_uv_total), caption: 'Estado operativo UV' },
-    { label: 'Calidad del periodo', value: summary.calidad_periodo || 'Sin datos', caption: summary.calidad_periodo === 'Validado' ? 'Cobertura validada en módulos hídricos' : `${formatInteger(summary.validacion_parcial)} elementos requieren atención` },
+    { label: 'Pozos', value: formatMeasurement(summary.volumen_pozos_m3, 'm³'), caption: `${formatCount(summary.pozos_activos, summary.pozos_total)} con actividad` },
+    { label: 'TAM', value: formatMeasurement(summary.volumen_tam_m3, 'm³'), caption: `${countRowsWithActivity(tamRows)}/${tamRows.length} con actividad` },
+    { label: 'Embotellado', value: formatMeasurement(summary.volumen_embotellado_m3, 'm³'), caption: `${countRowsWithActivity(bottlingRows)}/${bottlingRows.length} con actividad` },
+    { label: 'Cisterna', value: formatMeasurement(summary.volumen_cisterna_m3, 'm³'), caption: `${countRowsWithActivity(cisternRows)}/${cisternRows.length} con actividad` },
   ];
 
   return (
     <section className="reportes-page fade-up">
       <div className="panel report-hero-panel report-hero-modern">
         <div>
-          <span className="eyebrow">Centro de reportes</span>
           <h1 className="report-main-title">Reportes</h1>
           <p className="report-main-subtitle">Control hídrico · Planta Las Fuentes</p>
-          <p className="panel-subtitle">Genera, consulta y envía reportes del periodo seleccionado. El preview es ligero; PDF, Excel, HTML y correo se generan bajo demanda.</p>
+          
         </div>
         <div className="report-generated-card">
           <span>Última actualización</span>
@@ -520,9 +621,9 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
         <div className="report-controls-head">
           <div>
             <h2>Periodo del reporte</h2>
-            <p>Configura el periodo y genera el formato necesario.</p>
+            
           </div>
-          {refreshing && <span className="status-pill report-status-pill">Actualizando preview...</span>}
+          {refreshing && <span className="status-pill report-status-pill">Actualizando...</span>}
         </div>
         <div className="report-controls-grid">
           <DateRangeControls
@@ -540,7 +641,7 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
           <div className="report-actions-panel">
             <span className="eyebrow">Acciones</span>
             <div className="report-actions">
-              <button
+              <DashboardButton variant="pdf"
                 type="button"
                 className={`primary-action report-action-button report-export-pdf${exportingFormat === 'pdf' ? ' is-loading' : ''}`}
                 onClick={() => void exportReport('pdf')}
@@ -549,8 +650,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
               >
                 {exportingFormat === 'pdf' && <span className="report-action-spinner" aria-hidden="true" />}
                 {exportingFormat === 'pdf' ? 'Generando PDF...' : 'Generar PDF'}
-              </button>
-              <button
+              </DashboardButton>
+              <DashboardButton variant="excel"
                 type="button"
                 className={`ghost-action report-action-button report-export-excel${exportingFormat === 'excel' ? ' is-loading' : ''}`}
                 onClick={() => void exportReport('excel')}
@@ -559,8 +660,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
               >
                 {exportingFormat === 'excel' && <span className="report-action-spinner" aria-hidden="true" />}
                 {exportingFormat === 'excel' ? 'Generando Excel...' : 'Exportar Excel'}
-              </button>
-              <button
+              </DashboardButton>
+              <DashboardButton variant="secondary"
                 type="button"
                 className={`ghost-action report-action-button report-export-html${exportingFormat === 'html' ? ' is-loading' : ''}`}
                 onClick={() => void exportReport('html')}
@@ -569,39 +670,14 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
               >
                 {exportingFormat === 'html' && <span className="report-action-spinner" aria-hidden="true" />}
                 {exportingFormat === 'html' ? 'Preparando HTML...' : 'Vista HTML'}
-              </button>
-              {canEmail ? <button type="button" className="ghost-action report-action-button" onClick={openEmailModal} disabled={Boolean(exportingFormat)}>Enviar por correo</button> : null}
-            </div>
-            <div className="report-support-actions">
-              <span>Histórico integral · desde el primer registro</span>
-              <button
-                type="button"
-                className={`ghost-action report-action-button report-export-excel${exportingFormat === 'history-excel' ? ' is-loading' : ''}`}
-                onClick={() => void exportReport('history-excel')}
-                disabled={Boolean(exportingFormat)}
-                aria-busy={exportingFormat === 'history-excel'}
-              >
-                {exportingFormat === 'history-excel' && <span className="report-action-spinner" aria-hidden="true" />}
-                {exportingFormat === 'history-excel' ? 'Generando histórico...' : 'Histórico completo Excel'}
-              </button>
-              <button
-                type="button"
-                className={`ghost-action report-action-button report-export-pdf${exportingFormat === 'history-pdf' ? ' is-loading' : ''}`}
-                onClick={() => void exportReport('history-pdf')}
-                disabled={Boolean(exportingFormat)}
-                aria-busy={exportingFormat === 'history-pdf'}
-              >
-                {exportingFormat === 'history-pdf' && <span className="report-action-spinner" aria-hidden="true" />}
-                {exportingFormat === 'history-pdf' ? 'Generando histórico...' : 'Histórico completo PDF'}
-              </button>
+              </DashboardButton>
+              {canEmail ? <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={openEmailModal} disabled={Boolean(exportingFormat)}>Enviar por correo</DashboardButton> : null}
             </div>
             <span className={`report-action-feedback${exportingFormat ? ' is-active' : ''}`} role="status" aria-live="polite">
               {exportingFormat === 'pdf' && 'Generando el PDF. Espera a que inicie la descarga.'}
               {exportingFormat === 'excel' && 'Generando el Excel. Espera a que inicie la descarga.'}
               {exportingFormat === 'html' && 'Preparando la vista HTML. Se abrirá en una pestaña nueva.'}
-              {exportingFormat === 'history-excel' && 'Generando todo el histórico disponible desde el primer registro. Puede tardar varios minutos.'}
-              {exportingFormat === 'history-pdf' && 'Generando el PDF integral de cobertura, huecos e incidencias por sensor/día.'}
-              {!exportingFormat && 'PDF/Excel/HTML diarios usan el periodo seleccionado. El histórico completo siempre abarca desde el primer registro hasta hoy.'}
+              {!exportingFormat && 'PDF, Excel, HTML y correo usan exactamente el periodo seleccionado.'}
             </span>
           </div>
         </div>
@@ -609,101 +685,161 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
 
 
       {canEmail && (
-        <div className="panel report-schedule-panel">
-          <div className="report-controls-head">
+        <div className="panel report-schedule-panel report-schedule-compact">
+          <div className="report-schedule-toolbar">
             <div>
-              <span className="eyebrow">Automatización</span>
-              <h2>Programar correo</h2>
-              <p>24 h envía el día calendario anterior. 12 h usa bloques fijos 00:00–12:00 y 12:00–24:00, diez minutos después del cierre.</p>
+              <h2>Correo programado</h2>
             </div>
-            {scheduleLoading && <span className="status-pill report-status-pill">Actualizando...</span>}
+            <div className="report-schedule-toolbar-actions">
+              <span className="report-schedule-count">{emailSchedules.filter((item) => item.enabled).length} activas</span>
+              <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button report-schedule-new" onClick={openNewSchedule}>
+                <Mail size={16} /> Nueva programación
+              </DashboardButton>
+            </div>
           </div>
-          <div className="report-schedule-grid">
-            <section className="report-schedule-card report-schedule-config-card">
-              <div className="report-schedule-card-head">
+          {scheduleLoading && <span className="status-pill report-status-pill">Actualizando...</span>}
+          <div className="report-schedule-list report-schedule-list-compact">
+            {!scheduleLoading && emailSchedules.length === 0 && (
+              <div className="report-schedule-empty">
+                <div className="report-card-icon"><Mail size={18} /></div>
                 <div>
-                  <span className="eyebrow">Configuración</span>
-                  <h3>{scheduleEditingId ? 'Editar programación' : 'Nueva programación'}</h3>
-                  <p>Define periodo, destinatarios y archivos adjuntos. La configuración se conserva aunque el backend se reinicie.</p>
-                </div>
-                <span className={`report-schedule-state ${scheduleEnabled ? 'is-enabled' : 'is-paused'}`}>{scheduleEnabled ? 'Activa' : 'Pausada'}</span>
-              </div>
-              <div className="report-schedule-form">
-                <label className="report-email-field"><span>Nombre</span><input type="text" value={scheduleName} onChange={(event) => setScheduleName(event.target.value)} /></label>
-                <label className="report-email-field">
-                  <span>Periodo</span>
-                  <select value={schedulePeriodMode} onChange={(event) => setSchedulePeriodMode(event.target.value as ReportEmailSchedulePeriodMode)}>
-                    <option value="previous_calendar_day_24h">24 h — día anterior completo</option>
-                    <option value="fixed_12h_blocks">12 h — dos bloques fijos diarios</option>
-                  </select>
-                </label>
-                <label className="report-email-field">
-                  <span>Destinatarios</span>
-                  <input type="text" value={scheduleRecipients} onChange={(event) => setScheduleRecipients(event.target.value)} placeholder="correo@empresa.com, operacion@empresa.com" />
-                  <small className="report-field-hint">Puedes capturar varios correos separados por coma.</small>
-                </label>
-                <div className="report-format-selector report-schedule-options" aria-label="Formatos programados">
-                  <strong>Adjuntos y estado</strong>
-                  <label><input type="checkbox" checked={scheduleFormats.includes('pdf')} onChange={() => toggleScheduleFormat('pdf')} /> PDF</label>
-                  <label><input type="checkbox" checked={scheduleFormats.includes('excel')} onChange={() => toggleScheduleFormat('excel')} /> Excel</label>
-                  <label className="report-schedule-enabled"><input type="checkbox" checked={scheduleEnabled} onChange={(event) => setScheduleEnabled(event.target.checked)} /> Programación activa</label>
-                </div>
-                {scheduleError && <div className="status-pill alert report-status-pill">{scheduleError}</div>}
-                <div className="report-email-actions report-schedule-save-actions">
-                  {scheduleEditingId && <button type="button" className="ghost-action report-action-button" onClick={resetScheduleForm}>Cancelar edición</button>}
-                  <button type="button" className="primary-action report-action-button" onClick={() => void saveSchedule()} disabled={scheduleSaving}>
-                    {scheduleSaving && <span className="report-action-spinner" aria-hidden="true" />}
-                    {scheduleSaving ? 'Guardando...' : scheduleEditingId ? 'Guardar cambios' : 'Guardar programación'}
-                  </button>
+                  <strong>Aún no hay programaciones guardadas</strong>
+                  <p>Crea la primera programación y elige su hora exacta de entrega.</p>
                 </div>
               </div>
-            </section>
-
-            <section className="report-schedule-card report-schedule-list-card">
-              <div className="report-schedule-card-head">
-                <div>
-                  <span className="eyebrow">Guardadas</span>
-                  <h3>Programaciones</h3>
-                  <p>Consulta destinatarios, próximo envío y acciones disponibles.</p>
-                </div>
-                <span className="report-schedule-count">{emailSchedules.length}</span>
-              </div>
-              <div className="report-schedule-list">
-                {!scheduleLoading && emailSchedules.length === 0 && (
-                  <div className="report-schedule-empty">
-                    <div className="report-card-icon"><Mail size={18} /></div>
-                    <div>
-                      <strong>Aún no hay programaciones guardadas</strong>
-                      <p>Completa la configuración de la izquierda para crear el primer envío automático.</p>
-                    </div>
+            )}
+            {emailSchedules.map((schedule) => (
+              <article className="report-schedule-item report-schedule-item-compact" key={schedule.id}>
+                <div className="report-schedule-item-main">
+                  <div className="report-schedule-item-title">
+                    <strong>{schedule.name}</strong>
+                    <span className={`report-schedule-state ${schedule.enabled ? 'is-enabled' : 'is-paused'}`}>{schedule.enabled ? 'Activa' : 'Pausada'}</span>
                   </div>
-                )}
-                {emailSchedules.map((schedule) => (
-                  <article className="report-schedule-item" key={schedule.id}>
-                    <div className="report-schedule-item-main">
-                      <div className="report-schedule-item-title">
-                        <strong>{schedule.name}</strong>
-                        <span className={`report-schedule-state ${schedule.enabled ? 'is-enabled' : 'is-paused'}`}>{schedule.enabled ? 'Activa' : 'Pausada'}</span>
-                      </div>
-                      <p>{schedule.period_mode === 'fixed_12h_blocks' ? '12 h · bloques 00–12 / 12–24' : '24 h · día anterior completo'} · {schedule.formats.map((item) => item.toUpperCase()).join(' + ')}</p>
-                      <div className="report-schedule-recipients">
-                        <span>Destinatarios</span>
-                        <strong title={schedule.recipients.join(', ')}>{schedule.recipients.join(', ')}</strong>
-                      </div>
-                      <small>{schedule.enabled ? `Próximo envío: ${formatLocalDate(schedule.next_run_at)}` : 'La programación está pausada y no realizará envíos.'}</small>
-                    </div>
-                    <div className="report-schedule-actions">
-                      <button type="button" className="ghost-action report-action-button" onClick={() => editSchedule(schedule)}>Editar</button>
-                      <button type="button" className="ghost-action report-action-button" onClick={() => void toggleScheduleEnabled(schedule)}>{schedule.enabled ? 'Pausar' : 'Activar'}</button>
-                      <button type="button" className="ghost-action report-action-button" onClick={() => void runScheduleNow(schedule)}>Enviar ahora</button>
-                      <button type="button" className="ghost-action report-action-button report-schedule-delete" onClick={() => void removeSchedule(schedule)}>Eliminar</button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
+                  <p>{schedule.period_mode === 'fixed_12h_blocks' ? '12 h · bloques 00–12 / 12–24' : '24 h · día anterior completo'} · {schedule.formats.map((item) => item.toUpperCase()).join(' + ')} · {schedule.recipients.length} destinatario{schedule.recipients.length === 1 ? '' : 's'}</p>
+                  <strong className="report-schedule-time-summary">Horario configurado: {scheduleTimeSummary(schedule).replace('Envío diario: ', '')}</strong>
+                  <small>{schedule.enabled ? `Próximo envío: ${formatLocalDate(schedule.next_run_at)}` : 'La programación está pausada.'}</small>
+                </div>
+                <div className="report-schedule-actions">
+                  <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={() => editSchedule(schedule)}>Editar</DashboardButton>
+                  <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={() => void toggleScheduleEnabled(schedule)}>{schedule.enabled ? 'Pausar' : 'Activar'}</DashboardButton>
+                  <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={() => void runScheduleNow(schedule)}>Enviar ahora</DashboardButton>
+                  <DashboardButton variant="danger" type="button" className="ghost-action report-action-button report-schedule-delete" onClick={() => void removeSchedule(schedule)}>Eliminar</DashboardButton>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
+      )}
+
+      <div className="panel report-history-support-panel">
+        <div>
+          <h2>Histórico completo</h2>
+          <p>Soporte integral desde el primer registro disponible.</p>
+        </div>
+        <div className="report-history-support-actions">
+          <DashboardButton variant="pdf"
+            type="button"
+            className={`ghost-action report-action-button report-export-pdf${exportingFormat === 'history-pdf' ? ' is-loading' : ''}`}
+            onClick={() => void exportReport('history-pdf')}
+            disabled={Boolean(exportingFormat)}
+            aria-busy={exportingFormat === 'history-pdf'}
+          >
+            {exportingFormat === 'history-pdf' && <span className="report-action-spinner" aria-hidden="true" />}
+            {exportingFormat === 'history-pdf' ? 'Generando histórico...' : 'PDF histórico completo'}
+          </DashboardButton>
+          <DashboardButton variant="excel"
+            type="button"
+            className={`ghost-action report-action-button report-export-excel${exportingFormat === 'history-excel' ? ' is-loading' : ''}`}
+            onClick={() => void exportReport('history-excel')}
+            disabled={Boolean(exportingFormat)}
+            aria-busy={exportingFormat === 'history-excel'}
+          >
+            {exportingFormat === 'history-excel' && <span className="report-action-spinner" aria-hidden="true" />}
+            {exportingFormat === 'history-excel' ? 'Generando histórico...' : 'Excel histórico completo'}
+          </DashboardButton>
+        </div>
+        {(exportingFormat === 'history-excel' || exportingFormat === 'history-pdf') && (
+          <small className="report-history-support-status">
+            {exportingFormat === 'history-excel' && 'Generando todo el histórico disponible. Puede tardar varios minutos.'}
+            {exportingFormat === 'history-pdf' && 'Generando el PDF histórico completo.'}
+          </small>
+        )}
+      </div>
+
+      {canEmail && scheduleModalOpen && createPortal(
+        <div
+          className="report-email-modal report-schedule-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label={scheduleEditingId ? 'Editar programación de correo' : 'Nueva programación de correo'}
+          onMouseDown={(event) => { if (event.target === event.currentTarget) closeScheduleModal(); }}
+        >
+          <form className="report-email-card panel report-schedule-modal-card" onSubmit={(event) => { event.preventDefault(); void saveSchedule(); }}>
+            <div className="report-email-head report-schedule-modal-head">
+              <div className="report-card-icon"><Mail size={18} /></div>
+              <div>
+                <h3>{scheduleEditingId ? 'Editar programación' : 'Nueva programación'}</h3>
+              </div>
+              <span className={`report-schedule-state ${scheduleEnabled ? 'is-enabled' : 'is-paused'}`}>{scheduleEnabled ? 'Activa' : 'Pausada'}</span>
+            </div>
+
+            <div className="report-schedule-form report-schedule-modal-form">
+              <label className="report-email-field"><span>Nombre</span><input type="text" value={scheduleName} onChange={(event) => setScheduleName(event.target.value)} /></label>
+
+              <fieldset className="report-schedule-period-selector">
+                <legend>Periodo del reporte</legend>
+                <label className={`report-schedule-period-option${schedulePeriodMode === 'previous_calendar_day_24h' ? ' is-selected' : ''}`}>
+                  <input type="radio" name="schedule-period" value="previous_calendar_day_24h" checked={schedulePeriodMode === 'previous_calendar_day_24h'} onChange={() => changeSchedulePeriodMode('previous_calendar_day_24h')} />
+                  <span><strong>24 h</strong><small>Día calendario anterior completo</small></span>
+                </label>
+                <label className={`report-schedule-period-option${schedulePeriodMode === 'fixed_12h_blocks' ? ' is-selected' : ''}`}>
+                  <input type="radio" name="schedule-period" value="fixed_12h_blocks" checked={schedulePeriodMode === 'fixed_12h_blocks'} onChange={() => changeSchedulePeriodMode('fixed_12h_blocks')} />
+                  <span><strong>12 h</strong><small>Dos bloques diarios: 00–12 y 12–24</small></span>
+                </label>
+              </fieldset>
+
+              {schedulePeriodMode === 'previous_calendar_day_24h' ? (
+                <label className="report-email-field report-schedule-time-field">
+                  <span>Hora de envío diaria</span>
+                  <input type="time" value={scheduleTime1} onChange={(event) => setScheduleTime1(event.target.value)} required />
+                </label>
+              ) : (
+                <div className="report-schedule-two-times">
+                  <label className="report-email-field report-schedule-time-field">
+                    <span>Entrega del bloque 00:00–12:00</span>
+                    <input type="time" min="12:00" value={scheduleTime1} onChange={(event) => setScheduleTime1(event.target.value)} required />
+                  </label>
+                  <label className="report-email-field report-schedule-time-field">
+                    <span>Entrega del bloque 12:00–24:00</span>
+                    <input type="time" value={scheduleTime2} onChange={(event) => setScheduleTime2(event.target.value)} required />
+                  </label>
+                </div>
+              )}
+
+              <label className="report-email-field">
+                <span>Destinatarios</span>
+                <input type="text" value={scheduleRecipients} onChange={(event) => setScheduleRecipients(event.target.value)} placeholder="correo@empresa.com, operacion@empresa.com" />
+              </label>
+
+              <div className="report-format-selector report-schedule-options" aria-label="Formatos programados">
+                <strong>Adjuntos y estado</strong>
+                <label><input type="checkbox" checked={scheduleFormats.includes('pdf')} onChange={() => toggleScheduleFormat('pdf')} /> PDF</label>
+                <label><input type="checkbox" checked={scheduleFormats.includes('excel')} onChange={() => toggleScheduleFormat('excel')} /> Excel</label>
+                <label className="report-schedule-enabled"><input type="checkbox" checked={scheduleEnabled} onChange={(event) => setScheduleEnabled(event.target.checked)} /> Programación activa</label>
+              </div>
+
+              {scheduleError && <div className="status-pill alert report-status-pill">{scheduleError}</div>}
+              <div className="report-email-actions report-schedule-save-actions">
+                <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={closeScheduleModal} disabled={scheduleSaving}>Cancelar</DashboardButton>
+                <DashboardButton variant="primary" type="submit" className="primary-action report-action-button" disabled={scheduleSaving}>
+                  {scheduleSaving && <span className="report-action-spinner" aria-hidden="true" />}
+                  {scheduleSaving ? 'Guardando...' : scheduleEditingId ? 'Guardar cambios' : 'Guardar programación'}
+                </DashboardButton>
+              </div>
+            </div>
+          </form>
+        </div>,
+        document.body,
       )}
 
       {canEmail && emailModalOpen && createPortal(
@@ -723,7 +859,7 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
               <div className="report-card-icon"><Mail size={18} /></div>
               <div>
                 <h3>Enviar Reporte Diario de Control Hídrico</h3>
-                <p>Selecciona PDF, Excel o ambos para el periodo {reportEmailDateLabel}.</p>
+                <p>Selecciona PDF, Excel o ambos para el intervalo {reportEmailDateLabel}.</p>
               </div>
             </div>
             <div className="report-format-selector" aria-label="Formatos a adjuntar">
@@ -737,8 +873,8 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
             <label className="report-email-field"><span>Mensaje</span><textarea value={emailMessage} onChange={(event) => setEmailMessage(event.target.value)} rows={4} /></label>
             {emailError && <div className="status-pill alert report-status-pill">{emailError}</div>}
             <div className="report-email-actions">
-              <button type="button" className="ghost-action report-action-button" onClick={() => setEmailModalOpen(false)} disabled={emailSending}>Cancelar</button>
-              <button type="submit" className="primary-action report-action-button" disabled={emailSending}>{emailSending ? 'Enviando...' : 'Enviar'}</button>
+              <DashboardButton variant="secondary" type="button" className="ghost-action report-action-button" onClick={() => setEmailModalOpen(false)} disabled={emailSending}>Cancelar</DashboardButton>
+              <DashboardButton variant="primary" type="submit" className="primary-action report-action-button" disabled={emailSending}>{emailSending ? 'Enviando...' : 'Enviar'}</DashboardButton>
             </div>
           </form>
         </div>,
@@ -755,39 +891,69 @@ function ReportesSection({ currentUser }: { currentUser?: { role?: string } } = 
         ))}
       </div>
 
-      <div className="report-info-strip">
-        No se calcula Total Operativo global ni Balance de Agua. La medición Pozos Corporativos se conserva separada de los pozos individuales para evitar doble conteo.
-      </div>
-
       <article className="panel report-preview-dashboard">
         <div className="report-preview-head">
           <div>
-            <span className="eyebrow">Vista previa ligera</span>
-            <h2>Vista previa del reporte</h2>
-            <p>Las Fuentes · Periodo {dailyReport?.period_label || dailyReport?.date || '—'}</p>
+            <h2>Vista previa</h2>
+            <p>Las Fuentes · {reportIntervalLabel}</p>
           </div>
           <div className="report-preview-code">
             <span>{dailyReport?.report_code || '—'}</span>
-            <small>{refreshing ? 'Actualizando...' : 'No genera archivos hasta solicitarlos'}</small>
+            {refreshing && <small>Actualizando...</small>}
           </div>
         </div>
 
-        {reportLoading && <div className="status-pill report-status-pill">Cargando preview ligero...</div>}
+        {reportLoading && <div className="status-pill report-status-pill">Cargando vista previa...</div>}
         {reportError && <div className="status-pill alert report-status-pill">{reportError}</div>}
 
         <ReportPreviewTable
           title="Cortes por turno"
-          subtitle="Cortes administrativos con la misma respuesta del periodo."
-          headers={['Turno', 'Horario', 'Pozos Corporativos', 'Pozos', 'Líneas', 'Flujos', 'Estado']}
-          rows={shiftRows.map((item) => [item.turno, item.horario, formatMaybeMeasurement(item.entrada, 'm³'), formatMaybeMeasurement(item.pozos, 'm³'), formatMaybeMeasurement(item.lineas, 'm³'), formatMaybeMeasurement(item.flujos, 'm³'), item.estado])}
+          subtitle={`Cortes del intervalo ${reportIntervalLabel}.`}
+          headers={['Turno', 'Horario', 'Pozos', 'TAM', 'Embotellado', 'Cisterna', 'Estado']}
+          rows={shiftRows.map((item) => [item.turno, item.horario, formatMaybeMeasurement(item.pozos, 'm³'), formatMaybeMeasurement(item.tam, 'm³'), formatMaybeMeasurement(item.embotellado, 'm³'), formatMaybeMeasurement(item.cisterna, 'm³'), item.estado])}
         />
-        <ReportPreviewTable title="Pozos Corporativos" headers={['Elemento', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación', 'Última actualización']} rows={entryRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, formatActiveMinutes(item.tiempo_activo_min ?? item.active_minutes), formatInteger(item.encendidos_periodo ?? item.start_count), item.comunicacion, item.validacion, item.ultima_actualizacion])} />
-        <ReportPreviewTable title="Pozos" headers={['Pozo', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación', 'Última actualización']} rows={wellRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, formatActiveMinutes(item.tiempo_activo_min ?? item.active_minutes), formatInteger(item.encendidos_periodo ?? item.start_count), item.comunicacion, item.validacion, item.ultima_actualizacion])} />
-        <ReportPreviewTable title="Líneas" headers={['Línea', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación', 'Última actualización']} rows={lineRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, formatActiveMinutes(item.tiempo_activo_min ?? item.active_minutes), formatInteger(item.encendidos_periodo ?? item.start_count), item.comunicacion, item.validacion, item.ultima_actualizacion])} />
-        {flowRows.length > 0 && <ReportPreviewTable title="Flujos" headers={['Flujo', 'Flujo actual', 'Volumen periodo', 'Totalizador', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación', 'Última actualización']} rows={flowRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, formatActiveMinutes(item.tiempo_activo_min ?? item.active_minutes), formatInteger(item.encendidos_periodo ?? item.start_count), item.comunicacion, item.validacion, item.ultima_actualizacion])} />}
-        <ReportPreviewTable title="Niveles" headers={['Elemento', 'Nivel', 'Porcentaje', 'Mínimo', 'Máximo', 'Estado', 'Comunicación', 'Última actualización']} rows={levelRows.map((item) => [item.elemento, formatMeasurement(item.nivel_m, 'm'), formatMeasurement(item.porcentaje, '%'), formatMeasurement(item.nivel_minimo_m, 'm'), formatMeasurement(item.nivel_maximo_m, 'm'), item.estado, item.comunicacion, item.ultima_actualizacion])} />
-        <ReportPreviewTable title="Lámparas UV" headers={['Lámpara', 'ID', 'Age', 'UVT', 'Power', 'Flow', 'Dosis', 'Ignition', 'State', 'Status']} rows={uvRows.map((item) => [item.equipo, item.scada_id, formatInteger(item.agel), formatMeasurement(item.uvt, '%'), formatMeasurement(item.power, '%'), formatMeasurement(item.flow, 'm³/h'), formatMeasurement(item.dose, 'mJ/cm²'), formatInteger(item.ignition), item.estado_operativo, formatMeasurement(item.status, '%')])} />
-        <ReportPreviewTable title="Lecturas generales del sistema UV" headers={['UVT', 'Potencia', 'Flujo', 'Dosis', 'Comunicación', 'Última actualización']} rows={[[formatNumber(uvSummary.uvt, 2), formatNumber(uvSummary.potencia, 2), formatNumber(uvSummary.flujo, 2), formatNumber(uvSummary.dosis, 2), uvSummary.comunicacion || '—', uvSummary.ultima_actualizacion || '—']]} />
+        <ReportPreviewTable
+          title="Comparativo del periodo"
+          headers={[
+            'Módulo', 'Elemento',
+            comparativeHeaders.seleccionado || 'Seleccionado',
+            comparativeHeaders.ayer || 'Anterior',
+            comparativeHeaders.semana_anterior || 'Semana anterior',
+            comparativeHeaders.esta_semana || 'Esta semana',
+          ]}
+          rows={comparativeRows.map((item) => [
+            item.module, item.elemento,
+            formatMaybeMeasurement(item.hoy ?? item.seleccionado, 'm³'),
+            formatMaybeMeasurement(item.ayer, 'm³'),
+            formatMaybeMeasurement(item.semana_anterior, 'm³'),
+            formatMaybeMeasurement(item.esta_semana, 'm³'),
+          ])}
+        />
+        {historicalComparisonRows.length ? (
+          <ReportPreviewTable
+            title="Comparativo histórico"
+            headers={[
+              'Módulo', 'Elemento',
+              historicalComparisonHeaders.semana_pasada || 'Semana pasada',
+              historicalComparisonHeaders.hace_dos_semanas || 'Hace dos semanas',
+              historicalComparisonHeaders.un_mes_antes || 'Un mes antes',
+              historicalComparisonHeaders.dos_meses_antes || 'Dos meses antes',
+              historicalComparisonHeaders.tres_meses_antes || 'Tres meses antes',
+            ]}
+            rows={historicalComparisonRows.map((item) => [
+              item.module, item.elemento,
+              formatMaybeMeasurement(item.semana_pasada, 'm³'),
+              formatMaybeMeasurement(item.hace_dos_semanas, 'm³'),
+              formatMaybeMeasurement(item.un_mes_antes, 'm³'),
+              formatMaybeMeasurement(item.dos_meses_antes, 'm³'),
+              formatMaybeMeasurement(item.tres_meses_antes, 'm³'),
+            ])}
+          />
+        ) : null}
+        <ReportPreviewTable title="Pozos" headers={['Pozo', 'Flujo actual', `Volumen · ${reportIntervalLabel}`, 'Totalizador al cierre', 'Actividad', 'Tiempo activo', 'Encendidos', 'Comunicación', 'Validación', 'Última actualización']} rows={wellRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, formatActiveMinutes(item.tiempo_activo_min ?? item.active_minutes), formatInteger(item.encendidos_periodo ?? item.start_count), item.comunicacion, item.validacion, item.ultima_actualizacion])} />
+        <ReportPreviewTable title="TAM" headers={['Medidor', 'Flujo actual', `Volumen · ${reportIntervalLabel}`, 'Totalizador al cierre', 'Actividad', 'Comunicación', 'Validación']} rows={tamRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, item.comunicacion, item.validacion])} />
+        <ReportPreviewTable title="Embotellado" headers={['Medidor', 'Flujo actual', `Volumen · ${reportIntervalLabel}`, 'Totalizador al cierre', 'Actividad', 'Comunicación', 'Validación']} rows={bottlingRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, item.comunicacion, item.validacion])} />
+        <ReportPreviewTable title="Cisterna" headers={['Medidor', 'Flujo actual', `Volumen · ${reportIntervalLabel}`, 'Totalizador al cierre', 'Actividad', 'Comunicación', 'Validación']} rows={cisternRows.map((item) => [item.equipo, formatMeasurement(item.flujo_lps, 'L/s'), formatMaybeMeasurement(item.volumen_display ?? item.volumen_periodo_m3, 'm³'), formatMeasurement(item.totalizador_m3, 'm³'), item.actividad, item.comunicacion, item.validacion])} />
       </article>
     </section>
   );
@@ -818,6 +984,10 @@ function formatMeasurement(value: unknown, unit: string): string {
 function formatMaybeMeasurement(value: unknown, unit: string): string {
   if (typeof value === 'string' && Number.isNaN(Number(value))) return value;
   return formatMeasurement(value, unit);
+}
+
+function countRowsWithActivity(rows: EntryRow[]): number {
+  return rows.filter((row) => String(row.actividad || '').toLowerCase() === 'con actividad').length;
 }
 
 function formatCount(value: unknown, total: unknown): string {

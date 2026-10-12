@@ -1,3 +1,4 @@
+import DashboardButton from '../../../components/DashboardButton';
 import { useMemo, useState } from 'react';
 import { FileSpreadsheet, LoaderCircle } from 'lucide-react';
 import type { DateRange } from '../types';
@@ -55,7 +56,7 @@ export default function FiveMinuteExcelExportButton({ module, sensorId, range }:
 
   return (
     <div className="five-minute-export-action">
-      <button
+      <DashboardButton variant="excel"
         type="button"
         className="five-minute-excel-button"
         onClick={exportExcel}
@@ -64,7 +65,7 @@ export default function FiveMinuteExcelExportButton({ module, sensorId, range }:
       >
         {loading ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : <FileSpreadsheet size={17} aria-hidden="true" />}
         <span>{loading ? 'Generando...' : 'Excel 5 min'}</span>
-      </button>
+      </DashboardButton>
       {message ? <span className={`five-minute-export-message${hasError ? ' is-error' : ''}`}>{message}</span> : null}
     </div>
   );

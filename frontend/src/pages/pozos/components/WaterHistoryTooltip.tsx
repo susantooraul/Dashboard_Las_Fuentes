@@ -1,4 +1,5 @@
 import type { HistoryAggregation } from '../types';
+import type { DetailVolumeDisplay } from './WaterHistoryChart';
 
 interface TooltipPayloadEntry {
   payload?: Record<string, unknown>;
@@ -9,6 +10,7 @@ interface WaterHistoryTooltipProps {
   payload?: TooltipPayloadEntry[];
   aggregation: HistoryAggregation;
   flowUnit?: string;
+  volumeDisplay?: DetailVolumeDisplay;
 }
 
 interface IntervalParts {
@@ -53,7 +55,7 @@ const STATUS_LABELS: Record<string, string> = {
   validated: 'Validado',
 };
 
-export default function WaterHistoryTooltip({ active, payload, aggregation, flowUnit = 'Unidad por confirmar' }: WaterHistoryTooltipProps) {
+export default function WaterHistoryTooltip({ active, payload, aggregation, flowUnit = 'Unidad por confirmar', volumeDisplay = 'interval' }: WaterHistoryTooltipProps) {
   if (!active || !payload?.length) return null;
   const row = payload.find((entry) => entry.payload)?.payload;
   if (!row) return null;
@@ -92,8 +94,12 @@ export default function WaterHistoryTooltip({ active, payload, aggregation, flow
           <span className="chart-tooltip-value">{row.effectiveTotalizerClose === null || row.effectiveTotalizerClose === undefined ? 'Sin datos' : `${formatNumber(row.effectiveTotalizerClose)} m³`}{row.totalizerRetained ? ' · retenido' : ''}</span>
         </div>
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-name">Volumen</span>
-          <span className="chart-tooltip-value">{row.volume === null ? 'Sin datos' : `${formatNumber(row.volume)} m³`}</span>
+          <span className="chart-tooltip-name">{volumeDisplay === 'cumulative' ? 'Volumen acumulado del periodo' : 'Volumen del intervalo'}</span>
+          <span className="chart-tooltip-value">
+            {volumeDisplay === 'cumulative'
+              ? (row.cumulativeVolume === null ? 'Sin datos' : `${formatNumber(row.cumulativeVolume)} m³`)
+              : (row.volume === null ? 'Sin datos' : `${formatNumber(row.volume)} m³`)}
+          </span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-name">Muestras</span>

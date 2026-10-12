@@ -119,14 +119,14 @@ export async function getDailyWaterReport(filters: DailyWaterReportFilters = {})
 export async function downloadDailyWaterReportPdf(filters: DailyWaterReportFilters = {}): Promise<void> {
   const response = await api.get<Blob>(`/water/reports/daily/pdf${suffixFrom(filters)}`, { responseType: 'blob' });
   const blob = new Blob([response.data], { type: 'application/pdf' });
-  const filename = filenameFromHeaders(response.headers || {}, `reporte-diario-control-hidrico-insurgentes-${fallbackDate(filters)}.pdf`);
+  const filename = filenameFromHeaders(response.headers || {}, `reporte-diario-control-hidrico-las-fuentes-${fallbackDate(filters)}.pdf`);
   downloadBlob(blob, filename);
 }
 
 export async function downloadDailyWaterReportExcel(filters: DailyWaterReportFilters = {}): Promise<void> {
   const response = await api.get<Blob>(`/water/reports/daily/excel${suffixFrom(filters)}`, { responseType: 'blob' });
   const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const filename = filenameFromHeaders(response.headers || {}, `reporte-diario-control-hidrico-insurgentes-${fallbackDate(filters)}.xlsx`);
+  const filename = filenameFromHeaders(response.headers || {}, `reporte-diario-control-hidrico-las-fuentes-${fallbackDate(filters)}.xlsx`);
   downloadBlob(blob, filename);
 }
 
@@ -134,14 +134,14 @@ export async function downloadDailyWaterReportExcel(filters: DailyWaterReportFil
 export async function downloadFullWaterHistoryExcel(): Promise<void> {
   const response = await api.get('/water/history/full/excel', { responseType: 'blob', timeout: 900000 });
   const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const filename = filenameFromHeaders(response.headers || {}, 'insurgentes_historico_completo.xlsx');
+  const filename = filenameFromHeaders(response.headers || {}, 'las_fuentes_historico_completo.xlsx');
   downloadBlob(blob, filename);
 }
 
 export async function downloadFullWaterHistoryPdf(): Promise<void> {
   const response = await api.get('/water/history/full/pdf', { responseType: 'blob', timeout: 900000 });
   const blob = new Blob([response.data], { type: 'application/pdf' });
-  const filename = filenameFromHeaders(response.headers || {}, 'insurgentes_historico_completo.pdf');
+  const filename = filenameFromHeaders(response.headers || {}, 'las_fuentes_historico_completo.pdf');
   downloadBlob(blob, filename);
 }
 
@@ -179,6 +179,8 @@ export interface ReportEmailSchedule {
   recipients: string[];
   timezone: string;
   send_delay_minutes: number;
+  send_time_local: string;
+  send_time_local_2?: string | null;
   created_by_user_id: number;
   created_at: string;
   updated_at: string;
@@ -192,6 +194,8 @@ export interface ReportEmailSchedulePayload {
   recipients: string[];
   enabled?: boolean;
   send_delay_minutes?: number;
+  send_time_local?: string;
+  send_time_local_2?: string | null;
 }
 
 export async function getReportEmailSchedules(): Promise<ReportEmailSchedule[]> {

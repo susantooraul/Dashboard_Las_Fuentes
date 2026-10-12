@@ -101,10 +101,14 @@ export default function useWaterHistory({
 
   const setAggregation = (value: HistoryAggregation) => {
     manualAggregation.current = true;
+    setLoading(true);
+    setError('');
     setAggregationState(value);
   };
 
   const apply = () => {
+    setLoading(true);
+    setError('');
     setRange((previous) => ({
       ...draftRange,
       refreshKey: Number(previous.refreshKey || 0) + 1,
@@ -113,6 +117,8 @@ export default function useWaterHistory({
 
   const reset = () => {
     const next = initialRangeFactory();
+    setLoading(true);
+    setError('');
     manualAggregation.current = false;
     setDraftRange(next);
     setAggregationState(recommendedHistoryAggregation(next));

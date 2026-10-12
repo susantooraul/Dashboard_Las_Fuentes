@@ -145,12 +145,11 @@ function registerActiveTab(): void {
   writeActiveTabs(active);
 }
 
-function clearClosedBrowserSessionIfNeeded(): void {
-  const hadPreviousTabs = Object.keys(readActiveTabs()).length > 0;
-  const active = pruneActiveTabs();
-  if (hadPreviousTabs && !Object.keys(active).length && readBrowserSession()) {
-    clearAuthSession({ broadcast: true, notify: false });
-  }
+function cleanupStaleTabHeartbeats(): void {
+  // Los timers de pestañas en segundo plano pueden quedar throttled durante
+  // decenas de segundos o minutos. Un heartbeat vencido no demuestra que el
+  // usuario haya cerrado el navegador y nunca debe invalidar una sesión válida.
+  pruneActiveTabs();
 }
 
 function clearLegacyAuthStorage(): void {
@@ -213,7 +212,7 @@ function hasRecentHumanActivity(): boolean {
 }
 
 if (typeof window !== 'undefined') {
-  clearClosedBrowserSessionIfNeeded();
+  cleanupStaleTabHeartbeats();
   registerActiveTab();
   window.setInterval(registerActiveTab, ACTIVE_TAB_HEARTBEAT_MS);
   window.addEventListener('visibilitychange', registerActiveTab);
@@ -245,10 +244,53 @@ if (typeof window !== 'undefined') {
   });
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: API_BASE_URL,
   withCredentials: true,
 });
+
+// Instancia sin interceptores para confirmar una sesión cuando una petición
+// operativa recibe 401. Evita bucles recursivos del interceptor principal.
+const authProbeApi = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+});
+
+let authValidationPromise: Promise<boolean | null> | null = null;
+
+function authProbeHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const browserSession = readBrowserSession();
+  const localSessionToken = readBosLocalSessionToken();
+  if (localSessionToken) headers['X-ARCA-Local-Session'] = localSessionToken;
+  if (browserSession) headers['X-ARCA-Browser-Session'] = browserSession;
+  if (hasRecentHumanActivity()) headers['X-ARCA-User-Activity'] = '1';
+  return headers;
+}
+
+function confirmSessionStillValid(): Promise<boolean | null> {
+  if (authValidationPromise) return authValidationPromise;
+  authValidationPromise = authProbeApi.get('/auth/me', { headers: authProbeHeaders() })
+    .then((response) => {
+      const nextCsrf = response?.data?.csrf_token;
+      if (nextCsrf) setCsrfToken(nextCsrf);
+      return true;
+    })
+    .catch((probeError: AxiosError) => {
+      if (probeError.response?.status === 401) {
+        clearAuthSession({ broadcast: true, notify: true });
+        return false;
+      }
+      // Error de red/5xx: no convertir una falla transitoria en logout.
+      return null;
+    })
+    .finally(() => {
+      authValidationPromise = null;
+    });
+  return authValidationPromise;
+}
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const browserSession = readBrowserSession();
@@ -261,7 +303,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (csrf && ['post', 'put', 'patch', 'delete'].includes(method)) {
     config.headers['X-CSRF-Token'] = csrf;
   }
-  if (hasRecentHumanActivity() && browserSession) {
+  if (hasRecentHumanActivity()) {
     config.headers['X-ARCA-User-Activity'] = '1';
   }
   return config;
@@ -269,10 +311,18 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ detail?: string }>) => {
+  async (error: AxiosError<{ detail?: string }>) => {
     const url = String(error.config?.url || '');
     if (error.response?.status === 401 && !url.includes('/auth/login')) {
-      clearAuthSession({ broadcast: true, notify: true });
+      if (url.includes('/auth/me')) {
+        // /auth/me es la comprobación autoritativa: aquí sí se confirma que la
+        // sesión dejó de ser válida.
+        clearAuthSession({ broadcast: true, notify: true });
+      } else {
+        // Una sola API operativa puede fallar de forma transitoria. Confirmar la
+        // sesión antes de expulsar al usuario y sincronizar el logout.
+        await confirmSessionStillValid();
+      }
     }
     if (error.response?.status === 403 && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('arca-auth-forbidden', {

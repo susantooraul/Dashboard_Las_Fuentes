@@ -153,12 +153,13 @@ def read_water_history_module(
 
 @router.get('/history/module/pdf')
 def download_water_history_module_pdf(
-    module: str = Query(..., pattern='^(well|line|flow)$'),
+    module: str = Query(..., pattern='^(well|line|flow|level|uv)$'),
     start_date: str = Query(...),
     end_date: str = Query(...),
-    aggregation: str = Query(..., pattern='^(minute|quarter_hour|hourly|daily)$'),
-    metric: str = Query('flow', pattern='^(flow|totalizer|both)$'),
+    aggregation: str = Query(..., pattern='^(minute|quarter_hour|hourly|daily|monthly)$'),
+    metric: str = Query('flow', pattern='^(flow|totalizer|both|detail|level|uv_horometer|uv_flow)$'),
     totalizer_display: str = Query('delta', pattern='^(delta|absolute)$'),
+    detail_volume_display: str = Query('interval', pattern='^(interval|cumulative)$'),
     selected: str = Query(''),
     force_refresh: bool = Query(False),
 ):
@@ -171,6 +172,7 @@ def download_water_history_module_pdf(
             aggregation=aggregation,
             metric=metric,
             totalizer_display=totalizer_display,
+            detail_volume_display=detail_volume_display,
             selected=selected_ids,
             force_refresh=force_refresh,
         )
@@ -283,8 +285,8 @@ def download_full_history_pdf(
     except InsurgentesFullHistoryExportError as exc:
         raise HTTPException(status_code=504 if exc.status == 'timeout' else 503, detail=str(exc)) from exc
     except Exception as exc:
-        logger.exception('No fue posible generar el histórico de soporte PDF de Las Fuentes: %s', exc)
-        raise HTTPException(status_code=500, detail='No fue posible generar el histórico de soporte PDF.') from exc
+        logger.exception('No fue posible generar el histórico operativo PDF de Las Fuentes: %s', exc)
+        raise HTTPException(status_code=500, detail='No fue posible generar el histórico operativo PDF.') from exc
     return Response(
         content=content,
         media_type='application/pdf',
@@ -526,7 +528,7 @@ def email_daily_water_report(
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     report_period = str(report.get('period_label') or report.get('date') or 'periodo consultado')
-    subject = request.subject or f'Reporte Diario de Control Hídrico Insurgentes - {report_period}'
+    subject = request.subject or f'Reporte Diario de Control Hídrico Las Fuentes - {report_period}'
     quality = str((report.get('summary') or {}).get('calidad_periodo') or 'Sin datos')
     message = request.message or (
         'Reporte de Control Hídrico Las Fuentes generado desde el dashboard.\n\n'

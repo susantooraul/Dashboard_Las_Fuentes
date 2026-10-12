@@ -1,0 +1,247 @@
+/* Reportes / correo programado - layout portable 10AA */
+.reportes-page .report-schedule-compact {
+  display: grid;
+  gap: 14px;
+}
+
+.reportes-page .report-schedule-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.reportes-page .report-schedule-toolbar h2 {
+  margin: 3px 0 4px;
+}
+
+.reportes-page .report-schedule-toolbar p {
+  margin: 0;
+  max-width: 900px;
+}
+
+.reportes-page .report-schedule-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reportes-page .report-schedule-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.reportes-page .report-schedule-list-compact {
+  display: grid;
+  gap: 10px;
+}
+
+.reportes-page .report-schedule-item-compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 0;
+  padding: 14px 16px;
+}
+
+.reportes-page .report-schedule-item-compact .report-schedule-item-main {
+  display: grid;
+  gap: 5px;
+}
+
+.reportes-page .report-schedule-item-compact .report-schedule-item-title {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.reportes-page .report-schedule-item-compact p,
+.reportes-page .report-schedule-item-compact small {
+  margin: 0;
+}
+
+.reportes-page .report-schedule-time-summary {
+  display: block;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.reportes-page .report-schedule-item-compact .report-schedule-recipients {
+  max-width: 780px;
+}
+
+.report-schedule-modal-card {
+  width: min(760px, calc(100vw - 28px));
+  max-height: min(900px, calc(100vh - 32px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.report-schedule-modal-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.report-schedule-modal-head h3,
+.report-schedule-modal-head p {
+  margin-top: 0;
+}
+
+.report-schedule-modal-form {
+  display: grid;
+  gap: 14px;
+}
+
+.report-schedule-period-selector {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.report-schedule-period-selector legend {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 3px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.report-schedule-period-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 14px;
+  cursor: pointer;
+  background: rgba(7, 38, 60, 0.62);
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.report-schedule-period-option input[type='radio'] {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px;
+  margin: 3px 0 0;
+  accent-color: #0ea5e9;
+}
+
+.report-schedule-period-option > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.report-schedule-period-option strong {
+  font-size: 0.96rem;
+}
+
+.report-schedule-period-option small {
+  line-height: 1.35;
+  opacity: 0.78;
+}
+
+.report-schedule-period-option.is-selected {
+  border-color: rgba(56, 189, 248, 0.95);
+  background: rgba(14, 165, 233, 0.16);
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.2) inset;
+}
+
+.report-schedule-two-times {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.report-schedule-time-field input[type='time'] {
+  min-height: 44px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-period-option {
+  color: #0b3552;
+  background: #ffffff;
+  border-color: #b9dcf2;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-period-option small {
+  color: #4f6f86;
+  opacity: 1;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-period-option.is-selected {
+  color: #063655;
+  background: #e8f7ff;
+  border-color: #149fd9;
+  box-shadow: 0 0 0 1px rgba(20, 159, 217, 0.16) inset;
+}
+
+.pozos-shell.theme-light .insurgentes-page .report-schedule-time-summary {
+  color: #0d537b;
+}
+
+@media (max-width: 900px) {
+  .reportes-page .report-schedule-toolbar,
+  .reportes-page .report-schedule-item-compact {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .reportes-page .report-schedule-toolbar-actions,
+  .reportes-page .report-schedule-actions {
+    justify-content: flex-start;
+  }
+
+  .report-schedule-period-selector,
+  .report-schedule-two-times {
+    grid-template-columns: 1fr;
+  }
+}
+
+.reportes-page .report-history-support-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 20px;
+}
+
+.reportes-page .report-history-support-panel h2 {
+  margin: 3px 0 4px;
+}
+
+.reportes-page .report-history-support-panel p {
+  margin: 0;
+}
+
+.reportes-page .report-history-support-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reportes-page .report-history-support-status {
+  grid-column: 1 / -1;
+  opacity: 0.8;
+}
+
+@media (max-width: 900px) {
+  .reportes-page .report-history-support-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .reportes-page .report-history-support-actions {
+    justify-content: flex-start;
+  }
+}

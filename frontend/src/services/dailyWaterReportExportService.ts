@@ -46,7 +46,7 @@ function reportFileBase(report: DailyWaterReport): string {
   const start = String(report.start_date || report.date || new Date().toISOString().slice(0, 10)).slice(0, 10);
   const end = String(report.end_date || report.date || start).slice(0, 10);
   const period = start === end ? start : `${start}-a-${end}`;
-  return `reporte-diario-control-hidrico-insurgentes-${period}`;
+  return `reporte-diario-control-hidrico-las-fuentes-${period}`;
 }
 
 function downloadBlob(content: BlobPart, filename: string, type: string): void {
@@ -70,10 +70,10 @@ function table(title: string, headers: TableHeader[], rows: TableRow[]): string 
 
 function uvSummaryTable(summary: TableRow): string {
   return table('Lecturas generales del sistema UV', [
-    { key: 'uvt', label: 'UVT' },
-    { key: 'potencia', label: 'Potencia' },
-    { key: 'flujo', label: 'Flujo' },
-    { key: 'dosis', label: 'Dosis' },
+    { key: 'uvt', label: 'UVT', suffix: '%' },
+    { key: 'potencia', label: 'Potencia', suffix: '%' },
+    { key: 'flujo', label: 'Flujo', suffix: ' L/s' },
+    { key: 'dosis', label: 'Dosis', suffix: ' mJ/cm²' },
     { key: 'comunicacion', label: 'Comunicación' },
     { key: 'ultima_actualizacion', label: 'Última actualización' },
   ], [summary]);
@@ -142,9 +142,8 @@ export function buildDailyWaterReportHtml(report: DailyWaterReport, logoUrl?: st
     { key: 'agel', label: 'Age' },
     { key: 'uvt', label: 'UVT', suffix: '%' },
     { key: 'power', label: 'Power', suffix: '%' },
-    { key: 'flow', label: 'Flow', suffix: ' m³/h' },
+    { key: 'flow', label: 'Flow', suffix: ' L/s' },
     { key: 'dose', label: 'Dosis', suffix: ' mJ/cm²' },
-    { key: 'ignition', label: 'Ignition' },
     { key: 'estado_operativo', label: 'State' },
     { key: 'status', label: 'Status', suffix: '%' },
   ], uvRows)}
